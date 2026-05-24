@@ -1,0 +1,98 @@
+[debug] [2026-05-24T10:43:53.309Z] ----------------------------------------------------------------------
+[debug] [2026-05-24T10:43:53.320Z] Command:       C:\nvm4w\nodejs\node.exe C:\Users\DEVA\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --project dysi --only hosting --debug
+[debug] [2026-05-24T10:43:53.321Z] CLI Version:   15.18.0
+[debug] [2026-05-24T10:43:53.322Z] Platform:      win32
+[debug] [2026-05-24T10:43:53.322Z] Node Version:  v20.19.0
+[debug] [2026-05-24T10:43:53.323Z] Time:          Sun May 24 2026 16:13:53 GMT+0530 (India Standard Time)
+[debug] [2026-05-24T10:43:53.323Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-05-24T10:44:00.304Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-05-24T10:44:00.308Z] > authorizing via signed-in user (manirajmca.ac@gmail.com)
+[debug] [2026-05-24T10:44:00.318Z] [iam] checking project dysi-553d1 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-05-24T10:44:00.323Z] Checked if tokens are valid: true, expires at: 1779622030391
+[debug] [2026-05-24T10:44:00.324Z] Checked if tokens are valid: true, expires at: 1779622030391
+[debug] [2026-05-24T10:44:00.329Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/dysi-553d1:testIamPermissions [none]
+[debug] [2026-05-24T10:44:00.330Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/dysi-553d1:testIamPermissions  x-goog-user-project=dysi-553d1
+[debug] [2026-05-24T10:44:00.331Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/dysi-553d1:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-05-24T10:44:02.208Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/dysi-553d1:testIamPermissions 200
+[debug] [2026-05-24T10:44:02.210Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/dysi-553d1:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-05-24T10:44:02.214Z] Checked if tokens are valid: true, expires at: 1779622030391
+[debug] [2026-05-24T10:44:02.215Z] Checked if tokens are valid: true, expires at: 1779622030391
+[debug] [2026-05-24T10:44:02.218Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/dysi-553d1 [none]
+[debug] [2026-05-24T10:44:02.727Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/dysi-553d1 200
+[debug] [2026-05-24T10:44:02.727Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/dysi-553d1 {"projectId":"dysi-553d1","projectNumber":"344179333498","displayName":"DySi","name":"projects/dysi-553d1","resources":{"hostingSite":"dysi-553d1"},"state":"ACTIVE","etag":"1_3d152859-1a6f-48f9-be6c-c9ab93405e12"}
+[info] 
+[info] === Deploying to 'dysi-553d1'...
+[info] 
+[info] i  deploying hosting 
+[debug] [2026-05-24T10:44:02.738Z] Checked if tokens are valid: true, expires at: 1779622030391
+[debug] [2026-05-24T10:44:02.739Z] Checked if tokens are valid: true, expires at: 1779622030391
+[debug] [2026-05-24T10:44:02.740Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/dysi-553d1/sites/dysi [none]
+[debug] [2026-05-24T10:44:04.030Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/dysi-553d1/sites/dysi 200
+[debug] [2026-05-24T10:44:04.031Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/dysi-553d1/sites/dysi {"name":"projects/dysi-553d1/sites/dysi","defaultUrl":"https://dysi.web.app","appId":"1:344179333498:web:0b75c9eb3136621c65dec3","type":"USER_SITE"}
+[debug] [2026-05-24T10:44:04.041Z] Checked if tokens are valid: true, expires at: 1779622030391
+[debug] [2026-05-24T10:44:04.042Z] Checked if tokens are valid: true, expires at: 1779622030391
+[debug] [2026-05-24T10:44:04.043Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/dysi/versions [none]
+[debug] [2026-05-24T10:44:04.045Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/dysi/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase"}}
+[debug] [2026-05-24T10:44:05.156Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/dysi/versions 200
+[debug] [2026-05-24T10:44:05.157Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/dysi/versions {"name":"projects/344179333498/sites/dysi/versions/950c04d66b1833b5","status":"CREATED","config":{},"labels":{"deployment-tool":"cli-firebase"}}
+[info] i  hosting[dysi]: beginning deploy... 
+[info] i  hosting[dysi]: found 4 files in dist/firestore-crud/browser 
+[debug] [2026-05-24T10:44:05.212Z] [hosting] uploading with 200 concurrency
+[debug] [2026-05-24T10:44:05.223Z] Checked if tokens are valid: true, expires at: 1779622030391
+[debug] [2026-05-24T10:44:05.223Z] Checked if tokens are valid: true, expires at: 1779622030391
+[debug] [2026-05-24T10:44:05.257Z] [hosting] hash cache [ZGlzdFxmaXJlc3RvcmUtY3J1ZFxicm93c2Vy] stored for 4 files
+[debug] [2026-05-24T10:44:05.259Z] [hosting][hash queue][FINAL] {"max":3,"min":1,"avg":1,"active":0,"complete":4,"success":4,"errored":0,"retried":0,"total":4,"elapsed":42}
+[debug] [2026-05-24T10:44:05.261Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/344179333498/sites/dysi/versions/950c04d66b1833b5:populateFiles [none]
+[debug] [2026-05-24T10:44:05.262Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/344179333498/sites/dysi/versions/950c04d66b1833b5:populateFiles {"files":{"/styles-5INURTSO.css":"46b50c321b39e89a491b6727a01628c34245605a30beb3e7414c5e01cff90e6e","/main-3BHWUL7K.js":"0aa42d76d613054189782f6262adc3d85de6c80899b7c9d4319f7f9bcd0567f4","/index.html":"8b7c8f00111b485a6d135695c9566ad8472812f03c61ae8394dd505a03bbe4fe","/favicon.ico":"a905b13e228420df3dbe746dfb656d37a49736494c0737d00e007c8dc7319912"}}
+[debug] [2026-05-24T10:44:06.414Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/344179333498/sites/dysi/versions/950c04d66b1833b5:populateFiles 200
+[debug] [2026-05-24T10:44:06.415Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/344179333498/sites/dysi/versions/950c04d66b1833b5:populateFiles {"uploadUrl":"https://upload-firebasehosting.googleapis.com/upload/sites/dysi/versions/950c04d66b1833b5/files"}
+[debug] [2026-05-24T10:44:06.415Z] [hosting][populate queue][FINAL] {"max":1193,"min":1193,"avg":1193,"active":0,"complete":1,"success":1,"errored":0,"retried":0,"total":1,"elapsed":1193}
+[debug] [2026-05-24T10:44:06.416Z] [hosting] uploads queued: 0
+[debug] [2026-05-24T10:44:06.417Z] [hosting][upload queue][FINAL] {"max":0,"min":9999999999,"avg":0,"active":0,"complete":0,"success":0,"errored":0,"retried":0,"total":0,"elapsed":1779619446417}
+[info] i  hosting: upload complete 
+[info] +  hosting[dysi]: file upload complete 
+[debug] [2026-05-24T10:44:06.420Z] [hosting] deploy completed after 1253ms
+[debug] [2026-05-24T10:44:06.421Z] [
+  {
+    "config": {
+      "site": "dysi",
+      "public": "dist/firestore-crud/browser",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    },
+    "version": "projects/344179333498/sites/dysi/versions/950c04d66b1833b5"
+  }
+]
+[info] i  hosting[dysi]: finalizing version... 
+[debug] [2026-05-24T10:44:06.429Z] Checked if tokens are valid: true, expires at: 1779622030391
+[debug] [2026-05-24T10:44:06.430Z] Checked if tokens are valid: true, expires at: 1779622030391
+[debug] [2026-05-24T10:44:06.433Z] >>> [apiv2][query] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/dysi/versions/950c04d66b1833b5 updateMask=status%2Cconfig
+[debug] [2026-05-24T10:44:06.433Z] >>> [apiv2][body] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/dysi/versions/950c04d66b1833b5 {"status":"FINALIZED","config":{"rewrites":[{"glob":"**","path":"/index.html"}]}}
+[debug] [2026-05-24T10:44:07.261Z] <<< [apiv2][status] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/dysi/versions/950c04d66b1833b5 200
+[debug] [2026-05-24T10:44:07.265Z] <<< [apiv2][body] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/dysi/versions/950c04d66b1833b5 {"name":"projects/344179333498/sites/dysi/versions/950c04d66b1833b5","status":"FINALIZED","config":{"rewrites":[{"glob":"**","path":"/index.html"}]},"labels":{"deployment-tool":"cli-firebase"},"createTime":"2026-05-24T10:44:04.688907Z","createUser":{"email":"manirajmca.ac@gmail.com"},"finalizeTime":"2026-05-24T10:44:07.232522Z","finalizeUser":{"email":"manirajmca.ac@gmail.com"}}
+[debug] [2026-05-24T10:44:07.267Z] [hosting] finalized version for dysi:[object Object]
+[info] +  hosting[dysi]: version finalized 
+[info] i  hosting[dysi]: releasing new version... 
+[debug] [2026-05-24T10:44:07.270Z] Checked if tokens are valid: true, expires at: 1779622030391
+[debug] [2026-05-24T10:44:07.270Z] Checked if tokens are valid: true, expires at: 1779622030391
+[debug] [2026-05-24T10:44:07.272Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/dysi/channels/live/releases versionName=projects%2F344179333498%2Fsites%2Fdysi%2Fversions%2F950c04d66b1833b5
+[debug] [2026-05-24T10:44:07.273Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/dysi/channels/live/releases {}
+[debug] [2026-05-24T10:44:08.276Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/dysi/channels/live/releases 200
+[debug] [2026-05-24T10:44:08.276Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/dysi/channels/live/releases {"name":"projects/344179333498/sites/dysi/channels/live/releases/1779619447507000","version":{"name":"projects/344179333498/sites/dysi/versions/950c04d66b1833b5","status":"FINALIZED","config":{"rewrites":[{"glob":"**","path":"/index.html"}]},"labels":{"deployment-tool":"cli-firebase"},"createTime":"2026-05-24T10:44:04.688907Z","createUser":{"email":"manirajmca.ac@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocLFVnLio43a7B2k3YzcRNjygdfCgeOtoeCIQO7Y_vwumJEekatQ"},"finalizeTime":"2026-05-24T10:44:07.232522Z","finalizeUser":{"email":"manirajmca.ac@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocLFVnLio43a7B2k3YzcRNjygdfCgeOtoeCIQO7Y_vwumJEekatQ"}},"type":"DEPLOY","releaseTime":"2026-05-24T10:44:07.507Z","releaseUser":{"email":"manirajmca.ac@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocLFVnLio43a7B2k3YzcRNjygdfCgeOtoeCIQO7Y_vwumJEekatQ"}}
+[debug] [2026-05-24T10:44:08.277Z] [hosting] release: {"name":"projects/344179333498/sites/dysi/channels/live/releases/1779619447507000","version":{"name":"projects/344179333498/sites/dysi/versions/950c04d66b1833b5","status":"FINALIZED","config":{"rewrites":[{"glob":"**","path":"/index.html"}]},"labels":{"deployment-tool":"cli-firebase"},"createTime":"2026-05-24T10:44:04.688907Z","createUser":{"email":"manirajmca.ac@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocLFVnLio43a7B2k3YzcRNjygdfCgeOtoeCIQO7Y_vwumJEekatQ"},"finalizeTime":"2026-05-24T10:44:07.232522Z","finalizeUser":{"email":"manirajmca.ac@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocLFVnLio43a7B2k3YzcRNjygdfCgeOtoeCIQO7Y_vwumJEekatQ"}},"type":"DEPLOY","releaseTime":"2026-05-24T10:44:07.507Z","releaseUser":{"email":"manirajmca.ac@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocLFVnLio43a7B2k3YzcRNjygdfCgeOtoeCIQO7Y_vwumJEekatQ"}}
+[info] +  hosting[dysi]: release complete 
+[info] 
+[info] +  Deploy complete! 
+[info] 
+[info] Project Console: https://console.firebase.google.com/project/dysi-553d1/overview
+[info] Hosting URL: https://dysi.web.app
