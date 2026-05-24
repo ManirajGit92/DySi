@@ -1,0 +1,93 @@
+<div class="container">
+  <h1>{{ title() }} - Todo Manager</h1>
+
+  <!-- Error Message -->
+  @if (errorMessage()) {
+  <div class="error-message">{{ errorMessage() }}</div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+  <p class="loading">Loading...</p>
+  }
+
+  <!-- Add Todo Form -->
+  <div class="form-container">
+    <h2>Add New Todo</h2>
+    <div class="form-group">
+      <input type="text" [(ngModel)]="newTodoTitle" placeholder="Enter todo title" [disabled]="isLoading()"
+        class="input-field" />
+    </div>
+    <div class="form-group">
+      <textarea [(ngModel)]="newTodoDescription" placeholder="Enter todo description (optional)"
+        [disabled]="isLoading()" class="textarea-field" rows="3"></textarea>
+    </div>
+    <button (click)="addTodo()" [disabled]="isLoading()" class="btn btn-primary">
+      Add Todo
+    </button>
+  </div>
+
+  <!-- Edit Todo Form -->
+  @if (editingId()) {
+  <div class="edit-form-container">
+    <h2>Edit Todo</h2>
+    <div class="form-group">
+      <input type="text" [(ngModel)]="editTitle" placeholder="Enter todo title" [disabled]="isLoading()"
+        class="input-field" />
+    </div>
+    <div class="form-group">
+      <textarea [(ngModel)]="editDescription" placeholder="Enter todo description (optional)" [disabled]="isLoading()"
+        class="textarea-field" rows="3"></textarea>
+    </div>
+    <div class="button-group">
+      <button (click)="saveTodo()" [disabled]="isLoading()" class="btn btn-success">
+        Save Changes
+      </button>
+      <button (click)="cancelEditing()" [disabled]="isLoading()" class="btn btn-secondary">
+        Cancel
+      </button>
+    </div>
+  </div>
+  }
+
+  <!-- Todos List -->
+  <div class="todos-container">
+    <h2>My Todos</h2>
+    @if (todos().length === 0) {
+    <p class="no-todos">No todos yet. Create one to get started!</p>
+    } @else {
+    <ul class="todos-list">
+      @for (todo of todos(); track todo.id) {
+      <li class="todo-item" [class.completed]="todo.completed">
+        <div class="todo-content">
+          <input type="checkbox" [checked]="todo.completed" (change)="toggleTodo(todo)" [disabled]="isLoading()"
+            class="todo-checkbox" />
+          <div class="todo-text">
+            <h3 class="todo-title">{{ todo.title }}</h3>
+            @if (todo.description) {
+            <p class="todo-description">{{ todo.description }}</p>
+            }
+          </div>
+        </div>
+        <div class="todo-actions">
+          <button (click)="startEditing(todo)" [disabled]="isLoading()" class="btn btn-edit">
+            Edit
+          </button>
+          <button (click)="deleteTodo(todo.id!)" [disabled]="isLoading()" class="btn btn-danger">
+            Delete
+          </button>
+        </div>
+      </li>
+      }
+    </ul>
+
+    @if (hasCompletedTodos()) {
+    <button (click)="deleteCompletedTodos()" [disabled]="isLoading()" class="btn btn-danger btn-clear-completed">
+      Delete Completed Todos
+    </button>
+    }
+    }
+  </div>
+</div>
+
+<router-outlet />
