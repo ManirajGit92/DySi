@@ -1,0 +1,52 @@
+<section id="contact" class="section section--soft">
+  <div class="section__inner contact reveal">
+    <div>
+      <p class="section__eyebrow"><i class="fa-solid fa-paper-plane"></i> Contact Us</p>
+      <h2 class="section__title">Tell us what you want to build next.</h2>
+      <p class="section__lead">
+        Share a few details and we will help shape the right first step, from discovery to implementation.
+      </p>
+
+      <div class="info-grid">
+        <article class="card info-card">
+          <i class="fa-solid fa-envelope"></i>
+          <span>hello&#64;dysi.example</span>
+        </article>
+        <article class="card info-card">
+          <i class="fa-solid fa-phone"></i>
+          <span>+91 98765 43210</span>
+        </article>
+        <article class="card info-card">
+          <i class="fa-solid fa-location-dot"></i>
+          <span>Bengaluru, India</span>
+        </article>
+      </div>
+    </div>
+
+    <div class="contact__side">
+      <form class="card contact-form" (ngSubmit)="submitForm()">
+        <label>
+          Name
+          <input name="name" type="text" placeholder="Your name" required />
+        </label>
+        <label>
+          Email
+          <input name="email" type="email" placeholder="you@example.com" required />
+        </label>
+        <label>
+          Message
+          <textarea name="message" rows="5" placeholder="Tell us about your project" required></textarea>
+        </label>
+        <button class="btn btn--primary" type="submit">Send Message <i class="fa-solid fa-paper-plane"></i></button>
+        @if (formStatus()) {
+          <p class="form-status">{{ formStatus() }}</p>
+        }
+      </form>
+
+      <div class="map card" aria-label="Google map placeholder">
+        <i class="fa-solid fa-map-location-dot"></i>
+        <span>Google Map Placeholder</span>
+      </div>
+    </div>
+  </div>
+</section>

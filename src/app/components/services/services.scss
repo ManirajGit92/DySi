@@ -1,0 +1,38 @@
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 2.4rem;
+}
+
+.service-card {
+  padding: 1.35rem;
+
+  h3 {
+    margin: 1rem 0 0.45rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+}
+
+.services-action {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+@media (max-width: 900px) {
+  .services-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 620px) {
+  .services-grid {
+    grid-template-columns: 1fr;
+  }
+}

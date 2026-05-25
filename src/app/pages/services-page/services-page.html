@@ -1,0 +1,30 @@
+<main class="services-page">
+  <section class="services-hero">
+    <div class="services-hero__inner reveal is-visible">
+      <a class="btn btn--ghost" routerLink="/" fragment="services">
+        <i class="fa-solid fa-arrow-left"></i> Back to Services
+      </a>
+      <h1>Extended digital services for every stage of growth.</h1>
+      <p>
+        Explore deeper service options for product planning, software delivery, automation, analytics, and long-term
+        support.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section__inner services-page__grid">
+      @for (group of serviceGroups; track group.title) {
+        <article class="card service-detail">
+          <span class="icon-badge"><i class="fa-solid {{ group.icon }}"></i></span>
+          <h2>{{ group.title }}</h2>
+          <ul>
+            @for (item of group.items; track item) {
+              <li><i class="fa-solid fa-check"></i>{{ item }}</li>
+            }
+          </ul>
+        </article>
+      }
+    </div>
+  </section>
+</main>

@@ -1,0 +1,22 @@
+<section id="about" class="section section--soft">
+  <div class="section__inner about reveal">
+    <div>
+      <p class="section__eyebrow"><i class="fa-solid fa-circle-info"></i> About Us</p>
+      <h2 class="section__title">A product-minded technology team for growing companies.</h2>
+      <p class="section__lead">
+        DySi partners with founders, operators, and enterprise teams to plan, design, build, and improve digital systems.
+        Our work blends UX strategy, engineering discipline, cloud architecture, and continuous optimization.
+      </p>
+    </div>
+
+    <div class="about__cards">
+      @for (item of highlights; track item.title) {
+        <article class="card about-card">
+          <span class="icon-badge"><i class="fa-solid {{ item.icon }}"></i></span>
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.text }}</p>
+        </article>
+      }
+    </div>
+  </div>
+</section>

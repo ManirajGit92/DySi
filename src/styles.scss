@@ -1,0 +1,201 @@
+:root {
+  color-scheme: light;
+  --bg: #f7f9ff;
+  --surface: rgba(255, 255, 255, 0.78);
+  --surface-solid: #ffffff;
+  --text: #172033;
+  --muted: #62708a;
+  --border: rgba(52, 76, 140, 0.12);
+  --primary: #2563eb;
+  --secondary: #7c3aed;
+  --accent: #00a6d6;
+  --gradient-primary: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  --gradient-soft: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(124, 58, 237, 0.12));
+  --shadow-sm: 0 0.7rem 1.8rem rgba(30, 41, 59, 0.08);
+  --shadow-md: 0 1rem 2.4rem rgba(30, 41, 59, 0.12);
+  --shadow-lg: 0 1.6rem 3.8rem rgba(37, 99, 235, 0.22);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0a1024;
+  --surface: rgba(20, 31, 61, 0.74);
+  --surface-solid: #111a33;
+  --text: #eef4ff;
+  --muted: #a9b5ce;
+  --border: rgba(208, 221, 255, 0.16);
+  --primary: #6ea8ff;
+  --secondary: #b794ff;
+  --accent: #41d1ff;
+  --gradient-soft: linear-gradient(135deg, rgba(110, 168, 255, 0.16), rgba(183, 148, 255, 0.15));
+  --shadow-sm: 0 0.7rem 1.8rem rgba(0, 0, 0, 0.18);
+  --shadow-md: 0 1rem 2.4rem rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 1.6rem 3.8rem rgba(0, 0, 0, 0.34);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 86px;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 10% 10%, rgba(37, 99, 235, 0.13), transparent 26rem),
+    radial-gradient(circle at 90% 0%, rgba(124, 58, 237, 0.12), transparent 24rem),
+    var(--bg);
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.section {
+  padding: 6.5rem 1.25rem;
+  scroll-margin-top: 86px;
+}
+
+.section--soft {
+  background: var(--gradient-soft);
+}
+
+.section__inner {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+}
+
+.section__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.8rem;
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.section__title {
+  max-width: 720px;
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.section__lead {
+  max-width: 680px;
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 3rem;
+  padding: 0.85rem 1.25rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-weight: 800;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease;
+}
+
+.btn--primary {
+  color: #fff;
+  background: var(--gradient-primary);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn--ghost {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--border);
+  backdrop-filter: blur(16px);
+}
+
+.btn:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 1.35rem;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(18px);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(37, 99, 235, 0.28);
+  box-shadow: var(--shadow-md);
+}
+
+.icon-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1rem;
+  color: #fff;
+  background: var(--gradient-primary);
+  box-shadow: 0 0.7rem 1.4rem rgba(37, 99, 235, 0.24);
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 760px) {
+  .section {
+    padding: 5rem 1rem;
+  }
+
+  .section__title {
+    font-size: 2.15rem;
+  }
+}

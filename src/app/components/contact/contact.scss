@@ -1,0 +1,90 @@
+.contact {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1fr);
+  gap: 2rem;
+}
+
+.info-grid {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 2rem;
+}
+
+.info-card {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem;
+  font-weight: 800;
+
+  i {
+    color: var(--primary);
+  }
+}
+
+.contact__side {
+  display: grid;
+  gap: 1rem;
+}
+
+.contact-form {
+  display: grid;
+  gap: 1rem;
+  padding: 1.35rem;
+
+  label {
+    display: grid;
+    gap: 0.45rem;
+    color: var(--muted);
+    font-weight: 800;
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 0.9rem 1rem;
+    color: var(--text);
+    background: var(--surface-solid);
+    outline: none;
+
+    &:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+  }
+}
+
+.form-status {
+  margin: 0;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.map {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  padding: 2rem;
+  color: var(--muted);
+  background:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(124, 58, 237, 0.1)),
+    repeating-linear-gradient(45deg, transparent 0 12px, rgba(37, 99, 235, 0.07) 12px 13px);
+
+  i {
+    color: var(--primary);
+    font-size: 2.4rem;
+  }
+
+  span {
+    margin-top: 0.7rem;
+    font-weight: 800;
+  }
+}
+
+@media (max-width: 880px) {
+  .contact {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,28 @@
+<section id="feedback" class="section">
+  <div class="section__inner reveal">
+    <p class="section__eyebrow"><i class="fa-solid fa-star"></i> Feedback</p>
+    <h2 class="section__title">What clients say after launch.</h2>
+
+    <div class="feedback-grid">
+      @for (item of feedback; track item.name) {
+        <article class="card feedback-card">
+          <div class="stars" aria-label="5 star rating">
+            <i class="fa-solid fa-star"></i>
+            <i class="fa-solid fa-star"></i>
+            <i class="fa-solid fa-star"></i>
+            <i class="fa-solid fa-star"></i>
+            <i class="fa-solid fa-star"></i>
+          </div>
+          <p>{{ item.text }}</p>
+          <div class="customer">
+            <img [src]="item.image" [alt]="item.name" />
+            <div>
+              <strong>{{ item.name }}</strong>
+              <span>{{ item.company }}</span>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  </div>
+</section>

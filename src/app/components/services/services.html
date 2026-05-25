@@ -1,0 +1,25 @@
+<section id="services" class="section">
+  <div class="section__inner reveal">
+    <p class="section__eyebrow"><i class="fa-solid fa-layer-group"></i> Services</p>
+    <h2 class="section__title">Digital services shaped around outcomes.</h2>
+    <p class="section__lead">
+      From first strategy workshop to launch week and beyond, we create systems that teams can actually operate.
+    </p>
+
+    <div class="services-grid">
+      @for (service of services; track service.title) {
+        <article class="card service-card">
+          <span class="icon-badge"><i class="fa-solid {{ service.icon }}"></i></span>
+          <h3>{{ service.title }}</h3>
+          <p>{{ service.text }}</p>
+        </article>
+      }
+    </div>
+
+    <div class="services-action">
+      <a class="btn btn--primary" routerLink="/services">
+        View More Services <i class="fa-solid fa-arrow-up-right-from-square"></i>
+      </a>
+    </div>
+  </div>
+</section>

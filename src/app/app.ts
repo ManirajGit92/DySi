@@ -1,215 +1,163 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import {
-  Auth,
-  authState,
-  GoogleAuthProvider,
-  signInWithPopup,
-  signOut,
-  User,
-} from '@angular/fire/auth';
-import { FirestoreService, Todo } from './services/firestore.service';
+import { CommonModule, ViewportScroller } from '@angular/common';
+import { AfterViewInit, Component, HostListener, OnDestroy, OnInit, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { filter, Subscription } from 'rxjs';
+
+import { AboutComponent } from './components/about/about';
+import { ContactComponent } from './components/contact/contact';
+import { FeedbackComponent } from './components/feedback/feedback';
+import { FooterComponent } from './components/footer/footer';
+import { HeaderComponent } from './components/header/header';
+import { HomeComponent } from './components/home/home';
+import { ServicesComponent } from './components/services/services';
+import { TeamComponent } from './components/team/team';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    HeaderComponent,
+    HomeComponent,
+    AboutComponent,
+    ServicesComponent,
+    TeamComponent,
+    FeedbackComponent,
+    ContactComponent,
+    FooterComponent,
+  ],
   templateUrl: './app.html',
-  styleUrl: './app.css',
+  styleUrl: './app.scss',
 })
-export class App implements OnInit {
-  protected readonly title = signal('Firestore CRUD App');
-  todos = signal<Todo[]>([]);
-  newTodoTitle = signal('');
-  newTodoDescription = signal('');
-  editingId = signal<string | null>(null);
-  editTitle = signal('');
-  editDescription = signal('');
-  isLoading = signal(false);
-  errorMessage = signal('');
-  user = signal<User | null>(null);
+export class App implements OnInit, AfterViewInit, OnDestroy {
+  readonly isLoading = signal(true);
+  readonly activeSection = signal('home');
+  readonly showBackToTop = signal(false);
+  readonly isDarkTheme = signal(false);
+  readonly isLandingRoute = signal(true);
+
+  private readonly sectionIds = ['home', 'about', 'services', 'team', 'feedback', 'contact'];
+  private observer?: IntersectionObserver;
+  private routerSub?: Subscription;
 
   constructor(
-    private firestoreService: FirestoreService,
-    private auth: Auth,
-  ) {
-    authState(this.auth).subscribe((user) => {
-      this.user.set(user);
-      if (user) {
-        this.loadTodos().catch((error) => {
-          console.error(error);
-        });
-      } else {
-        this.todos.set([]);
-      }
+    private readonly router: Router,
+    private readonly viewportScroller: ViewportScroller,
+  ) {}
+
+  ngOnInit(): void {
+    const savedTheme = localStorage.getItem('dysi-theme');
+    const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+    this.setTheme(savedTheme ? savedTheme === 'dark' : prefersDark);
+
+    window.setTimeout(() => this.isLoading.set(false), 900);
+
+    this.routerSub = this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe(() => {
+        const fragment = this.router.parseUrl(this.router.url).fragment;
+        this.isLandingRoute.set(this.router.url.split('#')[0].split('?')[0] !== '/services');
+        if (fragment) {
+          window.setTimeout(() => this.scrollToSection(fragment), 80);
+        } else if (this.router.url === '/') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+  }
+
+  ngAfterViewInit(): void {
+    this.viewportScroller.setOffset([0, 82]);
+    this.initSectionObserver();
+    this.initFadeObserver();
+  }
+
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
+    this.routerSub?.unsubscribe();
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    this.showBackToTop.set(window.scrollY > 640);
+  }
+
+  scrollToSection(sectionId: string): void {
+    if (!this.isLandingRoute()) {
+      void this.router.navigate(['/'], { fragment: sectionId }).then(() => {
+        window.setTimeout(() => this.scrollToSection(sectionId), 80);
+      });
+      return;
+    }
+
+    const section = document.getElementById(sectionId);
+    if (!section) {
+      return;
+    }
+
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    this.activeSection.set(sectionId);
+    void this.router.navigate([], {
+      fragment: sectionId,
+      queryParamsHandling: 'preserve',
+      replaceUrl: true,
     });
   }
 
-  async ngOnInit() {
-    // Keep the app ready; auth state subscription will load data when signed in.
+  scrollToTop(): void {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.activeSection.set('home');
   }
 
-  async loadTodos() {
-    if (!this.user()) {
-      this.todos.set([]);
+  toggleTheme(): void {
+    this.setTheme(!this.isDarkTheme());
+  }
+
+  private setTheme(isDark: boolean): void {
+    this.isDarkTheme.set(isDark);
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    localStorage.setItem('dysi-theme', isDark ? 'dark' : 'light');
+  }
+
+  private initSectionObserver(): void {
+    if (!('IntersectionObserver' in window)) {
       return;
     }
 
-    this.isLoading.set(true);
-    this.errorMessage.set('');
-    try {
-      const todos = await this.firestoreService.getAllTodos();
-      this.todos.set(todos);
-    } catch (error) {
-      this.errorMessage.set('Error loading todos');
-      console.error(error);
-    } finally {
-      this.isLoading.set(false);
-    }
+    this.observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            this.activeSection.set(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: '-42% 0px -48% 0px', threshold: 0.01 },
+    );
+
+    this.sectionIds
+      .map((id) => document.getElementById(id))
+      .filter((section): section is HTMLElement => Boolean(section))
+      .forEach((section) => this.observer?.observe(section));
   }
 
-  async signInWithGoogle() {
-    this.isLoading.set(true);
-    this.errorMessage.set('');
-    try {
-      await signInWithPopup(this.auth, new GoogleAuthProvider());
-    } catch (error) {
-      this.errorMessage.set('Google sign-in failed');
-      console.error(error);
-    } finally {
-      this.isLoading.set(false);
-    }
-  }
-
-  async signOut() {
-    this.isLoading.set(true);
-    this.errorMessage.set('');
-    try {
-      await signOut(this.auth);
-    } catch (error) {
-      this.errorMessage.set('Sign-out failed');
-      console.error(error);
-    } finally {
-      this.isLoading.set(false);
-    }
-  }
-
-  async addTodo() {
-    if (!this.newTodoTitle().trim()) {
-      this.errorMessage.set('Title is required');
+  private initFadeObserver(): void {
+    if (!('IntersectionObserver' in window)) {
+      document.querySelectorAll('.reveal').forEach((element) => element.classList.add('is-visible'));
       return;
     }
 
-    this.isLoading.set(true);
-    this.errorMessage.set('');
-    try {
-      const newTodo: Todo = {
-        title: this.newTodoTitle(),
-        description: this.newTodoDescription(),
-        completed: false,
-      };
-      await this.firestoreService.addTodo(newTodo);
-      this.newTodoTitle.set('');
-      this.newTodoDescription.set('');
-      await this.loadTodos();
-    } catch (error) {
-      this.errorMessage.set('Error adding todo');
-      console.error(error);
-    } finally {
-      this.isLoading.set(false);
-    }
-  }
+    const fadeObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            fadeObserver.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.18 },
+    );
 
-  async toggleTodo(todo: Todo) {
-    this.isLoading.set(true);
-    try {
-      await this.firestoreService.updateTodo(todo.id!, {
-        completed: !todo.completed,
-      });
-      await this.loadTodos();
-    } catch (error) {
-      this.errorMessage.set('Error updating todo');
-      console.error(error);
-    } finally {
-      this.isLoading.set(false);
-    }
-  }
-
-  startEditing(todo: Todo) {
-    this.editingId.set(todo.id!);
-    this.editTitle.set(todo.title);
-    this.editDescription.set(todo.description);
-  }
-
-  async saveTodo() {
-    if (!this.editTitle().trim()) {
-      this.errorMessage.set('Title is required');
-      return;
-    }
-
-    this.isLoading.set(true);
-    this.errorMessage.set('');
-    try {
-      await this.firestoreService.updateTodo(this.editingId()!, {
-        title: this.editTitle(),
-        description: this.editDescription(),
-      });
-      this.editingId.set(null);
-      this.editTitle.set('');
-      this.editDescription.set('');
-      await this.loadTodos();
-    } catch (error) {
-      this.errorMessage.set('Error updating todo');
-      console.error(error);
-    } finally {
-      this.isLoading.set(false);
-    }
-  }
-
-  cancelEditing() {
-    this.editingId.set(null);
-    this.editTitle.set('');
-    this.editDescription.set('');
-  }
-
-  async deleteTodo(id: string) {
-    if (!confirm('Are you sure you want to delete this todo?')) {
-      return;
-    }
-
-    this.isLoading.set(true);
-    this.errorMessage.set('');
-    try {
-      await this.firestoreService.deleteTodo(id);
-      await this.loadTodos();
-    } catch (error) {
-      this.errorMessage.set('Error deleting todo');
-      console.error(error);
-    } finally {
-      this.isLoading.set(false);
-    }
-  }
-
-  async deleteCompletedTodos() {
-    if (!confirm('Delete all completed todos?')) {
-      return;
-    }
-
-    this.isLoading.set(true);
-    this.errorMessage.set('');
-    try {
-      await this.firestoreService.deleteCompletedTodos();
-      await this.loadTodos();
-    } catch (error) {
-      this.errorMessage.set('Error deleting completed todos');
-      console.error(error);
-    } finally {
-      this.isLoading.set(false);
-    }
-  }
-
-  hasCompletedTodos(): boolean {
-    return this.todos().some((todo) => todo.completed);
+    document.querySelectorAll('.reveal').forEach((element) => fadeObserver.observe(element));
   }
 }

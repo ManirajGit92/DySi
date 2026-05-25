@@ -1,0 +1,32 @@
+.about {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1fr);
+  gap: 2rem;
+  align-items: center;
+}
+
+.about__cards {
+  display: grid;
+  gap: 1rem;
+}
+
+.about-card {
+  padding: 1.35rem;
+
+  h3 {
+    margin: 1rem 0 0.45rem;
+    font-size: 1.2rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+}
+
+@media (max-width: 860px) {
+  .about {
+    grid-template-columns: 1fr;
+  }
+}

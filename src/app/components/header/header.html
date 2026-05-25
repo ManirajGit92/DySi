@@ -1,0 +1,33 @@
+<header class="site-header">
+  <a class="brand" href="#home" (click)="$event.preventDefault(); selectSection('home')" aria-label="DySi home">
+    <span class="brand__mark">D</span>
+    <span>DySi</span>
+  </a>
+
+  <nav class="nav" [class.nav--open]="isMenuOpen()" aria-label="Primary navigation">
+    @for (item of navItems; track item.id) {
+      <a
+        href="#{{ item.id }}"
+        [class.active]="activeSection === item.id"
+        (click)="$event.preventDefault(); selectSection(item.id)"
+      >
+        {{ item.label }}
+      </a>
+    }
+  </nav>
+
+  <div class="header-actions">
+    <button class="theme-toggle" type="button" aria-label="Toggle theme" (click)="themeToggled.emit()">
+      <i class="fa-solid" [class.fa-moon]="!isDarkTheme" [class.fa-sun]="isDarkTheme"></i>
+    </button>
+    <button
+      class="menu-toggle"
+      type="button"
+      aria-label="Toggle menu"
+      [attr.aria-expanded]="isMenuOpen()"
+      (click)="isMenuOpen.set(!isMenuOpen())"
+    >
+      <i class="fa-solid" [class.fa-bars]="!isMenuOpen()" [class.fa-xmark]="isMenuOpen()"></i>
+    </button>
+  </div>
+</header>
