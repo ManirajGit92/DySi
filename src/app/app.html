@@ -1,6 +1,20 @@
 <div class="container">
   <h1>{{ title() }} - Todo Manager</h1>
 
+  <div class="auth-toolbar">
+    @if (user()) {
+    <div class="auth-info">
+      <span>Signed in as {{ user()?.displayName || user()?.email }}</span>
+      <button (click)="signOut()" [disabled]="isLoading()" class="btn btn-secondary">Sign out</button>
+    </div>
+    } @else {
+    <button (click)="signInWithGoogle()" [disabled]="isLoading()" class="btn btn-primary">
+      Sign in with Google
+    </button>
+    <p class="signed-out-note">Sign in with Google to manage your todos.</p>
+    }
+  </div>
+
   <!-- Error Message -->
   @if (errorMessage()) {
   <div class="error-message">{{ errorMessage() }}</div>
@@ -10,6 +24,12 @@
   @if (isLoading()) {
   <p class="loading">Loading...</p>
   }
+
+  @if (!user()) {
+  <div class="signed-out-message">
+    <p>Please sign in with Google to access the todo manager.</p>
+  </div>
+  } @else {
 
   <!-- Add Todo Form -->
   <div class="form-container">
@@ -88,6 +108,7 @@
     }
     }
   </div>
+  }
 </div>
 
 <router-outlet />

@@ -2,6 +2,14 @@ import { Component, OnInit, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import {
+  Auth,
+  authState,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  User,
+} from '@angular/fire/auth';
 import { FirestoreService, Todo } from './services/firestore.service';
 
 @Component({
@@ -20,14 +28,34 @@ export class App implements OnInit {
   editDescription = signal('');
   isLoading = signal(false);
   errorMessage = signal('');
+  user = signal<User | null>(null);
 
-  constructor(private firestoreService: FirestoreService) {}
+  constructor(
+    private firestoreService: FirestoreService,
+    private auth: Auth,
+  ) {
+    authState(this.auth).subscribe((user) => {
+      this.user.set(user);
+      if (user) {
+        this.loadTodos().catch((error) => {
+          console.error(error);
+        });
+      } else {
+        this.todos.set([]);
+      }
+    });
+  }
 
   async ngOnInit() {
-    await this.loadTodos();
+    // Keep the app ready; auth state subscription will load data when signed in.
   }
 
   async loadTodos() {
+    if (!this.user()) {
+      this.todos.set([]);
+      return;
+    }
+
     this.isLoading.set(true);
     this.errorMessage.set('');
     try {
@@ -35,6 +63,32 @@ export class App implements OnInit {
       this.todos.set(todos);
     } catch (error) {
       this.errorMessage.set('Error loading todos');
+      console.error(error);
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  async signInWithGoogle() {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+    try {
+      await signInWithPopup(this.auth, new GoogleAuthProvider());
+    } catch (error) {
+      this.errorMessage.set('Google sign-in failed');
+      console.error(error);
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  async signOut() {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+    try {
+      await signOut(this.auth);
+    } catch (error) {
+      this.errorMessage.set('Sign-out failed');
       console.error(error);
     } finally {
       this.isLoading.set(false);
