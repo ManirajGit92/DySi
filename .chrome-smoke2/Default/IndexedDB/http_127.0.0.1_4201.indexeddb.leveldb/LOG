@@ -1,0 +1,21 @@
+2026/05/26-19:37:05.399 405c Creating DB d:\Projects\MainProjects\DySi App\DySi\.chrome-smoke2\Default\IndexedDB\http_127.0.0.1_4201.indexeddb.leveldb since it was missing.
+2026/05/26-19:37:05.415 405c Reusing MANIFEST d:\Projects\MainProjects\DySi App\DySi\.chrome-smoke2\Default\IndexedDB\http_127.0.0.1_4201.indexeddb.leveldb/MANIFEST-000001
+2026/05/26-19:37:05.480 49dc Level-0 table #5: started
+2026/05/26-19:37:05.488 49dc Level-0 table #5: 1284 bytes OK
+2026/05/26-19:37:05.492 49dc Delete type=0 #3
+2026/05/26-19:37:05.494 405c Manual compaction at level-0 from '\x00\x01\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x02\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/05/26-19:44:31.050 3f4c Level-0 table #7: started
+2026/05/26-19:44:31.057 3f4c Level-0 table #7: 2009 bytes OK
+2026/05/26-19:44:31.061 3f4c Delete type=0 #4
+2026/05/26-19:44:31.062 405c Manual compaction at level-0 from '\x00\x04\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x05\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/05/26-20:06:06.629 1540 Manual compaction at level-0 from '\x00\x05\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x06\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/05/26-20:08:21.338 49dc Level-0 table #9: started
+2026/05/26-20:08:21.351 49dc Level-0 table #9: 1293 bytes OK
+2026/05/26-20:08:21.355 49dc Delete type=0 #6
+2026/05/26-20:08:21.357 3f4c Manual compaction at level-0 from '\x00\x06\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x07\x00\x00\x00' @ 0 : 0; will stop at '\x00\x06\x00\x00\x05' @ 198 : 1
+2026/05/26-20:08:21.357 3f4c Compacting 1@0 + 1@1 files
+2026/05/26-20:08:21.361 3f4c Generated table #10@0: 64 keys, 1664 bytes
+2026/05/26-20:08:21.362 3f4c Compacted 1@0 + 1@1 files => 1664 bytes
+2026/05/26-20:08:21.365 3f4c compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/05/26-20:08:21.366 3f4c Delete type=2 #9
+2026/05/26-20:08:21.367 3f4c Manual compaction at level-0 from '\x00\x06\x00\x00\x05' @ 198 : 1 .. '\x00\x07\x00\x00\x00' @ 0 : 0; will stop at (end)

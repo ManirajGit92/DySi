@@ -1,4 +1,7 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+
+import { FooterSettings, MenuItem } from '../../core/models/website.models';
+import { defaultFooterSettings } from '../../core/services/website-data.service';
 
 @Component({
   selector: 'app-footer',
@@ -7,13 +10,10 @@ import { Component, EventEmitter, Output } from '@angular/core';
 })
 export class FooterComponent {
   @Output() sectionSelected = new EventEmitter<string>();
+  @Input() menus: MenuItem[] = [];
+  settings: FooterSettings = defaultFooterSettings;
 
-  readonly links = [
-    { id: 'home', label: 'Home' },
-    { id: 'about', label: 'About Us' },
-    { id: 'services', label: 'Services' },
-    { id: 'team', label: 'Team' },
-    { id: 'feedback', label: 'Feedback' },
-    { id: 'contact', label: 'Contact Us' },
-  ];
+  @Input() set footerSettings(value: FooterSettings | null) {
+    this.settings = value ?? defaultFooterSettings;
+  }
 }

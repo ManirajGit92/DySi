@@ -1,32 +1,47 @@
 @if (isLoading()) {
   <div class="loader" aria-label="Loading">
     <div class="loader__mark"></div>
-    <p>DySi</p>
+    <p>Loading live website content</p>
   </div>
 }
 
 <app-header
-  [activeSection]="activeSection()"
-  [isDarkTheme]="isDarkTheme()"
+  [menus]="menus()"
+  [activeSection]="scrollService.activeSection()"
+  [isDarkTheme]="themeService.isDark()"
   (sectionSelected)="scrollToSection($event)"
   (themeToggled)="toggleTheme()"
 />
 
 @if (isLandingRoute()) {
   <main>
-    <app-home (primaryAction)="scrollToSection('contact')" />
-    <app-about />
-    <app-services />
-    <app-team />
-    <app-feedback />
-    <app-contact />
+    @if (sections().length) {
+      @for (section of sections(); track section.id || section.sectionId) {
+        <app-dynamic-section [section]="section" (sectionAction)="scrollToSection($event)" />
+      }
+    } @else {
+      <section class="empty-state section">
+        <div class="section__inner card">
+          <p class="section__eyebrow">Firestore CMS</p>
+          <h1 class="section__title">No visible sections found.</h1>
+          <p class="section__lead">
+            Sign in to the admin panel and seed or create website sections to render the page dynamically.
+          </p>
+          <a class="btn btn--primary" routerLink="/admin">Open Admin Panel</a>
+        </div>
+      </section>
+    }
   </main>
 
-  <app-footer (sectionSelected)="scrollToSection($event)" />
+  <app-footer
+    [menus]="menus()"
+    [footerSettings]="footerSettings()"
+    (sectionSelected)="scrollToSection($event)"
+  />
 }
 
-@if (showBackToTop()) {
-  <button class="back-to-top" type="button" aria-label="Back to top" (click)="scrollToTop()">
+@if (scrollService.showBackToTop()) {
+  <button class="back-to-top" type="button" aria-label="Back to top" (click)="scrollService.scrollToTop()">
     <i class="fa-solid fa-arrow-up"></i>
   </button>
 }

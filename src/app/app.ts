@@ -1,148 +1,127 @@
 import { CommonModule, ViewportScroller } from '@angular/common';
 import { AfterViewInit, Component, HostListener, OnDestroy, OnInit, signal } from '@angular/core';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 
-import { AboutComponent } from './components/about/about';
-import { ContactComponent } from './components/contact/contact';
-import { FeedbackComponent } from './components/feedback/feedback';
 import { FooterComponent } from './components/footer/footer';
 import { HeaderComponent } from './components/header/header';
-import { HomeComponent } from './components/home/home';
-import { ServicesComponent } from './components/services/services';
-import { TeamComponent } from './components/team/team';
+import { FooterSettings, MenuItem, WebsiteSection } from './core/models/website.models';
+import { ScrollService } from './core/services/scroll.service';
+import { ThemeService } from './core/services/theme.service';
+import { WebsiteDataService, defaultFooterSettings } from './core/services/website-data.service';
+import { DynamicSectionComponent } from './shared/dynamic-section/dynamic-section';
 
 @Component({
   selector: 'app-root',
   imports: [
     CommonModule,
     RouterOutlet,
+    RouterLink,
     HeaderComponent,
-    HomeComponent,
-    AboutComponent,
-    ServicesComponent,
-    TeamComponent,
-    FeedbackComponent,
-    ContactComponent,
     FooterComponent,
+    DynamicSectionComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App implements OnInit, AfterViewInit, OnDestroy {
   readonly isLoading = signal(true);
-  readonly activeSection = signal('home');
-  readonly showBackToTop = signal(false);
-  readonly isDarkTheme = signal(false);
   readonly isLandingRoute = signal(true);
+  readonly menus = signal<MenuItem[]>([]);
+  readonly sections = signal<WebsiteSection[]>([]);
+  readonly footerSettings = signal<FooterSettings>(defaultFooterSettings);
 
-  private readonly sectionIds = ['home', 'about', 'services', 'team', 'feedback', 'contact'];
-  private observer?: IntersectionObserver;
-  private routerSub?: Subscription;
+  private readonly subscriptions = new Subscription();
 
   constructor(
     private readonly router: Router,
     private readonly viewportScroller: ViewportScroller,
+    readonly scrollService: ScrollService,
+    readonly themeService: ThemeService,
+    private readonly websiteData: WebsiteDataService,
   ) {}
 
   ngOnInit(): void {
-    const savedTheme = localStorage.getItem('dysi-theme');
-    const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
-    this.setTheme(savedTheme ? savedTheme === 'dark' : prefersDark);
+    this.subscriptions.add(
+      this.websiteData.menus$.subscribe((menus) => {
+        // console.log('Updating menus in App component:====>', menus);
+        this.menus.set(menus);
+        window.setTimeout(() => this.refreshNavigationTargets());
+      }),
+    );
+    this.subscriptions.add(
+      this.websiteData.sections$.subscribe((sections) => {
+        //  console.log('Updating sections in App component:====>', sections);
+        this.sections.set(sections);
+        window.setTimeout(() => {
+          this.refreshNavigationTargets();
+          this.initFadeObserver();
+        });
+        this.isLoading.set(false);
+      }),
+    );
+    this.subscriptions.add(
+      this.websiteData.themeSettings$.subscribe((settings) =>
+        this.themeService.applySettings(settings),
+      ),
+    );
+    this.subscriptions.add(
+      this.websiteData.footerSettings$.subscribe((settings) => this.footerSettings.set(settings)),
+    );
+    this.subscriptions.add(
+      this.router.events
+        .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+        .subscribe(() => {
+          const path = this.router.url.split('#')[0].split('?')[0];
+          const fragment = this.router.parseUrl(this.router.url).fragment;
+          this.isLandingRoute.set(path !== '/services' && path !== '/admin');
+          if (fragment && this.isLandingRoute()) {
+            window.setTimeout(() => this.scrollToSection(fragment), 80);
+          }
+        }),
+    );
 
-    window.setTimeout(() => this.isLoading.set(false), 900);
-
-    this.routerSub = this.router.events
-      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe(() => {
-        const fragment = this.router.parseUrl(this.router.url).fragment;
-        this.isLandingRoute.set(this.router.url.split('#')[0].split('?')[0] !== '/services');
-        if (fragment) {
-          window.setTimeout(() => this.scrollToSection(fragment), 80);
-        } else if (this.router.url === '/') {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-      });
+    window.setTimeout(() => this.isLoading.set(false), 1200);
   }
 
   ngAfterViewInit(): void {
-    this.viewportScroller.setOffset([0, 82]);
-    this.initSectionObserver();
-    this.initFadeObserver();
+    this.viewportScroller.setOffset([0, 86]);
+    window.setTimeout(() => this.refreshNavigationTargets());
   }
 
   ngOnDestroy(): void {
-    this.observer?.disconnect();
-    this.routerSub?.unsubscribe();
+    this.subscriptions.unsubscribe();
   }
 
   @HostListener('window:scroll')
   onWindowScroll(): void {
-    this.showBackToTop.set(window.scrollY > 640);
+    this.scrollService.setBackToTopVisibility();
   }
 
   scrollToSection(sectionId: string): void {
+    if (!sectionId) {
+      return;
+    }
+
     if (!this.isLandingRoute()) {
       void this.router.navigate(['/'], { fragment: sectionId }).then(() => {
-        window.setTimeout(() => this.scrollToSection(sectionId), 80);
+        window.setTimeout(() => this.scrollService.scrollToSection(sectionId), 120);
       });
       return;
     }
 
-    const section = document.getElementById(sectionId);
-    if (!section) {
-      return;
-    }
-
-    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    this.activeSection.set(sectionId);
-    void this.router.navigate([], {
-      fragment: sectionId,
-      queryParamsHandling: 'preserve',
-      replaceUrl: true,
-    });
-  }
-
-  scrollToTop(): void {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    this.activeSection.set('home');
+    this.scrollService.scrollToSection(sectionId);
   }
 
   toggleTheme(): void {
-    this.setTheme(!this.isDarkTheme());
-  }
-
-  private setTheme(isDark: boolean): void {
-    this.isDarkTheme.set(isDark);
-    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-    localStorage.setItem('dysi-theme', isDark ? 'dark' : 'light');
-  }
-
-  private initSectionObserver(): void {
-    if (!('IntersectionObserver' in window)) {
-      return;
-    }
-
-    this.observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            this.activeSection.set(entry.target.id);
-          }
-        });
-      },
-      { rootMargin: '-42% 0px -48% 0px', threshold: 0.01 },
-    );
-
-    this.sectionIds
-      .map((id) => document.getElementById(id))
-      .filter((section): section is HTMLElement => Boolean(section))
-      .forEach((section) => this.observer?.observe(section));
+    this.themeService.toggleTheme();
   }
 
   private initFadeObserver(): void {
     if (!('IntersectionObserver' in window)) {
-      document.querySelectorAll('.reveal').forEach((element) => element.classList.add('is-visible'));
+      document
+        .querySelectorAll('.reveal')
+        .forEach((element) => element.classList.add('is-visible'));
       return;
     }
 
@@ -155,9 +134,15 @@ export class App implements OnInit, AfterViewInit, OnDestroy {
           }
         });
       },
-      { threshold: 0.18 },
+      { threshold: 0.16 },
     );
 
     document.querySelectorAll('.reveal').forEach((element) => fadeObserver.observe(element));
+  }
+
+  private refreshNavigationTargets(): void {
+    const sectionIds = this.sections().map((section) => section.sectionId);
+    const menuTargets = this.menus().map((menu) => menu.sectionId);
+    this.scrollService.watchSections([...new Set([...sectionIds, ...menuTargets])]);
   }
 }

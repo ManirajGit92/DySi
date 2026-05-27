@@ -61,6 +61,19 @@ main {
   }
 }
 
+.empty-state {
+  min-height: 70vh;
+  padding-top: 9rem;
+
+  .card {
+    padding: 2rem;
+  }
+
+  .btn {
+    margin-top: 1.5rem;
+  }
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

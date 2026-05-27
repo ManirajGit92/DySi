@@ -5,18 +5,37 @@
   </a>
 
   <nav class="nav" [class.nav--open]="isMenuOpen()" aria-label="Primary navigation">
-    @for (item of navItems; track item.id) {
+    @for (item of menus; track item.id || item.sectionId) {
       <a
-        href="#{{ item.id }}"
-        [class.active]="activeSection === item.id"
-        (click)="$event.preventDefault(); selectSection(item.id)"
+        href="#{{ item.sectionId }}"
+        [class.active]="activeSection === item.sectionId"
+        (click)="$event.preventDefault(); selectSection(item.sectionId)"
       >
-        {{ item.label }}
+        {{ item.title }}
       </a>
     }
+    <a routerLink="/admin" class="admin-link" (click)="isMenuOpen.set(false)">Admin</a>
   </nav>
 
   <div class="header-actions">
+    <div class="search" [class.search--open]="isSearchOpen()">
+      @if (isSearchOpen()) {
+        <input
+          type="search"
+          placeholder="Search menu"
+          [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)"
+        />
+        <div class="search__results">
+          @for (item of filteredMenus(); track item.id || item.sectionId) {
+            <button type="button" (click)="selectSection(item.sectionId)">{{ item.title }}</button>
+          }
+        </div>
+      }
+      <button class="theme-toggle" type="button" aria-label="Search menu" (click)="isSearchOpen.set(!isSearchOpen())">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+    </div>
     <button class="theme-toggle" type="button" aria-label="Toggle theme" (click)="themeToggled.emit()">
       <i class="fa-solid" [class.fa-moon]="!isDarkTheme" [class.fa-sun]="isDarkTheme"></i>
     </button>

@@ -63,8 +63,13 @@
   }
 }
 
+.admin-link {
+  color: var(--primary) !important;
+}
+
 .header-actions {
   gap: 0.45rem;
+  position: relative;
 }
 
 .theme-toggle,
@@ -81,6 +86,50 @@
 
 .menu-toggle {
   display: none;
+}
+
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search input {
+  width: min(220px, 52vw);
+  height: 2.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0 0.9rem;
+  color: var(--text);
+  background: var(--surface-solid);
+  outline: none;
+}
+
+.search__results {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 220px;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-md);
+
+  button {
+    display: block;
+    width: 100%;
+    border: 0;
+    border-radius: 0.75rem;
+    padding: 0.7rem;
+    color: var(--text);
+    background: transparent;
+    text-align: left;
+
+    &:hover {
+      background: var(--gradient-soft);
+    }
+  }
 }
 
 @media (max-width: 900px) {
