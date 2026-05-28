@@ -5,28 +5,35 @@
 }
 
 .admin-hero,
-.admin-shell,
+.admin-shell {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
 .login-card {
-  width: min(var(--container-width), 100%);
+  width: min(520px, 100%);
   margin: 0 auto;
 }
 
 .admin-hero {
   display: flex;
-  align-items: end;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 1.5rem;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 
   h1 {
-    max-width: 760px;
+    max-width: 100%;
     margin: 0;
-    font-size: clamp(2.2rem, 5vw, 4rem);
-    line-height: 1;
+    font-size: clamp(2rem, 5vw, 4rem);
+    line-height: 1.1;
   }
 
   p:not(.section__eyebrow) {
-    max-width: 680px;
+    max-width: 100%;
     color: var(--muted);
     line-height: 1.7;
   }
@@ -34,9 +41,16 @@
 
 .admin-shell {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-  gap: 1rem;
+  grid-template-columns: 260px 1fr;
+  gap: 1.5rem;
   align-items: start;
+}
+
+@media (max-width: 1023px) {
+  .admin-shell {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 }
 
 .admin-sidebar {
@@ -83,9 +97,15 @@
 
 .admin-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  grid-template-columns: 1fr 1fr;
   gap: 1rem;
   align-items: start;
+}
+
+@media (max-width: 1280px) {
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .editor-form,
@@ -231,29 +251,216 @@ textarea {
   font-weight: 800;
 }
 
-@media (max-width: 1050px) {
-  .admin-shell,
+/* Tablet and below - stack sidebar and content */
+@media (max-width: 1023px) {
+  .admin-shell {
+    grid-template-columns: 1fr;
+    padding: 0;
+  }
+
   .admin-grid {
     grid-template-columns: 1fr;
   }
 
   .admin-sidebar {
     position: static;
+    top: auto;
   }
 }
 
-@media (max-width: 620px) {
+/* Tablet - optimize spacing */
+@media (max-width: 768px) {
+  .admin-page {
+    padding: 6rem 0.75rem 2rem;
+  }
+
   .admin-hero,
-  .form-header {
-    align-items: stretch;
+  .admin-shell {
+    padding: 0 0.75rem;
+  }
+
+  .admin-hero {
     flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .admin-hero h1 {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+  }
+
+  .form-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
   }
 
   .form-grid {
     grid-template-columns: 1fr;
   }
 
+  .editor-form,
+  .list-panel,
+  .login-card {
+    padding: 1rem;
+  }
+
   .list-panel article {
     grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .admin-sidebar > button:not(.btn) {
+    padding: 0.75rem;
+    font-size: 0.95rem;
+  }
+
+  .admin-sidebar .btn {
+    font-size: 0.9rem;
+    padding: 0.7rem 1rem;
+  }
+}
+
+/* Mobile - compact layout */
+@media (max-width: 480px) {
+  .admin-page {
+    padding: 5.5rem 0.5rem 1.5rem;
+  }
+
+  .admin-hero,
+  .admin-shell {
+    padding: 0 0.5rem;
+  }
+
+  .admin-hero {
+    margin-bottom: 0.75rem;
+  }
+
+  .admin-hero h1 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+  }
+
+  .admin-hero p:not(.section__eyebrow) {
+    font-size: 0.9rem;
+  }
+
+  .editor-form,
+  .list-panel,
+  .login-card {
+    padding: 0.75rem;
+  }
+
+  .form-header {
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .form-header h2,
+  .list-panel h2 {
+    font-size: 1.1rem;
+  }
+
+  .form-grid {
+    gap: 0.65rem;
+  }
+
+  label {
+    gap: 0.3rem;
+    font-size: 0.85rem;
+  }
+
+  input,
+  select,
+  textarea {
+    padding: 0.65rem 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .list-panel article {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .list-panel button {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
+  }
+
+  .admin-sidebar {
+    gap: 0.4rem;
+    padding: 0.5rem;
+  }
+
+  .admin-sidebar > button:not(.btn) {
+    padding: 0.6rem;
+    font-size: 0.85rem;
+    gap: 0.5rem;
+  }
+
+  .admin-sidebar > button:not(.btn) i {
+    font-size: 0.9rem;
+  }
+
+  .admin-sidebar .btn {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  .admin-user {
+    margin-bottom: 0.3rem;
+  }
+
+  .admin-user strong {
+    font-size: 0.9rem;
+  }
+
+  .admin-user span {
+    font-size: 0.8rem;
+  }
+
+  .login-card {
+    max-width: 100%;
+  }
+
+  .login-actions {
+    gap: 0.5rem;
+  }
+
+  .manager-stack {
+    gap: 0.75rem;
+  }
+}
+
+/* Extra small mobile */
+@media (max-width: 360px) {
+  .admin-page {
+    padding: 5rem 0.35rem 1rem;
+  }
+
+  .admin-hero,
+  .admin-shell {
+    padding: 0 0.35rem;
+  }
+
+  .editor-form,
+  .list-panel,
+  .login-card {
+    padding: 0.6rem;
+  }
+
+  .form-grid {
+    gap: 0.5rem;
+  }
+
+  input,
+  select,
+  textarea {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.85rem;
   }
 }
