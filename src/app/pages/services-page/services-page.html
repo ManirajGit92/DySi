@@ -4,27 +4,185 @@
       <a class="btn btn--ghost" routerLink="/" fragment="services">
         <i class="fa-solid fa-arrow-left"></i> Back to Services
       </a>
-      <h1>Extended digital services for every stage of growth.</h1>
-      <p>
-        Explore deeper service options for product planning, software delivery, automation, analytics, and long-term
-        support.
-      </p>
+      <div class="hero-copy">
+        <h1>Browse the modern marketplace for design, software, and cloud services.</h1>
+        <p>
+          Discover products and services straight from Firestore in realtime. Search, filter, sort, compare, and
+          checkout
+          from a modern storefront experience.
+        </p>
+      </div>
     </div>
   </section>
 
-  <section class="section">
-    <div class="section__inner services-page__grid">
-      @for (group of serviceGroups; track group.title) {
-        <article class="card service-detail">
-          <span class="icon-badge"><i class="fa-solid {{ group.icon }}"></i></span>
-          <h2>{{ group.title }}</h2>
-          <ul>
-            @for (item of group.items; track item) {
-              <li><i class="fa-solid fa-check"></i>{{ item }}</li>
-            }
-          </ul>
-        </article>
-      }
+  <section class="catalog-controls section">
+    <div class="section__inner catalog-layout">
+      <aside class="filter-panel">
+        <div class="panel-head">
+          <h2>Product Search</h2>
+          <p>Advanced filtering, pricing, stock and category controls.</p>
+        </div>
+
+        <label>
+          Search
+          <input type="search" placeholder="Search products, categories, tags..." [ngModel]="searchTerm()"
+            (ngModelChange)="searchTerm.set($event); currentPage.set(1)" />
+        </label>
+
+        <label>
+          Category
+          <select [ngModel]="selectedCategory()" (ngModelChange)="selectCategory($event)">
+            <option *ngFor="let category of categories()" [value]="category">{{ category }}</option>
+          </select>
+        </label>
+
+        <label>
+          Sort
+          <select [ngModel]="sortBy()" (ngModelChange)="setSort($event)">
+            <option value="featured">Featured</option>
+            <option value="priceLow">Price: Low to High</option>
+            <option value="priceHigh">Price: High to Low</option>
+            <option value="rating">Best Rating</option>
+          </select>
+        </label>
+
+        <div class="price-range">
+          <div>
+            <span>Price Min</span>
+            <input type="number" min="0" [value]="minPrice()"
+              (input)="updatePriceBounds($event.target.value, maxPrice().toString())" />
+          </div>
+          <div>
+            <span>Price Max</span>
+            <input type="number" min="0" [value]="maxPrice()"
+              (input)="updatePriceBounds(minPrice().toString(), $event.target.value)" />
+          </div>
+        </div>
+
+        <div class="stock-summary">
+          <span>{{ filteredProducts().length }} results</span>
+          <span>Page {{ currentPage() }} of {{ totalPages() }}</span>
+        </div>
+
+        <button class="btn btn--ghost" type="button"
+          (click)="searchTerm.set(''); selectCategory('All'); setSort('featured'); minPrice.set(0); maxPrice.set(9999); currentPage.set(1)">
+          Reset filters
+        </button>
+      </aside>
+
+      <section class="catalog-grid">
+        <div class="catalog-header">
+          <h2>Available Products & Services</h2>
+          <p>Realtime Firestore updates are reflected instantly in the storefront.</p>
+        </div>
+
+        <div class="grid-list">
+          <article class="product-card" *ngFor="let product of paginatedProducts()">
+            <div class="product-image" [style.background-image]="'url(' + product.imageUrl + ')'">
+              <span class="badge {{ product.available ? 'in-stock' : 'out-of-stock' }}">
+                {{ product.available ? 'In stock' : 'Out of stock' }}
+              </span>
+            </div>
+            <div class="product-body">
+              <div class="product-meta">
+                <small>{{ product.category }}</small>
+                <strong>{{ product.name }}</strong>
+              </div>
+              <p>{{ product.description }}</p>
+              <div class="product-footer">
+                <span class="price">${{ product.price.toFixed(2) }}</span>
+                <span class="rating">⭐ {{ product.rating.toFixed(1) }}</span>
+              </div>
+              <div class="product-actions">
+                <button class="btn btn--ghost" type="button" (click)="viewProduct(product)">
+                  More details
+                </button>
+                <button class="btn btn--primary" type="button" (click)="addToCart(product)"
+                  [disabled]="!product.available || product.stock <= 0">
+                  Add to cart
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="pagination-controls">
+          <button class="btn btn--ghost" type="button" [disabled]="currentPage() <= 1"
+            (click)="setPage(currentPage() - 1)">
+            Prev
+          </button>
+          <button class="btn btn--ghost" type="button" [disabled]="currentPage() >= totalPages()"
+            (click)="setPage(currentPage() + 1)">
+            Next
+          </button>
+        </div>
+      </section>
+
+      <aside class="cart-panel">
+        <div class="cart-header">
+          <h2>Shopping Cart</h2>
+          <span>{{ cart.cartCount() }} item(s)</span>
+        </div>
+
+        <div class="cart-items" *ngIf="cart.cartItems().length; else emptyCart">
+          <div class="cart-item" *ngFor="let item of cart.cartItems()">
+            <div>
+              <strong>{{ item.product.name }}</strong>
+              <small>{{ item.product.category }}</small>
+            </div>
+            <div class="cart-controls">
+              <input type="number" min="1" [max]="item.product.stock" [value]="item.quantity"
+                (input)="cart.updateQuantity(item.product.id, $event.target.valueAsNumber)" />
+              <button class="btn btn--ghost small" type="button"
+                (click)="cart.removeItem(item.product.id)">Remove</button>
+            </div>
+          </div>
+          <div class="cart-summary">
+            <span>Subtotal</span>
+            <strong>${{ cart.cartSubtotal().toFixed(2) }}</strong>
+          </div>
+
+          <button class="btn btn--primary" type="button" (click)="checkout()">Proceed to payment</button>
+          <button class="btn btn--ghost" type="button" (click)="cart.clearCart()">Clear cart</button>
+        </div>
+
+        <ng-template #emptyCart>
+          <div class="empty-state">
+            <p>Your cart is empty. Add a product to begin checkout.</p>
+          </div>
+        </ng-template>
+
+        <div class="payment-ui">
+          <h3>Payment UI</h3>
+          <span class="payment-pill">Secure card placeholder</span>
+          <p>Checkout forms, card validation, and gateway UI are ready for integration.</p>
+          <div class="payment-status">{{ paymentMessage() }}</div>
+        </div>
+      </aside>
     </div>
   </section>
+
+  <div class="details-panel" *ngIf="selectedProduct() as selectedProduct">
+    <div class="details-card">
+      <button class="close-button" type="button" (click)="closeProductDetails()">×</button>
+      <div class="details-header">
+        <div class="details-image" [style.background-image]="'url(' + selectedProduct.imageUrl + ')'"> </div>
+        <div>
+          <h2>{{ selectedProduct.name }}</h2>
+          <p>{{ selectedProduct.category }}</p>
+          <strong>${{ selectedProduct.price.toFixed(2) }}</strong>
+          <span class="stock-tag" [class.available]="selectedProduct.available">{{ selectedProduct.available ?
+            'Available' : 'Sold out' }}</span>
+        </div>
+      </div>
+      <p class="details-description">{{ selectedProduct.description }}</p>
+      <ul class="details-tags">
+        <li *ngFor="let tag of selectedProduct.tags || []">{{ tag }}</li>
+      </ul>
+      <div class="details-actions">
+        <button class="btn btn--ghost" type="button" (click)="addToCart(selectedProduct)">Add to Cart</button>
+        <button class="btn btn--primary" type="button" (click)="buyNow(selectedProduct)">Buy Now</button>
+      </div>
+    </div>
+  </div>
 </main>
