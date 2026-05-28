@@ -643,6 +643,20 @@ td {
   grid-column: span 12;
 }
 
+.products-admin {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.product-form-panel {
+  grid-column: span 3;
+}
+
+.product-list-panel {
+  grid-column: span 9;
+}
+
 @media (max-width: 1200px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
@@ -659,9 +673,12 @@ td {
   .products-admin {
     grid-template-columns: 1fr;
   }
-}
 
-/* ANIMATION */
+  .product-form-panel,
+  .product-list-panel {
+    grid-column: auto;
+  }
+}
 
 @keyframes fadeIn {
   from {
