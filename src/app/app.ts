@@ -31,6 +31,7 @@ export class App implements OnInit, AfterViewInit, OnDestroy {
   readonly sections = signal<WebsiteSection[]>([]);
   readonly footerSettings = signal<FooterSettings>(defaultFooterSettings);
 
+  private fadeObserver: IntersectionObserver | null = null;
   private readonly subscriptions = new Subscription();
 
   constructor(
@@ -74,9 +75,16 @@ export class App implements OnInit, AfterViewInit, OnDestroy {
         .subscribe(() => {
           const path = this.router.url.split('#')[0].split('?')[0];
           const fragment = this.router.parseUrl(this.router.url).fragment;
-          this.isLandingRoute.set(path !== '/services' && path !== '/admin' && path !== '/test');
-          if (fragment && this.isLandingRoute()) {
-            window.setTimeout(() => this.scrollToSection(fragment), 80);
+          const landing = path !== '/services' && path !== '/admin' && path !== '/test';
+          this.isLandingRoute.set(landing);
+
+          if (landing) {
+            window.setTimeout(() => {
+              this.initFadeObserver();
+              if (fragment) {
+                this.scrollToSection(fragment);
+              }
+            }, 80);
           }
         }),
     );
@@ -125,19 +133,21 @@ export class App implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const fadeObserver = new IntersectionObserver(
+    this.fadeObserver?.disconnect();
+
+    this.fadeObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add('is-visible');
-            fadeObserver.unobserve(entry.target);
+            this.fadeObserver?.unobserve(entry.target);
           }
         });
       },
       { threshold: 0.16 },
     );
 
-    document.querySelectorAll('.reveal').forEach((element) => fadeObserver.observe(element));
+    document.querySelectorAll('.reveal').forEach((element) => this.fadeObserver?.observe(element));
   }
 
   private refreshNavigationTargets(): void {
