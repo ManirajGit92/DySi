@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { MenuItem } from '../../core/models/website.models';
 
 @Component({
+  standalone: true,
   selector: 'app-header',
   imports: [CommonModule, RouterLink],
   templateUrl: './header.html',
@@ -13,6 +14,7 @@ import { MenuItem } from '../../core/models/website.models';
 export class HeaderComponent {
   @Input() activeSection = 'home';
   @Input() isDarkTheme = false;
+  @Input() showTopNavMenu = true;
   @Input() menus: MenuItem[] = [];
   @Output() sectionSelected = new EventEmitter<string>();
   @Output() themeToggled = new EventEmitter<void>();

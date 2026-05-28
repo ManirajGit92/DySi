@@ -27,6 +27,7 @@ import { DynamicSectionComponent } from './shared/dynamic-section/dynamic-sectio
 export class App implements OnInit, AfterViewInit, OnDestroy {
   readonly isLoading = signal(true);
   readonly isLandingRoute = signal(true);
+  readonly isAdminRoute = signal(false);
   readonly menus = signal<MenuItem[]>([]);
   readonly sections = signal<WebsiteSection[]>([]);
   readonly footerSettings = signal<FooterSettings>(defaultFooterSettings);
@@ -76,7 +77,9 @@ export class App implements OnInit, AfterViewInit, OnDestroy {
           const path = this.router.url.split('#')[0].split('?')[0];
           const fragment = this.router.parseUrl(this.router.url).fragment;
           const landing = path !== '/services' && path !== '/admin' && path !== '/test';
+          const admin = path === '/admin';
           this.isLandingRoute.set(landing);
+          this.isAdminRoute.set(admin);
 
           if (landing) {
             window.setTimeout(() => {

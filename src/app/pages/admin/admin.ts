@@ -3,7 +3,13 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
-import { ContentCard, FaqItem, FooterSettings, MenuItem, WebsiteSection } from '../../core/models/website.models';
+import {
+  ContentCard,
+  FaqItem,
+  FooterSettings,
+  MenuItem,
+  WebsiteSection,
+} from '../../core/models/website.models';
 import {
   WebsiteDataService,
   defaultFooterSettings,
@@ -82,6 +88,8 @@ export class AdminComponent {
     borderRadius: [defaultThemeSettings.borderRadius],
     cardShadow: [defaultThemeSettings.cardShadow],
     containerWidth: [defaultThemeSettings.containerWidth],
+    showTopNavMenu: [defaultThemeSettings.showTopNavMenu],
+    showHeader: [defaultThemeSettings.showHeader],
     themeMode: [defaultThemeSettings.themeMode],
   });
 
@@ -93,8 +101,12 @@ export class AdminComponent {
   });
 
   constructor() {
-    this.sectionForm.valueChanges.subscribe(() => this.previewSection.set(this.buildSectionFromForm(false)));
-    this.themeSettings$.subscribe((settings) => this.themeForm.patchValue(settings, { emitEvent: false }));
+    this.sectionForm.valueChanges.subscribe(() =>
+      this.previewSection.set(this.buildSectionFromForm(false)),
+    );
+    this.themeSettings$.subscribe((settings) =>
+      this.themeForm.patchValue(settings, { emitEvent: false }),
+    );
     this.footerSettings$.subscribe((settings) => {
       this.footerForm.patchValue(
         {
@@ -119,7 +131,10 @@ export class AdminComponent {
 
   async registerWithEmail(): Promise<void> {
     const { email, password } = this.loginForm.getRawValue();
-    await this.runTask(() => this.websiteData.registerWithEmail(email, password), 'Admin account created.');
+    await this.runTask(
+      () => this.websiteData.registerWithEmail(email, password),
+      'Admin account created.',
+    );
   }
 
   async signOut(): Promise<void> {
@@ -132,8 +147,18 @@ export class AdminComponent {
   }
 
   async saveMenu(): Promise<void> {
-    await this.runTask(() => this.websiteData.upsertMenu(this.menuForm.getRawValue()), 'Menu saved.');
-    this.menuForm.reset({ id: '', title: '', routeKey: '', order: 1, isVisible: true, sectionId: '' });
+    await this.runTask(
+      () => this.websiteData.upsertMenu(this.menuForm.getRawValue()),
+      'Menu saved.',
+    );
+    this.menuForm.reset({
+      id: '',
+      title: '',
+      routeKey: '',
+      order: 1,
+      isVisible: true,
+      sectionId: '',
+    });
   }
 
   async deleteMenu(menu: MenuItem): Promise<void> {
@@ -185,7 +210,10 @@ export class AdminComponent {
   }
 
   async saveTheme(): Promise<void> {
-    await this.runTask(() => this.websiteData.saveThemeSettings({ id: 'global', ...this.themeForm.getRawValue() }), 'Theme saved.');
+    await this.runTask(
+      () => this.websiteData.saveThemeSettings({ id: 'global', ...this.themeForm.getRawValue() }),
+      'Theme saved.',
+    );
   }
 
   async saveFooter(): Promise<void> {
@@ -193,7 +221,10 @@ export class AdminComponent {
     const settings: FooterSettings = {
       id: 'global',
       description: value.description,
-      importantLinks: this.parseJson(value.importantLinksJson, defaultFooterSettings.importantLinks),
+      importantLinks: this.parseJson(
+        value.importantLinksJson,
+        defaultFooterSettings.importantLinks,
+      ),
       socialLinks: this.parseJson(value.socialLinksJson, defaultFooterSettings.socialLinks),
       copyright: value.copyright,
     };
@@ -201,7 +232,10 @@ export class AdminComponent {
   }
 
   async seedDefaults(): Promise<void> {
-    await this.runTask(() => this.websiteData.seedDefaultWebsite(), 'Default menus, sections, theme, and footer saved.');
+    await this.runTask(
+      () => this.websiteData.seedDefaultWebsite(),
+      'Default menus, sections, theme, and footer saved.',
+    );
   }
 
   private buildSectionFromForm(showErrors: boolean): WebsiteSection | null {

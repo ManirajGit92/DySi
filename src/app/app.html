@@ -1,49 +1,43 @@
 @if (isLoading()) {
-  <div class="loader" aria-label="Loading">
-    <div class="loader__mark"></div>
-    <p>Loading live website content</p>
-  </div>
+<div class="loader" aria-label="Loading">
+  <div class="loader__mark"></div>
+  <p>Loading live website content</p>
+</div>
 }
 
-<app-header
-  [menus]="menus()"
-  [activeSection]="scrollService.activeSection()"
-  [isDarkTheme]="themeService.isDark()"
-  (sectionSelected)="scrollToSection($event)"
-  (themeToggled)="toggleTheme()"
-/>
+@if (!isAdminRoute() && themeService.settings().showHeader) {
+<app-header [menus]="menus()" [activeSection]="scrollService.activeSection()" [isDarkTheme]="themeService.isDark()"
+  [showTopNavMenu]="themeService.settings().showTopNavMenu" (sectionSelected)="scrollToSection($event)"
+  (themeToggled)="toggleTheme()" />
+}
 
 @if (isLandingRoute()) {
-  <main>
-    @if (sections().length) {
-      @for (section of sections(); track section.id || section.sectionId) {
-        <app-dynamic-section [section]="section" (sectionAction)="scrollToSection($event)" />
-      }
-    } @else {
-      <section class="empty-state section">
-        <div class="section__inner card">
-          <p class="section__eyebrow">Firestore CMS</p>
-          <h1 class="section__title">No visible sections found.</h1>
-          <p class="section__lead">
-            Sign in to the admin panel and seed or create website sections to render the page dynamically.
-          </p>
-          <a class="btn btn--primary" routerLink="/admin">Open Admin Panel</a>
-        </div>
-      </section>
-    }
-  </main>
+<main>
+  @if (sections().length) {
+  @for (section of sections(); track section.id || section.sectionId) {
+  <app-dynamic-section [section]="section" (sectionAction)="scrollToSection($event)" />
+  }
+  } @else {
+  <section class="empty-state section">
+    <div class="section__inner card">
+      <p class="section__eyebrow">Firestore CMS</p>
+      <h1 class="section__title">No visible sections found.</h1>
+      <p class="section__lead">
+        Sign in to the admin panel and seed or create website sections to render the page dynamically.
+      </p>
+      <a class="btn btn--primary" routerLink="/admin">Open Admin Panel</a>
+    </div>
+  </section>
+  }
+</main>
 
-  <app-footer
-    [menus]="menus()"
-    [footerSettings]="footerSettings()"
-    (sectionSelected)="scrollToSection($event)"
-  />
+<app-footer [menus]="menus()" [footerSettings]="footerSettings()" (sectionSelected)="scrollToSection($event)" />
 }
 
 @if (scrollService.showBackToTop()) {
-  <button class="back-to-top" type="button" aria-label="Back to top" (click)="scrollService.scrollToTop()">
-    <i class="fa-solid fa-arrow-up"></i>
-  </button>
+<button class="back-to-top" type="button" aria-label="Back to top" (click)="scrollService.scrollToTop()">
+  <i class="fa-solid fa-arrow-up"></i>
+</button>
 }
 
 <router-outlet />

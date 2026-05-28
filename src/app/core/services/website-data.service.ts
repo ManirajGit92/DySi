@@ -226,6 +226,8 @@ export const defaultThemeSettings: ThemeSettings = {
   borderRadius: '18px',
   cardShadow: '0 1rem 2.4rem rgba(30, 41, 59, 0.12)',
   containerWidth: '1120px',
+  showTopNavMenu: true,
+  showHeader: true,
   themeMode: 'auto',
 };
 

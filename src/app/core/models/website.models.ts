@@ -74,6 +74,8 @@ export interface ThemeSettings {
   borderRadius: string;
   cardShadow: string;
   containerWidth: string;
+  showHeader: boolean;
+  showTopNavMenu: boolean;
   themeMode: 'light' | 'dark' | 'auto';
 }
 

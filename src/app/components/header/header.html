@@ -4,15 +4,12 @@
     <span>DySi</span>
   </a>
 
-  <nav class="nav" [class.nav--open]="isMenuOpen()" aria-label="Primary navigation">
+  <nav *ngIf="showTopNavMenu" class="nav" [class.nav--open]="isMenuOpen()" aria-label="Primary navigation">
     @for (item of menus; track item.id || item.sectionId) {
-      <a
-        href="#{{ item.sectionId }}"
-        [class.active]="activeSection === item.sectionId"
-        (click)="$event.preventDefault(); selectSection(item.sectionId)"
-      >
-        {{ item.title }}
-      </a>
+    <a href="#{{ item.sectionId }}" [class.active]="activeSection === item.sectionId"
+      (click)="$event.preventDefault(); selectSection(item.sectionId)">
+      {{ item.title }}
+    </a>
     }
     <a routerLink="/admin" class="admin-link" (click)="isMenuOpen.set(false)">Admin</a>
   </nav>
@@ -20,17 +17,13 @@
   <div class="header-actions">
     <div class="search" [class.search--open]="isSearchOpen()">
       @if (isSearchOpen()) {
-        <input
-          type="search"
-          placeholder="Search menu"
-          [value]="searchTerm()"
-          (input)="searchTerm.set($any($event.target).value)"
-        />
-        <div class="search__results">
-          @for (item of filteredMenus(); track item.id || item.sectionId) {
-            <button type="button" (click)="selectSection(item.sectionId)">{{ item.title }}</button>
-          }
-        </div>
+      <input type="search" placeholder="Search menu" [value]="searchTerm()"
+        (input)="searchTerm.set($any($event.target).value)" />
+      <div class="search__results">
+        @for (item of filteredMenus(); track item.id || item.sectionId) {
+        <button type="button" (click)="selectSection(item.sectionId)">{{ item.title }}</button>
+        }
+      </div>
       }
       <button class="theme-toggle" type="button" aria-label="Search menu" (click)="isSearchOpen.set(!isSearchOpen())">
         <i class="fa-solid fa-magnifying-glass"></i>
@@ -39,13 +32,8 @@
     <button class="theme-toggle" type="button" aria-label="Toggle theme" (click)="themeToggled.emit()">
       <i class="fa-solid" [class.fa-moon]="!isDarkTheme" [class.fa-sun]="isDarkTheme"></i>
     </button>
-    <button
-      class="menu-toggle"
-      type="button"
-      aria-label="Toggle menu"
-      [attr.aria-expanded]="isMenuOpen()"
-      (click)="isMenuOpen.set(!isMenuOpen())"
-    >
+    <button *ngIf="showTopNavMenu" class="menu-toggle" type="button" aria-label="Toggle menu"
+      [attr.aria-expanded]="isMenuOpen()" (click)="isMenuOpen.set(!isMenuOpen())">
       <i class="fa-solid" [class.fa-bars]="!isMenuOpen()" [class.fa-xmark]="isMenuOpen()"></i>
     </button>
   </div>
