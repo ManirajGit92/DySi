@@ -9,8 +9,11 @@
       <button class="tab" [class.active]="activeTab === 'settings'" (click)="selectTab('settings')">
         Settings
       </button>
-      <button class="tab" [class.active]="activeTab === 'dashboard'" (click)="selectTab('dashboard')">
+      <button class="tab" [class.active]="activeTab === 'products'" (click)="selectTab('products')">
         Products/Services
+      </button>
+      <button class="tab" [class.active]="activeTab === 'dashboard'" (click)="selectTab('dashboard')">
+        Dashboard
       </button>
       <button class="tab" [class.active]="activeTab === 'users'" (click)="selectTab('users')">
         Users
@@ -25,7 +28,7 @@
         <app-settings></app-settings>
       </div>
 
-      <div *ngIf="activeTab === 'dashboard'">
+      <div *ngIf="activeTab === 'products'">
         <div class="products-admin">
           <section class="product-form-panel">
             <div class="panel-head">
@@ -144,6 +147,234 @@
             </div>
           </section>
         </div>
+      </div>
+
+      <div *ngIf="activeTab === 'dashboard'">
+        <section class="dashboard-header">
+          <div>
+            <p class="dashboard-section-label">Admin Analytics</p>
+            <h1>Commerce Dashboard</h1>
+            <p class="dashboard-description">Realtime business insights, sales performance and product health powered by
+              Firestore data.</p>
+          </div>
+
+          <div class="dashboard-actions">
+            <button class="btn btn--ghost" type="button" (click)="setPeriod('Daily')"
+              [class.active]="selectedPeriod() === 'Daily'">Daily</button>
+            <button class="btn btn--ghost" type="button" (click)="setPeriod('Weekly')"
+              [class.active]="selectedPeriod() === 'Weekly'">Weekly</button>
+            <button class="btn btn--ghost" type="button" (click)="setPeriod('Monthly')"
+              [class.active]="selectedPeriod() === 'Monthly'">Monthly</button>
+          </div>
+        </section>
+
+        <section class="dashboard-grid">
+          <article class="metric-card">
+            <span class="metric-title">Total Revenue</span>
+            <h2>${{ totalSales().toFixed(0) }}</h2>
+            <small>Revenue generated from recent orders</small>
+            <div class="metric-pill positive">+12.3% this week</div>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-title">Orders Processed</span>
+            <h2>{{ totalOrders() }}</h2>
+            <small>Confirmed orders in the current period</small>
+            <div class="metric-pill neutral">{{ orderStatuses().pending }} pending</div>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-title">Products Sold</span>
+            <h2>{{ productsSold() }}</h2>
+            <small>Total items sold across orders</small>
+            <div class="metric-pill positive">{{ totalCustomers() }} customers</div>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-title">Inventory Status</span>
+            <h2>{{ productStatus().total }} items</h2>
+            <small>{{ productStatus().lowStock }} products low on stock</small>
+            <div class="metric-pill warning">{{ productStatus().outOfStock }} out of stock</div>
+          </article>
+
+          <article class="chart-card span-8">
+            <div class="chart-card-header">
+              <div>
+                <span>Revenue Analytics</span>
+                <h3>Sales trend</h3>
+              </div>
+              <span class="badge badge-info">{{ selectedPeriod() }} view</span>
+            </div>
+            <div class="line-chart">
+              <div class="line-chart-grid"></div>
+              <div class="line-chart-path"></div>
+            </div>
+          </article>
+
+          <article class="chart-card span-4">
+            <div class="chart-card-header">
+              <div>
+                <span>Payment Status</span>
+                <h3>Checkout performance</h3>
+              </div>
+            </div>
+            <div class="status-widget">
+              <div class="status-row"><span>Success</span><strong>{{ paymentSuccess() }}%</strong></div>
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="paymentSuccess()"></div>
+              </div>
+              <div class="status-row"><span>Checkout conversion</span><strong>{{ checkoutRate() }}%</strong></div>
+              <div class="progress-bar">
+                <div class="progress-fill accent" [style.width.%]="checkoutRate()"></div>
+              </div>
+              <div class="status-row"><span>Conversion rate</span><strong>{{ conversionRate() }}%</strong></div>
+              <div class="progress-bar">
+                <div class="progress-fill neutral" [style.width.%]="conversionRate() * 10"></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="chart-card span-5">
+            <div class="chart-card-header">
+              <div>
+                <span>Orders Summary</span>
+                <h3>Performance by status</h3>
+              </div>
+            </div>
+            <div class="bar-chart">
+              <div class="bar-item"><strong>{{ orderStatuses().completed }}</strong><span>Completed</span>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width: 80%"></div>
+                </div>
+              </div>
+              <div class="bar-item"><strong>{{ orderStatuses().pending }}</strong><span>Pending</span>
+                <div class="bar-track">
+                  <div class="bar-fill accent" style="width: 45%"></div>
+                </div>
+              </div>
+              <div class="bar-item"><strong>{{ orderStatuses().refunded }}</strong><span>Refunded</span>
+                <div class="bar-track">
+                  <div class="bar-fill warning" style="width: 24%"></div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="chart-card span-3">
+            <div class="chart-card-header">
+              <div>
+                <span>Traffic Source</span>
+                <h3>Top sources</h3>
+              </div>
+            </div>
+            <div class="donut-chart"></div>
+            <div class="traffic-list">
+              <div class="traffic-item" *ngFor="let source of trafficSources()">
+                <span>{{ source.source }}</span>
+                <strong>{{ source.percent }}%</strong>
+              </div>
+            </div>
+          </article>
+
+          <article class="table-card span-7">
+            <div class="table-card-header">
+              <div>
+                <span>Recent Orders</span>
+                <h3>Live order activity</h3>
+              </div>
+              <div class="table-filters">
+                <input type="search" placeholder="Search orders..." [ngModel]="searchQuery()"
+                  (ngModelChange)="updateSearchQuery($event)" />
+                <select [ngModel]="selectedStatus()" (ngModelChange)="updateStatus($event)">
+                  <option value="All">All Status</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Refunded">Refunded</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order</th>
+                    <th>Customer</th>
+                    <th>Product</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let order of filteredOrders()">
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.customer }}</td>
+                    <td>{{ order.product }}</td>
+                    <td><span class="status-chip" [class.completed]="order.status === 'Completed'"
+                        [class.pending]="order.status === 'Pending'" [class.refunded]="order.status === 'Refunded'">{{
+                        order.status }}</span></td>
+                    <td>${{ order.total.toFixed(2) }}</td>
+                    <td>{{ order.date }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="table-card span-5">
+            <div class="table-card-header">
+              <div>
+                <span>Top Selling Products</span>
+                <h3>Best sellers</h3>
+              </div>
+            </div>
+            <div class="top-products">
+              <div class="top-product" *ngFor="let product of topProducts()">
+                <div>
+                  <strong>{{ product.product }}</strong>
+                  <span>{{ product.sold }} sold</span>
+                </div>
+                <strong>${{ product.revenue.toFixed(0) }}</strong>
+              </div>
+            </div>
+            <div class="category-summary">
+              <h4>Category performance</h4>
+              <ul>
+                <li *ngFor="let category of categoriesPerformance()">
+                  <span>{{ category.category }}</span>
+                  <strong>{{ category.sold }} sold</strong>
+                </li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="chart-card span-12">
+            <div class="chart-card-header">
+              <div>
+                <span>Visitors & Engagement</span>
+                <h3>Website traffic overview</h3>
+              </div>
+            </div>
+            <div class="area-chart">
+              <div class="area-chart-grid"></div>
+              <div class="area-chart-fill"></div>
+            </div>
+            <div class="visitor-summary">
+              <div>
+                <strong>{{ visitorTrend()[visitorTrend().length - 1] }}</strong>
+                <span>Visitors this week</span>
+              </div>
+              <div>
+                <strong>{{ trafficSources()[0]?.percent }}%</strong>
+                <span>Organic traffic share</span>
+              </div>
+              <div>
+                <strong>{{ productStatus().lowStock }}</strong>
+                <span>Low stock alerts</span>
+              </div>
+            </div>
+          </article>
+        </section>
       </div>
 
       <div *ngIf="activeTab === 'users'">

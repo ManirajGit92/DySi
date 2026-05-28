@@ -12,6 +12,16 @@ import {
 import { Observable } from 'rxjs';
 import { Product } from '../models/product.models';
 
+interface FirestoreOrder {
+  id?: string;
+  customer: string;
+  product: string;
+  total: number;
+  status: 'Completed' | 'Pending' | 'Refunded' | 'Failed';
+  date: string;
+  items: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -59,6 +69,11 @@ export class FirestoreService {
   async deleteProduct(productId: string): Promise<void> {
     const productRef = doc(this.firestore, 'products', productId);
     await deleteDoc(productRef);
+  }
+
+  getOrders(): Observable<FirestoreOrder[]> {
+    const ordersCollection = collection(this.firestore, 'orders');
+    return collectionData(ordersCollection, { idField: 'id' }) as Observable<FirestoreOrder[]>;
   }
 
   getCollections(): string[] {
