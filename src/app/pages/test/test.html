@@ -1,0 +1,145 @@
+<div class="layout-wrapper">
+
+  <!-- TOPBAR -->
+
+  <div class="topbar">
+    <div class="menu-items">
+      <span class="active">Data</span>
+      <span>Rules</span>
+      <span>Indexes</span>
+      <span>Disaster Recovery</span>
+      <span>Usage</span>
+      <span>Query Insights</span>
+      <span>Extensions</span>
+    </div>
+
+    <div class="cloud-link">
+      New in Cloud Firestore
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+
+  <div class="content-layout">
+
+    <!-- COLLECTIONS -->
+
+    <div class="panel-section">
+
+      <div class="panel-header">
+        <span>(default)</span>
+      </div>
+
+      <div class="action-btn">
+        <i class="pi pi-plus"></i>
+        Start collection
+      </div>
+
+      <div class="list-item" *ngFor="let collection of collections" [class.active]="collection === selectedCollection"
+        (click)="selectCollection(collection)">
+        {{ collection }}
+      </div>
+
+    </div>
+
+    <!-- DOCUMENTS -->
+
+    <div class="panel-section">
+
+      <div class="panel-header">
+        <span>{{ selectedCollection }}</span>
+
+        <div class="header-icons">
+          <i class="pi pi-filter"></i>
+          <i class="pi pi-ellipsis-v"></i>
+        </div>
+      </div>
+
+      <div class="action-btn">
+        <i class="pi pi-plus"></i>
+        Add document
+      </div>
+
+      <div class="list-item" *ngFor="let document of documents" [class.active]="document === selectedDocument"
+        (click)="selectDocument(document)">
+        {{ document }}
+      </div>
+
+    </div>
+
+    <!-- DOCUMENT DATA -->
+
+    <div class="panel-section large-panel">
+
+      <div class="panel-header">
+        <span>{{ selectedDocument }}</span>
+
+        <div class="header-icons">
+          <i class="pi pi-ellipsis-v"></i>
+        </div>
+      </div>
+
+      <div class="action-btn">
+        <i class="pi pi-plus"></i>
+        Add field
+      </div>
+
+      <div class="document-view">
+
+        <div class="field-row" *ngFor="let key of objectKeys(documentData)">
+          <div class="field-name">
+            {{ key }}
+          </div>
+
+          <div class="field-value">
+
+            <ng-container *ngIf="key !== 'items'">
+              {{ documentData[key] }}
+            </ng-container>
+
+            <ng-container *ngIf="key === 'items'">
+
+              <div class="nested-item" *ngFor="let item of documentData.items; let i = index">
+
+                <div class="nested-index">
+                  {{ i }}
+                </div>
+
+                <div class="nested-content">
+
+                  <div class="nested-field">
+                    <span>title:</span>
+                    {{ item.title }}
+                  </div>
+
+                  <div class="nested-field">
+                    <span>icon:</span>
+                    {{ item.icon }}
+                  </div>
+
+                  <div class="nested-field">
+                    <span>description:</span>
+                    {{ item.description }}
+                  </div>
+
+                </div>
+
+              </div>
+
+            </ng-container>
+
+          </div>
+
+          <div class="field-actions">
+            <i class="pi pi-pencil"></i>
+            <i class="pi pi-trash"></i>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

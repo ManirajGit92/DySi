@@ -87,10 +87,12 @@ export class WebsiteDataService {
     },
   ) as Observable<WebsiteSection[]>;
 
-  readonly themeSettings$ = collectionData(collection(this.firestore, 'themeSettings'), {
+  readonly themeSettingsDocs$ = collectionData(collection(this.firestore, 'themeSettings'), {
     idField: 'id',
-  }).pipe(
-    map((items) => (items as ThemeSettings[])[0] ?? defaultThemeSettings),
+  }) as Observable<ThemeSettings[]>;
+
+  readonly themeSettings$ = this.themeSettingsDocs$.pipe(
+    map((items) => items[0] ?? defaultThemeSettings),
     startWith(defaultThemeSettings),
     catchError((error) => {
       console.error('Failed to load theme settings from Firestore.', error);
@@ -98,10 +100,12 @@ export class WebsiteDataService {
     }),
   );
 
-  readonly footerSettings$ = collectionData(collection(this.firestore, 'footerSettings'), {
+  readonly footerSettingsDocs$ = collectionData(collection(this.firestore, 'footerSettings'), {
     idField: 'id',
-  }).pipe(
-    map((items) => (items as FooterSettings[])[0] ?? defaultFooterSettings),
+  }) as Observable<FooterSettings[]>;
+
+  readonly footerSettings$ = this.footerSettingsDocs$.pipe(
+    map((items) => items[0] ?? defaultFooterSettings),
     startWith(defaultFooterSettings),
     catchError((error) => {
       console.error('Failed to load footer settings from Firestore.', error);
