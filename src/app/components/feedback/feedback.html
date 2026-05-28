@@ -4,8 +4,10 @@
     <h2 class="section__title">What clients say after launch.</h2>
 
     <div class="feedback-grid">
-      @for (item of feedback; track item.name) {
-        <article class="card feedback-card">
+      @for (item of feedback(); track item.name) {
+      <article class="card feedback-card" [ngClass]="{ 'has-background-image': isImageValid(item.image) }"
+        [ngStyle]="getBackgroundStyle(item.image)">
+        <div class="feedback-card__content">
           <div class="stars" aria-label="5 star rating">
             <i class="fa-solid fa-star"></i>
             <i class="fa-solid fa-star"></i>
@@ -21,7 +23,8 @@
               <span>{{ item.company }}</span>
             </div>
           </div>
-        </article>
+        </div>
+      </article>
       }
     </div>
   </div>

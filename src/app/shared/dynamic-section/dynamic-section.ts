@@ -58,7 +58,7 @@ export class DynamicSectionComponent implements OnInit, OnDestroy {
 
     this.imageValidator
       .validateImageUrl(this.section.imageUrl)
-      .then((isValid) => {
+      .then((isValid: boolean) => {
         this.isImageValid.set(isValid);
       })
       .catch(() => {
