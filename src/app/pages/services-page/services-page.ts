@@ -23,6 +23,7 @@ export class ServicesPageComponent {
   currentPage = signal(1);
   pageSize = signal(8);
   selectedProduct = signal<Product | null>(null);
+  viewMode = signal<'grid' | 'list'>('grid');
   paymentMessage = signal('');
 
   categories = computed(() => {
@@ -117,6 +118,10 @@ export class ServicesPageComponent {
 
   closeProductDetails(): void {
     this.selectedProduct.set(null);
+  }
+
+  setViewMode(mode: 'grid' | 'list'): void {
+    this.viewMode.set(mode);
   }
 
   addToCart(product: Product): void {

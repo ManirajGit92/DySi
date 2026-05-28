@@ -18,6 +18,7 @@ export class AdminComponent {
   isDarkTheme: boolean = true;
   products = signal<Product[]>([]);
   editing = signal(false);
+  viewMode = signal<'grid' | 'list'>('grid');
   private fb = inject(FormBuilder);
   private firestoreService = inject(FirestoreService);
 
@@ -107,6 +108,10 @@ export class AdminComponent {
     } catch (error) {
       console.error('Unable to save product', error);
     }
+  }
+
+  setViewMode(mode: 'grid' | 'list'): void {
+    this.viewMode.set(mode);
   }
 
   async removeProduct(product: Product): Promise<void> {
