@@ -1,214 +1,54 @@
-<main class="admin-page">
-  <section class="admin-hero">
-    <div>
-      <p class="section__eyebrow">Firestore Admin</p>
-      <h1>Manage every public website section from one panel.</h1>
-      <p>Menus, sections, theme, footer, images, and preview all update through Firebase in real time.</p>
-    </div>
-    <a class="btn btn--ghost" routerLink="/">View Website</a>
-  </section>
+<div class="page" [class.dark-theme]="isDarkTheme">
 
-  @if (user$ | async; as user) {
-  <section class="admin-shell">
-    <aside class="admin-sidebar card">
-      <div class="admin-user">
-        <strong>{{ user.displayName || user.email }}</strong>
-        <span>Administrator</span>
+  <div class="theme-toggle">
+    <button (click)="toggleTheme()">
+      {{ isDarkTheme ? '☀ Light Mode' : '🌙 Dark Mode' }}
+    </button>
+  </div>
+
+  <div class="tabs-container">
+
+    <div class="tabs">
+
+      <button class="tab" [class.active]="activeTab === 'settings'" (click)="activeTab = 'settings'">
+        Settings
+      </button>
+
+      <button class="tab" [class.active]="activeTab === 'dashboard'" (click)="activeTab = 'dashboard'">
+        Dashboard
+      </button>
+
+      <button class="tab" [class.active]="activeTab === 'users'" (click)="activeTab = 'users'">
+        Users
+      </button>
+
+      <button class="tab" [class.active]="activeTab === 'analytics'" (click)="activeTab = 'analytics'">
+        Analytics
+      </button>
+
+    </div>
+
+    <div class="tab-content">
+      <div *ngIf="activeTab === 'settings'">
+        <app-settings></app-settings>
       </div>
-      <button type="button" [class.active]="activeTab() === 'sections'" (click)="activeTab.set('sections')">
-        <i class="fa-solid fa-layer-group"></i> Sections
-      </button>
-      <button type="button" [class.active]="activeTab() === 'menus'" (click)="activeTab.set('menus')">
-        <i class="fa-solid fa-bars-staggered"></i> Menus
-      </button>
-      <button type="button" [class.active]="activeTab() === 'theme'" (click)="activeTab.set('theme')">
-        <i class="fa-solid fa-palette"></i> Theme
-      </button>
-      <button type="button" [class.active]="activeTab() === 'footer'" (click)="activeTab.set('footer')">
-        <i class="fa-solid fa-shoe-prints"></i> Footer
-      </button>
-      <button class="btn btn--primary" type="button" (click)="seedDefaults()">Seed Sample Content</button>
-      <button class="btn btn--ghost" type="button" (click)="signOut()">Sign Out</button>
-      @if (status()) {
-      <p class="status">{{ status() }}</p>
-      }
-    </aside>
 
-    <div class="admin-content">
-      @if (activeTab() === 'sections') {
-      <section class="admin-grid">
-        <form class="card editor-form" [formGroup]="sectionForm" (ngSubmit)="saveSection()">
-          <div class="form-header">
-            <h2>Section Editor</h2>
-            <button class="btn btn--primary" type="submit">Save Section</button>
-          </div>
-          <div class="form-grid">
-            <label>ID <input formControlName="id" placeholder="auto from sectionId" /></label>
-            <label>Section ID <input formControlName="sectionId" placeholder="portfolio" /></label>
-            <label>Order <input type="number" formControlName="order" /></label>
-            <label>
-              Layout
-              <select formControlName="layoutType">
-                <option value="hero">Hero</option>
-                <option value="about">About</option>
-                <option value="services">Services</option>
-                <option value="team">Team</option>
-                <option value="testimonials">Testimonials</option>
-                <option value="contact">Contact</option>
-                <option value="faq">FAQ</option>
-                <option value="gallery">Gallery</option>
-                <option value="default">Default Cards</option>
-              </select>
-            </label>
-            <label>Subtitle <input formControlName="subtitle" /></label>
-            <label>Title <input formControlName="title" /></label>
-            <label class="wide">Description <textarea rows="3" formControlName="description"></textarea></label>
-            <label>Image URL <input formControlName="imageUrl" /></label>
-            <label>Upload Image <input type="file" accept="image/*" (change)="uploadImage($event)" /></label>
-            <label>Button Text <input formControlName="buttonText" /></label>
-            <label>Button Link <input formControlName="buttonLink" placeholder="contact or /services" /></label>
-            <label>Background Color <input formControlName="backgroundColor" placeholder="#ffffff" /></label>
-            <label>Text Color <input formControlName="textColor" placeholder="#172033" /></label>
-            <label>Font Family <input formControlName="fontFamily" /></label>
-            <label>Font Size <input formControlName="fontSize" /></label>
-            <label class="check"><input type="checkbox" formControlName="isVisible" /> Visible</label>
-            <label class="check"><input type="checkbox" formControlName="isDarkSection" /> Dark section</label>
-            <label class="wide">Cards JSON <textarea rows="8" formControlName="cardsJson"></textarea></label>
-            <label class="wide">FAQ JSON <textarea rows="5" formControlName="faqsJson"></textarea></label>
-            <label class="wide">Gallery JSON <textarea rows="4" formControlName="galleryJson"></textarea></label>
-          </div>
-          @if (uploadStatus()) {
-          <p class="status">{{ uploadStatus() }}</p>
-          }
-        </form>
+      <div *ngIf="activeTab === 'dashboard'">
+        <h2>Dashboard</h2>
+        <p>Modern dashboard content here...</p>
+      </div>
 
-        <div class="manager-stack">
-          <div class="card list-panel">
-            <h2>Sections</h2>
-            @for (section of sections$ | async; track section.id || section.sectionId) {
-            <article>
-              <div>
-                <strong>{{ section.order }}. {{ section.title }}</strong>
-                <span>{{ section.sectionId }} · {{ section.layoutType }} · {{ section.isVisible ? 'Visible' : 'Hidden'
-                  }}</span>
-              </div>
-              <button type="button" (click)="editSection(section)">Edit</button>
-              <button type="button" (click)="deleteSection(section)">Delete</button>
-            </article>
-            }
-          </div>
+      <div *ngIf="activeTab === 'users'">
+        <h2>Users</h2>
+        <p>Users management content...</p>
+      </div>
 
-          @if (previewSection()) {
-          <div class="live-preview">
-            <p class="section__eyebrow">Live Preview</p>
-            <app-dynamic-section [section]="previewSection()!" />
-          </div>
-          }
-        </div>
-      </section>
-      }
-
-      @if (activeTab() === 'menus') {
-      <section class="admin-grid">
-        <form class="card editor-form" [formGroup]="menuForm" (ngSubmit)="saveMenu()">
-          <div class="form-header">
-            <h2>Menu Editor</h2>
-            <button class="btn btn--primary" type="submit">Save Menu</button>
-          </div>
-          <div class="form-grid">
-            <label>ID <input formControlName="id" placeholder="auto from sectionId" /></label>
-            <label>Title <input formControlName="title" /></label>
-            <label>Route Key <input formControlName="routeKey" /></label>
-            <label>Section ID <input formControlName="sectionId" /></label>
-            <label>Order <input type="number" formControlName="order" /></label>
-            <label class="check"><input type="checkbox" formControlName="isVisible" /> Visible</label>
-          </div>
-        </form>
-
-        <div class="card list-panel">
-          <h2>Menus</h2>
-          @for (menu of menus$ | async; track menu.id || menu.sectionId) {
-          <article>
-            <div>
-              <strong>{{ menu.order }}. {{ menu.title }}</strong>
-              <span>{{ menu.sectionId }} · {{ menu.isVisible ? 'Enabled' : 'Disabled' }}</span>
-            </div>
-            <button type="button" (click)="editMenu(menu)">Edit</button>
-            <button type="button" (click)="deleteMenu(menu)">Delete</button>
-          </article>
-          }
-        </div>
-      </section>
-      }
-
-      @if (activeTab() === 'theme') {
-      <form class="card editor-form" [formGroup]="themeForm" (ngSubmit)="saveTheme()">
-        <div class="form-header">
-          <h2>Customization Panel</h2>
-          <button class="btn btn--primary" type="submit">Save Theme</button>
-        </div>
-        <div class="form-grid">
-          <label>Primary Color <input type="color" formControlName="primaryColor" /></label>
-          <label>Secondary Color <input type="color" formControlName="secondaryColor" /></label>
-          <label>Background Color <input type="color" formControlName="backgroundColor" /></label>
-          <label>Text Color <input type="color" formControlName="textColor" /></label>
-          <label>Button Color <input type="color" formControlName="buttonColor" /></label>
-          <label>Font Family <input formControlName="fontFamily" /></label>
-          <label>Font Size <input formControlName="fontSize" /></label>
-          <label>Font Weight <input formControlName="fontWeight" /></label>
-          <label>Letter Spacing <input formControlName="letterSpacing" /></label>
-          <label>Line Height <input formControlName="lineHeight" /></label>
-          <label>Section Spacing <input formControlName="sectionSpacing" /></label>
-          <label>Border Radius <input formControlName="borderRadius" /></label>
-          <label>Card Shadow <input formControlName="cardShadow" /></label>
-          <label>Container Width <input formControlName="containerWidth" /></label>
-          <label class="check"><input type="checkbox" formControlName="showHeader" /> Show header</label>
-          <label class="check"><input type="checkbox" formControlName="showTopNavMenu" /> Show top nav menu</label>
-          <label>
-            Theme Mode
-            <select formControlName="themeMode">
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="auto">Auto</option>
-            </select>
-          </label>
-        </div>
-      </form>
-      }
-
-      @if (activeTab() === 'footer') {
-      <form class="card editor-form" [formGroup]="footerForm" (ngSubmit)="saveFooter()">
-        <div class="form-header">
-          <h2>Footer Editor</h2>
-          <button class="btn btn--primary" type="submit">Save Footer</button>
-        </div>
-        <div class="form-grid">
-          <label class="wide">Description <textarea rows="3" formControlName="description"></textarea></label>
-          <label class="wide">Important Links JSON <textarea rows="7"
-              formControlName="importantLinksJson"></textarea></label>
-          <label class="wide">Social Links JSON <textarea rows="7" formControlName="socialLinksJson"></textarea></label>
-          <label class="wide">Copyright <input formControlName="copyright" /></label>
-        </div>
-      </form>
-      }
+      <div *ngIf="activeTab === 'analytics'">
+        <h2>Analytics</h2>
+        <p>Analytics reports content...</p>
+      </div>
     </div>
-  </section>
-  } @else {
-  <section class="login-card card">
-    <h2>Admin Login</h2>
-    <p>Sign in with Google or email/password to manage website content.</p>
-    <form [formGroup]="loginForm">
-      <input type="email" formControlName="email" placeholder="Email" />
-      <input type="password" formControlName="password" placeholder="Password" />
-    </form>
-    <div class="login-actions">
-      <button class="btn btn--primary" type="button" (click)="signInWithGoogle()">Google Login</button>
-      <button class="btn btn--ghost" type="button" (click)="signInWithEmail()">Email Login</button>
-      <button class="btn btn--ghost" type="button" (click)="registerWithEmail()">Create Account</button>
-    </div>
-    @if (status()) {
-    <p class="status">{{ status() }}</p>
-    }
-  </section>
-  }
-</main>
+
+  </div>
+
+</div>
