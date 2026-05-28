@@ -1,14 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {
-  Component,
-  EventEmitter,
-  Input,
-  Output,
-  signal,
-  OnInit,
-  OnDestroy,
-  effect,
-} from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
@@ -21,34 +12,30 @@ import { ImageValidatorService } from '../../core/services/image-validator.servi
   templateUrl: './dynamic-section.html',
   styleUrl: './dynamic-section.scss',
 })
-export class DynamicSectionComponent implements OnInit, OnDestroy {
-  @Input({ required: true }) section!: WebsiteSection;
+export class DynamicSectionComponent {
+  private _section!: WebsiteSection;
+
+  @Input({ required: true })
+  set section(section: WebsiteSection) {
+    this._section = section;
+    if (section?.imageUrl) {
+      this.validateSectionImage();
+    } else {
+      this.isImageValid.set(false);
+    }
+  }
+
+  get section(): WebsiteSection {
+    return this._section;
+  }
+
   @Output() sectionAction = new EventEmitter<string>();
 
   readonly formStatus = signal('');
   readonly openFaq = signal(0);
   readonly isImageValid = signal(false);
 
-  constructor(private readonly imageValidator: ImageValidatorService) {
-    // Validate image whenever section changes
-    effect(() => {
-      if (this.section?.imageUrl) {
-        this.validateSectionImage();
-      } else {
-        this.isImageValid.set(false);
-      }
-    });
-  }
-
-  ngOnInit(): void {
-    if (this.section?.imageUrl) {
-      this.validateSectionImage();
-    }
-  }
-
-  ngOnDestroy(): void {
-    // Cleanup is handled by the service
-  }
+  constructor(private readonly imageValidator: ImageValidatorService) {}
 
   private validateSectionImage(): void {
     if (!this.section?.imageUrl) {
