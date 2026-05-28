@@ -1,6 +1,9 @@
 .dynamic-section {
   position: relative;
   overflow: hidden;
+  transition:
+    background-image 0.3s ease-in-out,
+    background-color 0.3s ease-in-out;
 }
 
 .dynamic-section--hero {
@@ -13,6 +16,33 @@
 
 .dynamic-section--dark {
   color: #fff;
+}
+
+/* Overlay for sections with background images */
+.dynamic-section.has-background-image {
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(115deg, rgba(8, 17, 39, 0.78), rgba(37, 99, 235, 0.5));
+    pointer-events: none;
+  }
+
+  .section__inner {
+    position: relative;
+    z-index: 1;
+  }
+
+  h1,
+  h2,
+  h3,
+  p,
+  .section__eyebrow,
+  .section__title,
+  .section__lead {
+    color: #fff;
+  }
 }
 
 .hero-bg {

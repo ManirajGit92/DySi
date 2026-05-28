@@ -1,15 +1,8 @@
-<section
-  class="dynamic-section section"
+<section class="dynamic-section section"
   [class.section--soft]="section.order % 2 === 0 && section.layoutType !== 'hero'"
-  [class.dynamic-section--dark]="section.isDarkSection"
-  [class.dynamic-section--hero]="section.layoutType === 'hero'"
-  [id]="section.sectionId"
-  [ngStyle]="sectionStyles(section)"
->
-  @if (section.layoutType === 'hero') {
-    <div class="hero-bg" [style.background-image]="'url(' + section.imageUrl + ')'"></div>
-  }
-
+  [class.dynamic-section--dark]="section.isDarkSection" [class.dynamic-section--hero]="section.layoutType === 'hero'"
+  [class.has-background-image]="isImageValid() && section.imageUrl" [id]="section.sectionId"
+  [ngStyle]="sectionStyles(section)">
   <div class="section__inner reveal">
     <div class="section-heading">
       <p class="section__eyebrow">
@@ -20,151 +13,151 @@
       <p class="section__lead">{{ section.description }}</p>
 
       @if (section.buttonText) {
-        @if (section.buttonLink.startsWith('/')) {
-          <a class="btn btn--primary" [routerLink]="section.buttonLink">
-            {{ section.buttonText }} <i class="fa-solid fa-arrow-right"></i>
-          </a>
-        } @else {
-          <button class="btn btn--primary" type="button" (click)="sectionAction.emit(section.buttonLink)">
-            {{ section.buttonText }} <i class="fa-solid fa-arrow-right"></i>
-          </button>
-        }
+      @if (section.buttonLink.startsWith('/')) {
+      <a class="btn btn--primary" [routerLink]="section.buttonLink">
+        {{ section.buttonText }} <i class="fa-solid fa-arrow-right"></i>
+      </a>
+      } @else {
+      <button class="btn btn--primary" type="button" (click)="sectionAction.emit(section.buttonLink)">
+        {{ section.buttonText }} <i class="fa-solid fa-arrow-right"></i>
+      </button>
+      }
       }
     </div>
 
     @switch (section.layoutType) {
-      @case ('hero') {
-        <div class="metric-grid">
-          @for (card of section.cards; track card.title) {
-            <article class="card metric-card">
-              <i [class]="card.icon"></i>
-              <strong>{{ card.title }}</strong>
-              <span>{{ card.description }}</span>
-            </article>
+    @case ('hero') {
+    <div class="metric-grid">
+      @for (card of section.cards; track card.title) {
+      <article class="card metric-card">
+        <i [class]="card.icon"></i>
+        <strong>{{ card.title }}</strong>
+        <span>{{ card.description }}</span>
+      </article>
+      }
+    </div>
+    }
+    @case ('services') {
+    <div class="content-grid content-grid--three">
+      @for (card of section.cards; track card.title) {
+      <article class="card content-card">
+        <span class="icon-badge"><i [class]="card.icon"></i></span>
+        <h3>{{ card.title }}</h3>
+        <p>{{ card.description }}</p>
+      </article>
+      }
+    </div>
+    }
+    @case ('team') {
+    <div class="content-grid content-grid--team">
+      @for (card of section.cards; track card.title) {
+      <article class="card team-card">
+        @if (card.imageUrl) {
+        <img [src]="card.imageUrl" [alt]="card.title" loading="lazy" />
+        }
+        <div>
+          <h3>{{ card.title }}</h3>
+          <p>{{ card.description }}</p>
+          <a href="#" aria-label="Social profile"><i [class]="card.icon"></i></a>
+        </div>
+      </article>
+      }
+    </div>
+    }
+    @case ('testimonials') {
+    <div class="content-grid content-grid--three carousel">
+      @for (card of section.cards; track card.title) {
+      <article class="card testimonial-card">
+        <div class="stars">
+          @for (_ of ratingArray(card.rating); track $index) {
+          <i class="fa-solid fa-star"></i>
           }
         </div>
-      }
-      @case ('services') {
-        <div class="content-grid content-grid--three">
-          @for (card of section.cards; track card.title) {
-            <article class="card content-card">
-              <span class="icon-badge"><i [class]="card.icon"></i></span>
-              <h3>{{ card.title }}</h3>
-              <p>{{ card.description }}</p>
-            </article>
+        <p>{{ card.description }}</p>
+        <div class="customer">
+          @if (card.imageUrl) {
+          <img [src]="card.imageUrl" [alt]="card.title" loading="lazy" />
           }
-        </div>
-      }
-      @case ('team') {
-        <div class="content-grid content-grid--team">
-          @for (card of section.cards; track card.title) {
-            <article class="card team-card">
-              @if (card.imageUrl) {
-                <img [src]="card.imageUrl" [alt]="card.title" loading="lazy" />
-              }
-              <div>
-                <h3>{{ card.title }}</h3>
-                <p>{{ card.description }}</p>
-                <a href="#" aria-label="Social profile"><i [class]="card.icon"></i></a>
-              </div>
-            </article>
-          }
-        </div>
-      }
-      @case ('testimonials') {
-        <div class="content-grid content-grid--three carousel">
-          @for (card of section.cards; track card.title) {
-            <article class="card testimonial-card">
-              <div class="stars">
-                @for (_ of ratingArray(card.rating); track $index) {
-                  <i class="fa-solid fa-star"></i>
-                }
-              </div>
-              <p>{{ card.description }}</p>
-              <div class="customer">
-                @if (card.imageUrl) {
-                  <img [src]="card.imageUrl" [alt]="card.title" loading="lazy" />
-                }
-                <div>
-                  <strong>{{ card.title }}</strong>
-                  <span>{{ card.meta }}</span>
-                </div>
-              </div>
-            </article>
-          }
-        </div>
-      }
-      @case ('contact') {
-        <div class="contact-layout">
-          <div class="info-list">
-            @for (card of section.cards; track card.title) {
-              <article class="card info-card">
-                <i [class]="card.icon"></i>
-                <div>
-                  <strong>{{ card.title }}</strong>
-                  <span>{{ card.description }}</span>
-                </div>
-              </article>
-            }
-            <div class="card map-placeholder">
-              <i class="fa-solid fa-map-location-dot"></i>
-              <span>Google Map Placeholder</span>
-            </div>
+          <div>
+            <strong>{{ card.title }}</strong>
+            <span>{{ card.meta }}</span>
           </div>
+        </div>
+      </article>
+      }
+    </div>
+    }
+    @case ('contact') {
+    <div class="contact-layout">
+      <div class="info-list">
+        @for (card of section.cards; track card.title) {
+        <article class="card info-card">
+          <i [class]="card.icon"></i>
+          <div>
+            <strong>{{ card.title }}</strong>
+            <span>{{ card.description }}</span>
+          </div>
+        </article>
+        }
+        <div class="card map-placeholder">
+          <i class="fa-solid fa-map-location-dot"></i>
+          <span>Google Map Placeholder</span>
+        </div>
+      </div>
 
-          <form class="card contact-form" (ngSubmit)="submitContact()">
-            <label>
-              Name
-              <input name="name" required placeholder="Your name" />
-            </label>
-            <label>
-              Email
-              <input name="email" type="email" required placeholder="you@example.com" />
-            </label>
-            <label>
-              Message
-              <textarea name="message" rows="5" required placeholder="Tell us about your project"></textarea>
-            </label>
-            <button class="btn btn--primary" type="submit">{{ section.buttonText || 'Send Message' }}</button>
-            @if (formStatus()) {
-              <p class="form-status">{{ formStatus() }}</p>
-            }
-          </form>
-        </div>
+      <form class="card contact-form" (ngSubmit)="submitContact()">
+        <label>
+          Name
+          <input name="name" required placeholder="Your name" />
+        </label>
+        <label>
+          Email
+          <input name="email" type="email" required placeholder="you@example.com" />
+        </label>
+        <label>
+          Message
+          <textarea name="message" rows="5" required placeholder="Tell us about your project"></textarea>
+        </label>
+        <button class="btn btn--primary" type="submit">{{ section.buttonText || 'Send Message' }}</button>
+        @if (formStatus()) {
+        <p class="form-status">{{ formStatus() }}</p>
+        }
+      </form>
+    </div>
+    }
+    @case ('faq') {
+    <div class="faq-list">
+      @for (faq of section.faqs; track faq.question; let index = $index) {
+      <article class="card faq-item">
+        <button type="button" (click)="openFaq.set(openFaq() === index ? -1 : index)">
+          {{ faq.question }}
+          <i class="fa-solid" [class.fa-plus]="openFaq() !== index" [class.fa-minus]="openFaq() === index"></i>
+        </button>
+        @if (openFaq() === index) {
+        <p>{{ faq.answer }}</p>
+        }
+      </article>
       }
-      @case ('faq') {
-        <div class="faq-list">
-          @for (faq of section.faqs; track faq.question; let index = $index) {
-            <article class="card faq-item">
-              <button type="button" (click)="openFaq.set(openFaq() === index ? -1 : index)">
-                {{ faq.question }}
-                <i class="fa-solid" [class.fa-plus]="openFaq() !== index" [class.fa-minus]="openFaq() === index"></i>
-              </button>
-              @if (openFaq() === index) {
-                <p>{{ faq.answer }}</p>
-              }
-            </article>
-          }
-        </div>
+    </div>
+    }
+    @case ('gallery') {
+    <div class="gallery-grid">
+      @for (image of section.gallery; track image) {
+      <img class="card" [src]="image" [alt]="section.title" loading="lazy" />
       }
-      @case ('gallery') {
-        <div class="gallery-grid">
-          @for (image of section.gallery; track image) {
-            <img class="card" [src]="image" [alt]="section.title" loading="lazy" />
-          }
-        </div>
+    </div>
+    }
+    @default {
+    <div class="content-grid content-grid--three">
+      @for (card of section.cards; track card.title) {
+      <article class="card content-card">
+        <span class="icon-badge"><i [class]="card.icon"></i></span>
+        <h3>{{ card.title }}</h3>
+        <p>{{ card.description }}</p>
+      </article>
       }
-      @default {
-        <div class="content-grid content-grid--three">
-          @for (card of section.cards; track card.title) {
-            <article class="card content-card">
-              <span class="icon-badge"><i [class]="card.icon"></i></span>
-              <h3>{{ card.title }}</h3>
-              <p>{{ card.description }}</p>
-            </article>
-          }
-        </div>
-      }
+    </div>
+    }
     }
   </div>
 </section>
