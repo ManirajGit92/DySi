@@ -168,44 +168,88 @@
    VIEW TOGGLE
 ========================================= */
 
+.catalog-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .view-toggle {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.toggle-btn {
-  border: 1px solid #cbd5e1;
-
-  background: white;
-
-  padding: 0.7rem 1rem;
-
-  border-radius: 999px;
-
-  cursor: pointer;
-
-  transition: 0.3s ease;
+.layout-control {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-.toggle-btn.active {
+.layout-control span {
+  font-weight: 600;
+  color: #334155;
+}
+
+.layout-btn {
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #0f172a;
+  border-radius: 999px;
+  padding: 0.65rem 0.85rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-size: 0.92rem;
+}
+
+.layout-btn.active {
   background: #6366f1;
   color: white;
   border-color: #6366f1;
 }
-
-/* =========================================
-   PRODUCT GRID
-========================================= */
 
 .grid-list {
   width: 100%;
 
   display: grid;
 
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(var(--grid-cols, 4), minmax(0, 1fr));
 
   gap: 1.5rem;
+}
+
+@media (max-width: 1023px) {
+  .grid-list {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .grid-list {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
+  .catalog-controls-right {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 479px) {
+  .grid-list {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .product-card {
+    border-radius: 1.25rem;
+  }
+
+  .product-body {
+    padding: 1rem;
+  }
 }
 
 /* =========================================

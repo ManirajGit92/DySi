@@ -76,20 +76,30 @@
             <h2>Available Products & Services</h2>
             <p>Realtime Firestore updates are reflected instantly in the storefront.</p>
           </div>
-          <div class="view-toggle">
-            <span>Display</span>
-            <button class="toggle-btn" type="button" [class.active]="viewMode() === 'grid'"
-              (click)="setViewMode('grid')">
-              Grid
-            </button>
-            <button class="toggle-btn" type="button" [class.active]="viewMode() === 'list'"
-              (click)="setViewMode('list')">
-              List
-            </button>
+          <div class="catalog-controls-right">
+            <div class="view-toggle">
+              <span>Display</span>
+              <button class="toggle-btn" type="button" [class.active]="viewMode() === 'grid'"
+                (click)="setViewMode('grid')">
+                Grid
+              </button>
+              <button class="toggle-btn" type="button" [class.active]="viewMode() === 'list'"
+                (click)="setViewMode('list')">
+                List
+              </button>
+            </div>
+
+            <div class="layout-control" *ngIf="viewMode() === 'grid'">
+              <span>Items per row</span>
+              <button class="layout-btn" *ngFor="let cols of [2, 3, 4, 5, 6]" type="button"
+                [class.active]="itemsPerRow() === cols" (click)="setItemsPerRow(cols)">
+                {{ cols }}
+              </button>
+            </div>
           </div>
         </div>
 
-        <div class="grid-list" [class.list-view]="viewMode() === 'list'">
+        <div class="grid-list" [class.list-view]="viewMode() === 'list'" [style.--grid-cols]="itemsPerRow()">
           <article class="product-card" *ngFor="let product of paginatedProducts()">
             <div class="product-image" [style.background-image]="'url(' + product.imageUrl + ')'">
               <span class="badge {{ product.available ? 'in-stock' : 'out-of-stock' }}">

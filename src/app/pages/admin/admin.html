@@ -121,7 +121,15 @@
               </button>
             </div>
 
-            <div class="product-list" [class.list-view]="viewMode() === 'list'">
+            <div class="layout-control" *ngIf="viewMode() === 'grid'">
+              <span>Items per row</span>
+              <button class="layout-btn" *ngFor="let cols of [2, 3, 4, 5, 6]" type="button"
+                [class.active]="itemsPerRow() === cols" (click)="setItemsPerRow(cols)">
+                {{ cols }}
+              </button>
+            </div>
+
+            <div class="product-list" [class.list-view]="viewMode() === 'list'" [style.--grid-cols]="itemsPerRow()">
               <article class="product-card" *ngFor="let product of products()">
                 <img
                   [src]="product.imageUrl || 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=80'"

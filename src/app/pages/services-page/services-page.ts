@@ -24,6 +24,7 @@ export class ServicesPageComponent {
   pageSize = signal(8);
   selectedProduct = signal<Product | null>(null);
   viewMode = signal<'grid' | 'list'>('grid');
+  itemsPerRow = signal(4);
   paymentMessage = signal('');
 
   categories = computed(() => {
@@ -122,6 +123,10 @@ export class ServicesPageComponent {
 
   setViewMode(mode: 'grid' | 'list'): void {
     this.viewMode.set(mode);
+  }
+
+  setItemsPerRow(count: number): void {
+    this.itemsPerRow.set(count);
   }
 
   addToCart(product: Product): void {

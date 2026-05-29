@@ -41,6 +41,7 @@ export class AdminComponent {
   products = signal<Product[]>([]);
   editing = signal(false);
   viewMode = signal<'grid' | 'list'>('grid');
+  itemsPerRow = signal(4);
   searchQuery = signal('');
   selectedPeriod = signal<'Daily' | 'Weekly' | 'Monthly'>('Weekly');
   selectedStatus = signal<'All' | 'Completed' | 'Pending' | 'Refunded'>('All');
@@ -173,6 +174,10 @@ export class AdminComponent {
 
   setViewMode(mode: 'grid' | 'list'): void {
     this.viewMode.set(mode);
+  }
+
+  setItemsPerRow(count: number): void {
+    this.itemsPerRow.set(count);
   }
 
   updateSearchQuery(value: string): void {
