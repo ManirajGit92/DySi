@@ -35,6 +35,16 @@
     </aside>
 
     <div class="admin-content">
+      <div class="settings-actions card">
+        <div class="action-group">
+          <button class="btn btn--ghost" type="button" (click)="exportSettings()">Export Excel</button>
+          <button class="btn btn--primary" type="button" (click)="excelImporter.click()">Import Excel</button>
+          <input #excelImporter type="file" accept=".xlsx,.xls" hidden (change)="importSettings($event)" />
+        </div>
+        @if (excelStatus()) {
+        <p class="status">{{ excelStatus() }}</p>
+        }
+      </div>
       @if (activeTab() === 'sections') {
       <section class="admin-grid">
         <form class="card editor-form" [formGroup]="sectionForm" (ngSubmit)="saveSection()">

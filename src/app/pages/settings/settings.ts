@@ -2,12 +2,15 @@ import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import * as XLSX from 'xlsx';
 
 import {
   ContentCard,
   FaqItem,
   FooterSettings,
   MenuItem,
+  ThemeSettings,
   WebsiteSection,
 } from '../../core/models/website.models';
 import {
@@ -35,6 +38,7 @@ export class Settings {
   readonly activeTab = signal<'menus' | 'sections' | 'theme' | 'footer'>('sections');
   readonly status = signal('');
   readonly uploadStatus = signal('');
+  readonly excelStatus = signal('');
   readonly previewSection = signal<WebsiteSection | null>(null);
 
   readonly loginForm = this.fb.nonNullable.group({
@@ -229,6 +233,228 @@ export class Settings {
       copyright: value.copyright,
     };
     await this.runTask(() => this.websiteData.saveFooterSettings(settings), 'Footer saved.');
+  }
+
+  async exportSettings(): Promise<void> {
+    this.excelStatus.set('Preparing settings export...');
+    try {
+      const menus = await firstValueFrom(this.menus$);
+      const sections = await firstValueFrom(this.sections$);
+      const theme = await firstValueFrom(this.themeSettings$);
+      const footer = await firstValueFrom(this.footerSettings$);
+
+      const workbook = XLSX.utils.book_new();
+      const menuRows = menus.map((menu: MenuItem) => ({
+        id: menu.id,
+        title: menu.title,
+        routeKey: menu.routeKey,
+        order: menu.order,
+        isVisible: menu.isVisible,
+        sectionId: menu.sectionId,
+      }));
+      const sectionRows = sections.map((section: any) => ({
+        id: section.id,
+        sectionId: section.sectionId,
+        title: section.title,
+        subtitle: section.subtitle,
+        description: section.description,
+        imageUrl: section.imageUrl,
+        buttonText: section.buttonText,
+        buttonLink: section.buttonLink,
+        backgroundColor: section.backgroundColor,
+        textColor: section.textColor,
+        fontFamily: section.fontFamily,
+        fontSize: section.fontSize,
+        layoutType: section.layoutType,
+        isDarkSection: section.isDarkSection,
+        isVisible: section.isVisible,
+        order: section.order,
+        cards: JSON.stringify(section.cards ?? []),
+        faqs: JSON.stringify(section.faqs ?? []),
+        gallery: JSON.stringify(section.gallery ?? []),
+      }));
+      const themeRows = [theme];
+      const footerRows = [
+        {
+          description: footer.description,
+          importantLinks: JSON.stringify(footer.importantLinks),
+          socialLinks: JSON.stringify(footer.socialLinks),
+          copyright: footer.copyright,
+        },
+      ];
+
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(menuRows), 'Menus');
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(sectionRows), 'Sections');
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(themeRows), 'Theme');
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(footerRows), 'Footer');
+
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: 'xlsx',
+        type: 'array',
+      });
+      this.downloadBlob(excelBuffer, 'website-settings.xlsx');
+      this.excelStatus.set('Settings exported successfully.');
+    } catch (error) {
+      console.error(error);
+      this.excelStatus.set('Export failed. Check the file format and try again.');
+    }
+  }
+
+  async importSettings(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    this.excelStatus.set('Importing settings from Excel...');
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const requiredSheets = ['Menus', 'Sections', 'Theme', 'Footer'];
+      const missingSheets = requiredSheets.filter((sheet) => !workbook.SheetNames.includes(sheet));
+      if (missingSheets.length) {
+        throw new Error(`Missing sheets: ${missingSheets.join(', ')}`);
+      }
+
+      const menuRows = XLSX.utils.sheet_to_json<MenuItem>(workbook.Sheets['Menus'], {
+        defval: '',
+      });
+      const sectionRows = XLSX.utils.sheet_to_json<Partial<WebsiteSection>>(
+        workbook.Sheets['Sections'],
+        { defval: '' },
+      );
+      const themeRows = XLSX.utils.sheet_to_json<ThemeSettings>(workbook.Sheets['Theme'], {
+        defval: '',
+      });
+      const footerRows = XLSX.utils.sheet_to_json<FooterSettings>(workbook.Sheets['Footer'], {
+        defval: '',
+      });
+
+      if (!themeRows.length || !footerRows.length) {
+        throw new Error('Theme and Footer sheets must each contain one row.');
+      }
+
+      const normalizeMenu = (menu: MenuItem): MenuItem => ({
+        id: menu.id || crypto.randomUUID(),
+        title: menu.title || '',
+        routeKey: menu.routeKey || '',
+        order: Number(menu.order) || 1,
+        isVisible: this.parseBoolean(menu.isVisible, true),
+        sectionId: menu.sectionId || '',
+      });
+
+      const normalizeSection = (section: Partial<WebsiteSection>): WebsiteSection => ({
+        id: section.id || section.sectionId || crypto.randomUUID(),
+        sectionId: section.sectionId || '',
+        title: section.title || '',
+        subtitle: section.subtitle || '',
+        description: section.description || '',
+        imageUrl: section.imageUrl || '',
+        buttonText: section.buttonText || '',
+        buttonLink: section.buttonLink || '',
+        backgroundColor: section.backgroundColor || '',
+        textColor: section.textColor || '',
+        fontFamily: section.fontFamily || 'Inter',
+        fontSize: section.fontSize || '16px',
+        layoutType: section.layoutType || 'default',
+        isDarkSection: this.parseBoolean(section.isDarkSection, false),
+        isVisible: this.parseBoolean(section.isVisible, true),
+        order: Number(section.order) || 1,
+        cards: this.parseExcelJson(section.cards, []),
+        faqs: this.parseExcelJson(section.faqs, []),
+        gallery: this.parseExcelJson(section.gallery, []),
+      });
+
+      const normalizeTheme = (themeData: Partial<ThemeSettings>): ThemeSettings => ({
+        id: 'global',
+        primaryColor: themeData.primaryColor || defaultThemeSettings.primaryColor,
+        secondaryColor: themeData.secondaryColor || defaultThemeSettings.secondaryColor,
+        backgroundColor: themeData.backgroundColor || defaultThemeSettings.backgroundColor,
+        textColor: themeData.textColor || defaultThemeSettings.textColor,
+        buttonColor: themeData.buttonColor || defaultThemeSettings.buttonColor,
+        fontFamily: themeData.fontFamily || defaultThemeSettings.fontFamily,
+        fontSize: themeData.fontSize || defaultThemeSettings.fontSize,
+        fontWeight: themeData.fontWeight || defaultThemeSettings.fontWeight,
+        letterSpacing: themeData.letterSpacing || defaultThemeSettings.letterSpacing,
+        lineHeight: themeData.lineHeight || defaultThemeSettings.lineHeight,
+        sectionSpacing: themeData.sectionSpacing || defaultThemeSettings.sectionSpacing,
+        borderRadius: themeData.borderRadius || defaultThemeSettings.borderRadius,
+        cardShadow: themeData.cardShadow || defaultThemeSettings.cardShadow,
+        containerWidth: themeData.containerWidth || defaultThemeSettings.containerWidth,
+        showTopNavMenu: this.parseBoolean(
+          themeData.showTopNavMenu,
+          defaultThemeSettings.showTopNavMenu,
+        ),
+        showHeader: this.parseBoolean(themeData.showHeader, defaultThemeSettings.showHeader),
+        themeMode: themeData.themeMode || defaultThemeSettings.themeMode,
+      });
+
+      const normalizeFooter = (footerData: Partial<FooterSettings>): FooterSettings => ({
+        id: 'global',
+        description: footerData.description || defaultFooterSettings.description,
+        importantLinks: this.parseExcelJson(
+          footerData.importantLinks,
+          defaultFooterSettings.importantLinks,
+        ),
+        socialLinks: this.parseExcelJson(footerData.socialLinks, defaultFooterSettings.socialLinks),
+        copyright: footerData.copyright || defaultFooterSettings.copyright,
+      });
+
+      await Promise.all([
+        ...menuRows.map((menu: any) => this.websiteData.upsertMenu(normalizeMenu(menu))),
+        ...sectionRows.map((section: any) =>
+          this.websiteData.upsertSection(normalizeSection(section)),
+        ),
+      ]);
+      await this.websiteData.saveThemeSettings(normalizeTheme(themeRows[0]));
+      await this.websiteData.saveFooterSettings(normalizeFooter(footerRows[0]));
+      this.excelStatus.set('Settings imported successfully.');
+    } catch (error) {
+      console.error(error);
+      this.excelStatus.set('Import failed. Ensure the Excel file contains valid settings sheets.');
+    } finally {
+      const inputElem = event.target as HTMLInputElement;
+      if (inputElem) {
+        inputElem.value = '';
+      }
+    }
+  }
+
+  private downloadBlob(data: ArrayBuffer, filename: string): void {
+    const blob = new Blob([data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private parseBoolean(value: unknown, fallback: boolean): boolean {
+    if (typeof value === 'boolean') {
+      return value;
+    }
+    if (typeof value === 'string') {
+      return ['true', '1', 'yes'].includes(value.trim().toLowerCase());
+    }
+    return fallback;
+  }
+
+  private parseExcelJson<T>(value: unknown, fallback: T): T {
+    if (Array.isArray(value) || typeof value === 'object') {
+      return value as T;
+    }
+    if (typeof value === 'string' && value.trim()) {
+      try {
+        return JSON.parse(value) as T;
+      } catch {
+        return fallback;
+      }
+    }
+    return fallback;
   }
 
   async seedDefaults(): Promise<void> {
