@@ -283,6 +283,7 @@ export const defaultHeaderSettings: HeaderSettings = {
   logoAlt: 'DySi Logo',
   logoWidth: '32px',
   logoHeight: '32px',
+  headerWidth: 'fit-content',
 };
 
 export const defaultMenus: MenuItem[] = [

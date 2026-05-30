@@ -1,4 +1,4 @@
-<header class="site-header">
+<header class="site-header" [style.width]="headerSettings?.headerWidth">
   <a class="brand" href="#home" (click)="$event.preventDefault(); selectSection('home')" aria-label="DySi home">
     @if (headerSettings?.logoUrl) {
     <img [src]="headerSettings?.logoUrl" [alt]="headerSettings?.logoAlt || 'Logo'"

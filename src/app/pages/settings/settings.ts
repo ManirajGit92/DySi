@@ -113,6 +113,7 @@ export class Settings {
     logoAlt: [defaultHeaderSettings.logoAlt || ''],
     logoWidth: [defaultHeaderSettings.logoWidth || '32px'],
     logoHeight: [defaultHeaderSettings.logoHeight || '32px'],
+    headerWidth: [defaultHeaderSettings.headerWidth || 'fit-content'],
   });
 
   constructor() {
@@ -275,6 +276,7 @@ export class Settings {
       logoAlt: value.logoAlt,
       logoWidth: value.logoWidth,
       logoHeight: value.logoHeight,
+      headerWidth: value.headerWidth,
     };
     await this.runTask(
       () => this.websiteData.saveHeaderSettings(settings),
@@ -287,8 +289,14 @@ export class Settings {
     try {
       const menus = await firstValueFrom(this.menus$);
       const sections = await firstValueFrom(this.sections$);
-      const theme = await firstValueFrom(this.themeSettings$);
-      const footer = await firstValueFrom(this.footerSettings$);
+      const themeList = await firstValueFrom(this.websiteData.themeSettingsDocs$);
+      const theme = themeList[0] ?? defaultThemeSettings;
+
+      const footerList = await firstValueFrom(this.websiteData.footerSettingsDocs$);
+      const footer = footerList[0] ?? defaultFooterSettings;
+
+      const headerList = await firstValueFrom(this.websiteData.headerSettingsDocs$);
+      const header = headerList[0] ?? defaultHeaderSettings;
 
       const workbook = XLSX.utils.book_new();
       const menuRows = menus.map((menu: MenuItem) => ({
@@ -329,11 +337,22 @@ export class Settings {
           copyright: footer.copyright,
         },
       ];
+      const headerRows = [
+        {
+          logoUrl: header.logoUrl,
+          websiteName: header.websiteName,
+          logoAlt: header.logoAlt,
+          logoWidth: header.logoWidth,
+          logoHeight: header.logoHeight,
+          headerWidth: header.headerWidth,
+        },
+      ];
 
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(menuRows), 'Menus');
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(sectionRows), 'Sections');
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(themeRows), 'Theme');
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(footerRows), 'Footer');
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(headerRows), 'Header');
 
       const excelBuffer = XLSX.write(workbook, {
         bookType: 'xlsx',
@@ -358,7 +377,7 @@ export class Settings {
     try {
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data, { type: 'array' });
-      const requiredSheets = ['Menus', 'Sections', 'Theme', 'Footer'];
+      const requiredSheets = ['Menus', 'Sections', 'Theme', 'Footer', 'Header'];
       const missingSheets = requiredSheets.filter((sheet) => !workbook.SheetNames.includes(sheet));
       if (missingSheets.length) {
         throw new Error(`Missing sheets: ${missingSheets.join(', ')}`);
@@ -377,9 +396,12 @@ export class Settings {
       const footerRows = XLSX.utils.sheet_to_json<FooterSettings>(workbook.Sheets['Footer'], {
         defval: '',
       });
+      const headerRows = XLSX.utils.sheet_to_json<HeaderSettings>(workbook.Sheets['Header'], {
+        defval: '',
+      });
 
-      if (!themeRows.length || !footerRows.length) {
-        throw new Error('Theme and Footer sheets must each contain one row.');
+      if (!themeRows.length || !footerRows.length || !headerRows.length) {
+        throw new Error('Theme, Footer, and Header sheets must each contain one row.');
       }
 
       const normalizeMenu = (menu: MenuItem): MenuItem => ({
@@ -448,6 +470,16 @@ export class Settings {
         copyright: footerData.copyright || defaultFooterSettings.copyright,
       });
 
+      const normalizeHeader = (headerData: Partial<HeaderSettings>): HeaderSettings => ({
+        id: 'global',
+        logoUrl: headerData.logoUrl || '',
+        websiteName: headerData.websiteName || defaultHeaderSettings.websiteName,
+        logoAlt: headerData.logoAlt || '',
+        logoWidth: headerData.logoWidth || '32px',
+        logoHeight: headerData.logoHeight || '32px',
+        headerWidth: headerData.headerWidth || 'fit-content',
+      });
+
       await Promise.all([
         ...menuRows.map((menu: any) => this.websiteData.upsertMenu(normalizeMenu(menu))),
         ...sectionRows.map((section: any) =>
@@ -456,6 +488,7 @@ export class Settings {
       ]);
       await this.websiteData.saveThemeSettings(normalizeTheme(themeRows[0]));
       await this.websiteData.saveFooterSettings(normalizeFooter(footerRows[0]));
+      await this.websiteData.saveHeaderSettings(normalizeHeader(headerRows[0]));
       this.excelStatus.set('Settings imported successfully.');
     } catch (error) {
       console.error(error);

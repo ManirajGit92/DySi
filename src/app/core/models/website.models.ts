@@ -100,4 +100,5 @@ export interface HeaderSettings {
   logoAlt?: string;
   logoWidth?: string;
   logoHeight?: string;
+  headerWidth?: string;
 }
