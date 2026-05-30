@@ -1,4 +1,4 @@
-<section class="booking-page section">
+<section class="booking-page section mt-4">
   <p-toast position="top-right"></p-toast>
 
   <div class="booking-hero card reveal">
@@ -37,58 +37,58 @@
 
       <form [formGroup]="bookingForm" (ngSubmit)="submitBooking()">
         <div class="field-grid">
-          <label>
+          <label class="col-span-2">
             Full Name <span>*</span>
             <input pInputText formControlName="fullName" placeholder="Your full name" />
           </label>
-          <label>
+          <label class="col-span-2">
             Mobile Number <span>*</span>
             <input pInputText formControlName="mobileNumber" placeholder="+91 9876543210" />
           </label>
-          <label>
+          <label class="col-span-2">
             Email Address <span>*</span>
             <input pInputText formControlName="email" placeholder="you@example.com" />
           </label>
-          <label>
+          <label class="col-span-3">
             Pickup Location <span>*</span>
             <input pInputText formControlName="pickupLocation" placeholder="City, landmark or station" />
           </label>
-          <label>
+          <label class="col-span-3">
             Drop Location <span>*</span>
             <input pInputText formControlName="dropLocation" placeholder="Final destination" />
           </label>
-          <label class="field-full">
+          <label class="col-span-6">
             Address <span>*</span>
             <textarea pInputTextarea rows="3" formControlName="address"
               placeholder="Pickup address or hotel details"></textarea>
           </label>
-          <label>
+          <label class="col-span-2">
             Number of Passengers <span>*</span>
             <p-inputNumber inputId="passengers" formControlName="passengers" [min]="1" [max]="40"></p-inputNumber>
           </label>
-          <label>
+          <label class="col-span-2">
             Travel Date <span>*</span>
             <p-datepicker formControlName="travelDate" dateFormat="yy-mm-dd"></p-datepicker>
           </label>
-          <label>
+          <label class="col-span-2">
             Return Date
             <p-datepicker formControlName="returnDate" dateFormat="yy-mm-dd"></p-datepicker>
           </label>
-          <label>
+          <label class="col-span-2">
             Bus Type <span>*</span>
             <p-select [options]="busTypes()" formControlName="busType" placeholder="Select bus type"></p-select>
           </label>
-          <label>
+          <label class="col-span-2">
             Tour Package <span>*</span>
             <p-select [options]="packages().map(pkg => pkg.name)" formControlName="packageName"
               placeholder="Select package"></p-select>
           </label>
-          <label>
+          <label class="col-span-2">
             Payment Method <span>*</span>
             <p-select [options]="paymentMethods()" formControlName="paymentMethod"
               placeholder="Select payment method"></p-select>
           </label>
-          <label class="field-full">
+          <label class="col-span-6">
             Special Requests / Notes
             <textarea pInputTextarea rows="4" formControlName="specialRequests"
               placeholder="Any extra requests for your journey"></textarea>
