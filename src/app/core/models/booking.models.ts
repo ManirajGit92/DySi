@@ -43,21 +43,21 @@ export const defaultBookingPackages: BookingPackage[] = [
     description:
       'A relaxing city tour with comfortable stops, local guides, and premium sightseeing.',
     imageUrl:
-      'https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?auto=format&fit=crop&w=1200&q=80',
+      'https://i.postimg.cc/jjFpN6YX/Pngtree-a-bus-is-traveling-down-12871907.jpg',
     baseFare: 1800,
   },
   {
     name: 'Heritage Trail',
     description: 'Discover historic landmarks, curated itineraries, and cultural highlights.',
     imageUrl:
-      'https://images.unsplash.com/photo-1517487881594-2787fef5ebf7?auto=format&fit=crop&w=1200&q=80',
+      'https://i.postimg.cc/jjFpN6YX/Pngtree-a-bus-is-traveling-down-12871907.jpg',
     baseFare: 2300,
   },
   {
     name: 'Mountain Escape',
     description: 'A scenic adventure package with hills, vistas, and a comfortable overnight bus.',
     imageUrl:
-      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
+      'https://i.postimg.cc/jjFpN6YX/Pngtree-a-bus-is-traveling-down-12871907.jpg',
     baseFare: 3200,
   },
 ];
@@ -78,7 +78,7 @@ export const sampleBookings: Booking[] = [
     busType: 'AC Bus',
     packageName: 'Heritage Trail',
     packageImageUrl:
-      'https://images.unsplash.com/photo-1517487881594-2787fef5ebf7?auto=format&fit=crop&w=1200&q=80',
+      'https://i.postimg.cc/jjFpN6YX/Pngtree-a-bus-is-traveling-down-12871907.jpg',
     specialRequests: 'Need a child seat and vegan snacks.',
     paymentMethod: 'UPI',
     bookingStatus: 'Confirmed',

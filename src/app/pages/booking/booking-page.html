@@ -38,58 +38,58 @@
       <form [formGroup]="bookingForm" (ngSubmit)="submitBooking()">
         <div class="field-grid">
           <label class="col-span-2">
-            Full Name <span>*</span>
+            <span class="label-text">Full Name <span class="required">*</span></span>
             <input pInputText formControlName="fullName" placeholder="Your full name" />
           </label>
           <label class="col-span-2">
-            Mobile Number <span>*</span>
+            <span class="label-text">Mobile Number <span class="required">*</span></span>
             <input pInputText formControlName="mobileNumber" placeholder="+91 9876543210" />
           </label>
           <label class="col-span-2">
-            Email Address <span>*</span>
+            <span class="label-text">Email Address <span class="required">*</span></span>
             <input pInputText formControlName="email" placeholder="you@example.com" />
           </label>
           <label class="col-span-3">
-            Pickup Location <span>*</span>
+            <span class="label-text">Pickup Location <span class="required">*</span></span>
             <input pInputText formControlName="pickupLocation" placeholder="City, landmark or station" />
           </label>
           <label class="col-span-3">
-            Drop Location <span>*</span>
+            <span class="label-text">Drop Location <span class="required">*</span></span>
             <input pInputText formControlName="dropLocation" placeholder="Final destination" />
           </label>
           <label class="col-span-6">
-            Address <span>*</span>
+            <span class="label-text">Address <span class="required">*</span></span>
             <textarea pInputTextarea rows="3" formControlName="address"
               placeholder="Pickup address or hotel details"></textarea>
           </label>
           <label class="col-span-2">
-            Number of Passengers <span>*</span>
+            <span class="label-text">Number of Passengers <span class="required">*</span></span>
             <p-inputNumber inputId="passengers" formControlName="passengers" [min]="1" [max]="40"></p-inputNumber>
           </label>
           <label class="col-span-2">
-            Travel Date <span>*</span>
+            <span class="label-text">Travel Date <span class="required">*</span></span>
             <p-datepicker formControlName="travelDate" dateFormat="yy-mm-dd"></p-datepicker>
           </label>
           <label class="col-span-2">
-            Return Date
+            <span class="label-text">Return Date</span>
             <p-datepicker formControlName="returnDate" dateFormat="yy-mm-dd"></p-datepicker>
           </label>
           <label class="col-span-2">
-            Bus Type <span>*</span>
+            <span class="label-text">Bus Type <span class="required">*</span></span>
             <p-select [options]="busTypes()" formControlName="busType" placeholder="Select bus type"></p-select>
           </label>
           <label class="col-span-2">
-            Tour Package <span>*</span>
+            <span class="label-text">Tour Package <span class="required">*</span></span>
             <p-select [options]="packages().map(pkg => pkg.name)" formControlName="packageName"
               placeholder="Select package"></p-select>
           </label>
           <label class="col-span-2">
-            Payment Method <span>*</span>
+            <span class="label-text">Payment Method <span class="required">*</span></span>
             <p-select [options]="paymentMethods()" formControlName="paymentMethod"
               placeholder="Select payment method"></p-select>
           </label>
           <label class="col-span-6">
-            Special Requests / Notes
+            <span class="label-text">Special Requests / Notes</span>
             <textarea pInputTextarea rows="4" formControlName="specialRequests"
               placeholder="Any extra requests for your journey"></textarea>
           </label>

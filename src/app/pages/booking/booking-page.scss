@@ -134,8 +134,17 @@
   color: var(--text);
 }
 
-.field-grid label span {
-  color: var(--primary);
+.label-text {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.required {
+  color: #ef4444;
+  margin-left: 0.25rem;
+  font-weight: bold;
 }
 
 .col-span-2 {
@@ -150,15 +159,19 @@
   grid-column: span 6;
 }
 
-.p-inputtext,
-.p-inputnumber,
-.p-dropdown,
 textarea {
   width: 100%;
   border-radius: 1rem;
   border: 1px solid var(--border);
   padding: 1rem;
   background: var(--surface-solid);
+  color: var(--text);
+}
+
+p-datepicker,
+p-select,
+p-inputnumber {
+  width: 100%;
 }
 
 .seat-grid {
