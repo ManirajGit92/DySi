@@ -9,6 +9,7 @@ import {
   ContentCard,
   FaqItem,
   FooterSettings,
+  HeaderSettings,
   MenuItem,
   ThemeSettings,
   WebsiteSection,
@@ -16,6 +17,7 @@ import {
 import {
   WebsiteDataService,
   defaultFooterSettings,
+  defaultHeaderSettings,
   defaultThemeSettings,
 } from '../../core/services/website-data.service';
 import { DynamicSectionComponent } from '../../shared/dynamic-section/dynamic-section';
@@ -35,7 +37,8 @@ export class Settings {
   readonly sections$ = this.websiteData.allSections$;
   readonly themeSettings$ = this.websiteData.themeSettings$;
   readonly footerSettings$ = this.websiteData.footerSettings$;
-  readonly activeTab = signal<'menus' | 'sections' | 'theme' | 'footer'>('sections');
+  readonly headerSettings$ = this.websiteData.headerSettings$;
+  readonly activeTab = signal<'menus' | 'sections' | 'theme' | 'footer' | 'header'>('sections');
   readonly status = signal('');
   readonly uploadStatus = signal('');
   readonly excelStatus = signal('');
@@ -104,6 +107,14 @@ export class Settings {
     copyright: [defaultFooterSettings.copyright],
   });
 
+  readonly headerForm = this.fb.nonNullable.group({
+    logoUrl: [defaultHeaderSettings.logoUrl],
+    websiteName: [defaultHeaderSettings.websiteName, Validators.required],
+    logoAlt: [defaultHeaderSettings.logoAlt || ''],
+    logoWidth: [defaultHeaderSettings.logoWidth || '32px'],
+    logoHeight: [defaultHeaderSettings.logoHeight || '32px'],
+  });
+
   constructor() {
     this.sectionForm.valueChanges.subscribe(() =>
       this.previewSection.set(this.buildSectionFromForm(false)),
@@ -122,6 +133,9 @@ export class Settings {
         { emitEvent: false },
       );
     });
+    this.headerSettings$.subscribe((settings) =>
+      this.headerForm.patchValue(settings, { emitEvent: false }),
+    );
   }
 
   async signInWithGoogle(): Promise<void> {
@@ -213,6 +227,23 @@ export class Settings {
     }
   }
 
+  async uploadLogoImage(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+    this.uploadStatus.set('Uploading logo...');
+    try {
+      const url = await this.websiteData.uploadImage(file);
+      this.headerForm.patchValue({ logoUrl: url });
+      this.uploadStatus.set('Logo uploaded and attached.');
+    } catch (error) {
+      this.uploadStatus.set('Logo upload failed. Check Firebase Storage rules.');
+      console.error(error);
+    }
+  }
+
   async saveTheme(): Promise<void> {
     await this.runTask(
       () => this.websiteData.saveThemeSettings({ id: 'global', ...this.themeForm.getRawValue() }),
@@ -233,6 +264,22 @@ export class Settings {
       copyright: value.copyright,
     };
     await this.runTask(() => this.websiteData.saveFooterSettings(settings), 'Footer saved.');
+  }
+
+  async saveHeader(): Promise<void> {
+    const value = this.headerForm.getRawValue();
+    const settings: HeaderSettings = {
+      id: 'global',
+      logoUrl: value.logoUrl,
+      websiteName: value.websiteName,
+      logoAlt: value.logoAlt,
+      logoWidth: value.logoWidth,
+      logoHeight: value.logoHeight,
+    };
+    await this.runTask(
+      () => this.websiteData.saveHeaderSettings(settings),
+      'Header settings saved.',
+    );
   }
 
   async exportSettings(): Promise<void> {

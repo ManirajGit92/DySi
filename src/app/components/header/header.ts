@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { MenuItem } from '../../core/models/website.models';
+import { HeaderSettings, MenuItem } from '../../core/models/website.models';
 
 @Component({
   standalone: true,
@@ -16,6 +16,7 @@ export class HeaderComponent {
   @Input() isDarkTheme = false;
   @Input() showTopNavMenu = true;
   @Input() menus: MenuItem[] = [];
+  @Input() headerSettings: HeaderSettings | null = null;
   @Output() sectionSelected = new EventEmitter<string>();
   @Output() themeToggled = new EventEmitter<void>();
 

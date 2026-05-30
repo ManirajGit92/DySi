@@ -7,8 +7,8 @@
 
 @if (!isAdminRoute() && themeService.settings().showHeader) {
 <app-header [menus]="menus()" [activeSection]="scrollService.activeSection()" [isDarkTheme]="themeService.isDark()"
-  [showTopNavMenu]="themeService.settings().showTopNavMenu" (sectionSelected)="scrollToSection($event)"
-  (themeToggled)="toggleTheme()" />
+  [showTopNavMenu]="themeService.settings().showTopNavMenu" [headerSettings]="headerSettings()"
+  (sectionSelected)="scrollToSection($event)" (themeToggled)="toggleTheme()" />
 }
 
 @if (isLandingRoute()) {

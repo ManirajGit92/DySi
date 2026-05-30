@@ -24,6 +24,9 @@
       <button type="button" [class.active]="activeTab() === 'theme'" (click)="activeTab.set('theme')">
         <i class="fa-solid fa-palette"></i> Theme
       </button>
+      <button type="button" [class.active]="activeTab() === 'header'" (click)="activeTab.set('header')">
+        <i class="fa-solid fa-heading"></i> Header
+      </button>
       <button type="button" [class.active]="activeTab() === 'footer'" (click)="activeTab.set('footer')">
         <i class="fa-solid fa-shoe-prints"></i> Footer
       </button>
@@ -183,6 +186,26 @@
             </select>
           </label>
         </div>
+      </form>
+      }
+
+      @if (activeTab() === 'header') {
+      <form class="card editor-form" [formGroup]="headerForm" (ngSubmit)="saveHeader()">
+        <div class="form-header">
+          <h2>Header Settings</h2>
+          <button class="btn btn--primary" type="submit">Save Header</button>
+        </div>
+        <div class="form-grid">
+          <label class="wide">Website Name <input formControlName="websiteName" placeholder="DySi" /></label>
+          <label>Logo URL <input formControlName="logoUrl" placeholder="https://..." /></label>
+          <label>Upload Logo <input type="file" accept="image/*" (change)="uploadLogoImage($event)" /></label>
+          <label>Logo Alt Text <input formControlName="logoAlt" placeholder="Logo alternative text" /></label>
+          <label>Logo Width <input formControlName="logoWidth" placeholder="32px" /></label>
+          <label>Logo Height <input formControlName="logoHeight" placeholder="32px" /></label>
+        </div>
+        @if (uploadStatus()) {
+        <p class="status">{{ uploadStatus() }}</p>
+        }
       </form>
       }
 

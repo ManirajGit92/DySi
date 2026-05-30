@@ -5,10 +5,19 @@ import { filter, Subscription } from 'rxjs';
 
 import { FooterComponent } from './components/footer/footer';
 import { HeaderComponent } from './components/header/header';
-import { FooterSettings, MenuItem, WebsiteSection } from './core/models/website.models';
+import {
+  FooterSettings,
+  HeaderSettings,
+  MenuItem,
+  WebsiteSection,
+} from './core/models/website.models';
 import { ScrollService } from './core/services/scroll.service';
 import { ThemeService } from './core/services/theme.service';
-import { WebsiteDataService, defaultFooterSettings } from './core/services/website-data.service';
+import {
+  WebsiteDataService,
+  defaultFooterSettings,
+  defaultHeaderSettings,
+} from './core/services/website-data.service';
 import { DynamicSectionComponent } from './shared/dynamic-section/dynamic-section';
 
 @Component({
@@ -31,6 +40,7 @@ export class App implements OnInit, AfterViewInit, OnDestroy {
   readonly menus = signal<MenuItem[]>([]);
   readonly sections = signal<WebsiteSection[]>([]);
   readonly footerSettings = signal<FooterSettings>(defaultFooterSettings);
+  readonly headerSettings = signal<HeaderSettings>(defaultHeaderSettings);
 
   private fadeObserver: IntersectionObserver | null = null;
   private readonly subscriptions = new Subscription();
@@ -69,6 +79,9 @@ export class App implements OnInit, AfterViewInit, OnDestroy {
     );
     this.subscriptions.add(
       this.websiteData.footerSettings$.subscribe((settings) => this.footerSettings.set(settings)),
+    );
+    this.subscriptions.add(
+      this.websiteData.headerSettings$.subscribe((settings) => this.headerSettings.set(settings)),
     );
     this.subscriptions.add(
       this.router.events

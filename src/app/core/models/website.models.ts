@@ -92,3 +92,12 @@ export interface FooterLink {
   url: string;
   icon?: string;
 }
+
+export interface HeaderSettings {
+  id?: string;
+  logoUrl: string;
+  websiteName: string;
+  logoAlt?: string;
+  logoWidth?: string;
+  logoHeight?: string;
+}

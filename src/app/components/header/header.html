@@ -1,7 +1,12 @@
 <header class="site-header">
   <a class="brand" href="#home" (click)="$event.preventDefault(); selectSection('home')" aria-label="DySi home">
-    <span class="brand__mark">D</span>
-    <span>DySi</span>
+    @if (headerSettings?.logoUrl) {
+    <img [src]="headerSettings?.logoUrl" [alt]="headerSettings?.logoAlt || 'Logo'"
+      [style.width]="headerSettings?.logoWidth" [style.height]="headerSettings?.logoHeight" class="brand__logo" />
+    } @else {
+    <span class="brand__mark">{{ (headerSettings?.websiteName || 'DySi').charAt(0) }}</span>
+    }
+    <span>{{ headerSettings?.websiteName || 'DySi' }}</span>
   </a>
 
   <nav *ngIf="showTopNavMenu" class="nav" [class.nav--open]="isMenuOpen()" aria-label="Primary navigation">

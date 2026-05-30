@@ -24,7 +24,13 @@ import {
 import { Storage, getDownloadURL, ref, uploadBytes } from '@angular/fire/storage';
 import { Observable, catchError, map, of, startWith, tap } from 'rxjs';
 
-import { FooterSettings, MenuItem, ThemeSettings, WebsiteSection } from '../models/website.models';
+import {
+  FooterSettings,
+  HeaderSettings,
+  MenuItem,
+  ThemeSettings,
+  WebsiteSection,
+} from '../models/website.models';
 
 @Injectable({ providedIn: 'root' })
 export class WebsiteDataService {
@@ -113,6 +119,19 @@ export class WebsiteDataService {
     }),
   );
 
+  readonly headerSettingsDocs$ = collectionData(collection(this.firestore, 'headerSettings'), {
+    idField: 'id',
+  }) as Observable<HeaderSettings[]>;
+
+  readonly headerSettings$ = this.headerSettingsDocs$.pipe(
+    map((items) => items[0] ?? defaultHeaderSettings),
+    startWith(defaultHeaderSettings),
+    catchError((error) => {
+      console.error('Failed to load header settings from Firestore.', error);
+      return of(defaultHeaderSettings);
+    }),
+  );
+
   signInWithGoogle(): Promise<unknown> {
     return signInWithPopup(this.auth, new GoogleAuthProvider());
   }
@@ -172,6 +191,14 @@ export class WebsiteDataService {
     );
   }
 
+  saveHeaderSettings(settings: HeaderSettings): Promise<void> {
+    return setDoc(
+      doc(this.firestore, 'headerSettings', 'global'),
+      { ...settings, id: 'global' },
+      { merge: true },
+    );
+  }
+
   async uploadImage(file: File): Promise<string> {
     const storageRef = ref(this.storage, `website/${Date.now()}-${file.name}`);
     await uploadBytes(storageRef, file);
@@ -193,6 +220,7 @@ export class WebsiteDataService {
       ...defaultSections.map((section) => this.upsertSection(section)),
       this.saveThemeSettings(defaultThemeSettings),
       this.saveFooterSettings(defaultFooterSettings),
+      this.saveHeaderSettings(defaultHeaderSettings),
     ]);
   }
 
@@ -246,6 +274,15 @@ export const defaultFooterSettings: FooterSettings = {
     { label: 'X', url: '#', icon: 'fa-brands fa-x-twitter' },
   ],
   copyright: 'Copyright 2026 DySi. All rights reserved.',
+};
+
+export const defaultHeaderSettings: HeaderSettings = {
+  id: 'global',
+  logoUrl: '',
+  websiteName: 'DySi',
+  logoAlt: 'DySi Logo',
+  logoWidth: '32px',
+  logoHeight: '32px',
 };
 
 export const defaultMenus: MenuItem[] = [
