@@ -95,14 +95,12 @@ export class App implements OnInit, AfterViewInit, OnDestroy {
           this.isLandingRoute.set(landing);
           this.isAdminRoute.set(admin);
 
-          if (landing) {
-            window.setTimeout(() => {
-              this.initFadeObserver();
-              if (fragment) {
-                this.scrollToSection(fragment);
-              }
-            }, 80);
-          }
+          window.setTimeout(() => {
+            this.initFadeObserver();
+            if (landing && fragment) {
+              this.scrollToSection(fragment);
+            }
+          }, 80);
         }),
     );
 
