@@ -256,7 +256,7 @@ export const defaultThemeSettings: ThemeSettings = {
   containerWidth: '1120px',
   showTopNavMenu: true,
   showHeader: true,
-  themeMode: 'auto',
+  themeMode: 'light',
 };
 
 export const defaultFooterSettings: FooterSettings = {

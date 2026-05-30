@@ -6,6 +6,7 @@ import { FirestoreService } from '../../core/services/firestore.service';
 import { Settings } from '../settings/settings';
 import { BookingsAdminComponent } from './bookings-admin.component';
 import { Product } from '../../core/models/product.models';
+import { Router } from '@angular/router';
 
 interface Order {
   id?: string;
@@ -45,7 +46,7 @@ interface CategoryPerformance {
 })
 export class AdminComponent {
   activeTab: string = 'dashboard';
-  isDarkTheme: boolean = true;
+  isDarkTheme: boolean = false;
   products = signal<Product[]>([]);
   editing = signal(false);
   viewMode = signal<'grid' | 'list'>('grid');
@@ -159,13 +160,18 @@ export class AdminComponent {
 
   productPreview = computed(() => this.productForm.value as Product);
 
-  constructor() {
+  constructor(private router: Router) {
     this.firestoreService.getProducts().subscribe((products) => this.products.set(products));
     this.firestoreService.getOrders().subscribe((orders) => this.orders.set(orders));
   }
 
   toggleTheme() {
     this.isDarkTheme = !this.isDarkTheme;
+  }
+
+  toggleAndNavigate() {
+    this.toggleTheme();             // 1. Toggle the theme
+    this.router.navigate(['/']);    // 2. Navigate to the homepage
   }
 
   selectTab(tab: string): void {
