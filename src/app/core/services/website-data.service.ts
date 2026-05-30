@@ -312,8 +312,8 @@ export const defaultSections: WebsiteSection[] = [
       'We design scalable web platforms, automation workflows, and data-led digital products for ambitious businesses.',
     imageUrl:
       'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=80',
-    buttonText: 'Start a Project',
-    buttonLink: 'contact',
+    buttonText: 'Book a Tour',
+    buttonLink: '/bookings',
     backgroundColor: '#101a4a',
     textColor: '#ffffff',
     fontFamily: 'Inter',

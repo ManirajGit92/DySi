@@ -4,6 +4,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { TabsModule } from 'primeng/tabs';
 import { FirestoreService } from '../../core/services/firestore.service';
 import { Settings } from '../settings/settings';
+import { BookingsAdminComponent } from './bookings-admin.component';
 import { Product } from '../../core/models/product.models';
 
 interface Order {
@@ -31,7 +32,14 @@ interface CategoryPerformance {
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, TabsModule, Settings],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    TabsModule,
+    Settings,
+    BookingsAdminComponent,
+  ],
   templateUrl: './admin.html',
   styleUrls: ['./admin.scss'],
 })

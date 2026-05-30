@@ -7,6 +7,10 @@ export const routes: Routes = [
       import('./pages/services-page/services-page').then((m) => m.ServicesPageComponent),
   },
   {
+    path: 'bookTicket',
+    loadComponent: () => import('./pages/booking/booking-page').then((m) => m.BookingPageComponent),
+  },
+  {
     path: 'admin',
     loadComponent: () => import('./pages/admin/admin').then((m) => m.AdminComponent),
   },

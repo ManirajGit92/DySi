@@ -1,0 +1,172 @@
+<section class="booking-page section">
+  <p-toast position="top-right"></p-toast>
+
+  <div class="booking-hero card reveal">
+    <div class="hero-copy">
+      <p class="eyebrow">Tour Bus Booking</p>
+      <h1>Reserve your next travel experience in three easy steps.</h1>
+      <p>Choose seats, package, bus type and book with Firestore-powered reliability. Your itinerary is saved
+        instantly.</p>
+      <div class="hero-meta">
+        <div>
+          <strong>{{ bookingForm.value.packageName }}</strong>
+          <span>{{ selectedPackage().description }}</span>
+        </div>
+        <div>
+          <strong>{{ bookingForm.value.passengers || 1 }} passengers</strong>
+          <span>Flexible group and family-friendly travel.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <img [src]="selectedPackage().imageUrl" alt="Tour package banner" />
+      <div class="hero-banner">
+        <span>Featured Tour</span>
+        <strong>{{ selectedPackage().name }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="booking-grid">
+    <div class="booking-form card reveal">
+      <div class="section-header">
+        <span class="eyebrow">Booking Details</span>
+        <h2>Customer & travel information</h2>
+      </div>
+
+      <form [formGroup]="bookingForm" (ngSubmit)="submitBooking()">
+        <div class="field-grid">
+          <label>
+            Full Name <span>*</span>
+            <input pInputText formControlName="fullName" placeholder="Your full name" />
+          </label>
+          <label>
+            Mobile Number <span>*</span>
+            <input pInputText formControlName="mobileNumber" placeholder="+91 9876543210" />
+          </label>
+          <label>
+            Email Address <span>*</span>
+            <input pInputText formControlName="email" placeholder="you@example.com" />
+          </label>
+          <label>
+            Pickup Location <span>*</span>
+            <input pInputText formControlName="pickupLocation" placeholder="City, landmark or station" />
+          </label>
+          <label>
+            Drop Location <span>*</span>
+            <input pInputText formControlName="dropLocation" placeholder="Final destination" />
+          </label>
+          <label class="field-full">
+            Address <span>*</span>
+            <textarea pInputTextarea rows="3" formControlName="address"
+              placeholder="Pickup address or hotel details"></textarea>
+          </label>
+          <label>
+            Number of Passengers <span>*</span>
+            <p-inputNumber inputId="passengers" formControlName="passengers" [min]="1" [max]="40"></p-inputNumber>
+          </label>
+          <label>
+            Travel Date <span>*</span>
+            <p-datepicker formControlName="travelDate" dateFormat="yy-mm-dd"></p-datepicker>
+          </label>
+          <label>
+            Return Date
+            <p-datepicker formControlName="returnDate" dateFormat="yy-mm-dd"></p-datepicker>
+          </label>
+          <label>
+            Bus Type <span>*</span>
+            <p-select [options]="busTypes()" formControlName="busType" placeholder="Select bus type"></p-select>
+          </label>
+          <label>
+            Tour Package <span>*</span>
+            <p-select [options]="packages().map(pkg => pkg.name)" formControlName="packageName"
+              placeholder="Select package"></p-select>
+          </label>
+          <label>
+            Payment Method <span>*</span>
+            <p-select [options]="paymentMethods()" formControlName="paymentMethod"
+              placeholder="Select payment method"></p-select>
+          </label>
+          <label class="field-full">
+            Special Requests / Notes
+            <textarea pInputTextarea rows="4" formControlName="specialRequests"
+              placeholder="Any extra requests for your journey"></textarea>
+          </label>
+        </div>
+
+        <div class="section-header section-header--small">
+          <span class="eyebrow">Seat selection</span>
+          <h3>Choose your seats</h3>
+        </div>
+
+        <div class="seat-grid">
+          <button type="button" *ngFor="let seat of seatLayout()" [class]="seatClass(seat)" (click)="toggleSeat(seat)">
+            {{ seat }}
+          </button>
+        </div>
+
+        <div class="form-actions">
+          <button pButton type="submit" label="Confirm Booking" class="btn--primary"
+            [disabled]="bookingForm.invalid || isSubmitting()"></button>
+          <button pButton type="button" label="Reset" class="btn--ghost" (click)="resetForm()"></button>
+        </div>
+      </form>
+    </div>
+
+    <aside class="booking-summary card reveal">
+      <div class="summary-header">
+        <span class="eyebrow">Booking summary</span>
+        <h3>Tour package details</h3>
+      </div>
+
+      <div class="package-card">
+        <img [src]="selectedPackage().imageUrl" alt="Package image" />
+        <div class="package-copy">
+          <p class="package-badge">{{ selectedPackage().name }}</p>
+          <p>{{ selectedPackage().description }}</p>
+        </div>
+      </div>
+
+      <div class="summary-list">
+        <div>
+          <span>Bus type</span>
+          <strong>{{ bookingForm.value.busType || 'Choose a bus' }}</strong>
+        </div>
+        <div>
+          <span>Passengers</span>
+          <strong>{{ bookingForm.value.passengers || 1 }}</strong>
+        </div>
+        <div>
+          <span>Travel date</span>
+          <strong>{{ bookingForm.value.travelDate ? (bookingForm.value.travelDate | date: 'mediumDate') : 'Not
+            selected' }}</strong>
+        </div>
+        <div>
+          <span>Return date</span>
+          <strong>{{ bookingForm.value.returnDate ? (bookingForm.value.returnDate | date: 'mediumDate') :
+            'Optional' }}</strong>
+        </div>
+        <div>
+          <span>Selected seats</span>
+          <strong>{{ selectedSeats().length }} seat(s)</strong>
+        </div>
+      </div>
+
+      <div class="fare-card">
+        <span>Estimated fare</span>
+        <strong>₹{{ fareEstimate() | number:'1.0-0' }}</strong>
+        <p>Includes package, bus surcharge, seat selection and passenger count.</p>
+      </div>
+
+      <div class="cta-block">
+        <p>All bookings are stored securely in Firestore. You will receive a booking ID after confirmation.</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="loading-overlay" *ngIf="isSubmitting()">
+    <div class="spinner"></div>
+    <span>Processing booking...</span>
+  </div>
+</section>

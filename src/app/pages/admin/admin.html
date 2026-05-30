@@ -21,6 +21,9 @@
       <button class="tab" [class.active]="activeTab === 'analytics'" (click)="selectTab('analytics')">
         Analytics
       </button>
+      <button class="tab" [class.active]="activeTab === 'bookings'" (click)="selectTab('bookings')">
+        Bookings
+      </button>
     </div>
 
     <div class="tab-content">
@@ -388,6 +391,10 @@
       <div *ngIf="activeTab === 'users'">
         <h2>Users</h2>
         <p>Users management content...</p>
+      </div>
+
+      <div *ngIf="activeTab === 'bookings'">
+        <app-bookings-admin></app-bookings-admin>
       </div>
 
       <div *ngIf="activeTab === 'analytics'">

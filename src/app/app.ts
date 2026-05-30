@@ -76,7 +76,8 @@ export class App implements OnInit, AfterViewInit, OnDestroy {
         .subscribe(() => {
           const path = this.router.url.split('#')[0].split('?')[0];
           const fragment = this.router.parseUrl(this.router.url).fragment;
-          const landing = path !== '/services' && path !== '/admin' && path !== '/test';
+          const landing =
+            path !== '/services' && path !== '/admin' && path !== '/test' && path !== '/bookTicket';
           const admin = path === '/admin';
           this.isLandingRoute.set(landing);
           this.isAdminRoute.set(admin);

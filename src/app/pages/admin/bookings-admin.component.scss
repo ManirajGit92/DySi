@@ -1,0 +1,118 @@
+.bookings-admin {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.admin-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-card strong {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 2rem;
+  color: #111827;
+}
+
+.stat-card--revenue {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  color: white;
+}
+
+.filter-bar {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.9rem;
+  align-items: end;
+}
+
+.filter-group {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.filter-group span {
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.btn-export {
+  min-height: 3rem;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.dialog-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.dialog-status {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.booking-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.notes-block {
+  padding: 1.25rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 1rem;
+  background: rgba(248, 250, 252, 0.95);
+}
+
+@media (max-width: 1024px) {
+  .admin-summary,
+  .filter-bar,
+  .dialog-grid,
+  .booking-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: end;
+  padding: 1rem;
+  background: var(--surface-card);
+  border-radius: 12px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  gap: 0.5rem;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.button-group {
+  justify-content: end;
+}

@@ -1,0 +1,165 @@
+<section class="bookings-admin">
+  <div class="admin-summary">
+    <article class="stat-card">
+      <span>Total Bookings</span>
+      <strong>{{ summary().total }}</strong>
+    </article>
+    <article class="stat-card">
+      <span>Pending</span>
+      <strong>{{ summary().pending }}</strong>
+    </article>
+    <article class="stat-card">
+      <span>Confirmed</span>
+      <strong>{{ summary().confirmed }}</strong>
+    </article>
+    <article class="stat-card">
+      <span>Cancelled</span>
+      <strong>{{ summary().cancelled }}</strong>
+    </article>
+    <article class="stat-card stat-card--revenue">
+      <span>Revenue</span>
+      <strong>₹{{ summary().revenue | number:'1.0-0' }}</strong>
+    </article>
+  </div>
+  <div class="filter-bar">
+
+    <!-- Search -->
+    <div class="filter-group">
+      <label>Search</label>
+
+      <input pInputText type="text" placeholder="Search bookings" [ngModel]="searchText()"
+        (ngModelChange)="searchText.set($event)" class="w-full" />
+    </div>
+
+    <!-- Status -->
+    <div class="filter-group">
+      <label>Status</label>
+
+      <p-select [options]="bookingStatuses" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)"
+        placeholder="Select Status" class="w-full">
+      </p-select>
+    </div>
+
+    <!-- Bus Type -->
+    <div class="filter-group">
+      <label>Bus Type</label>
+
+      <p-select [options]="busTypes" [ngModel]="busTypeFilter()" (ngModelChange)="busTypeFilter.set($event)"
+        placeholder="Select Bus Type" class="w-full">
+      </p-select>
+    </div>
+
+    <!-- Package -->
+    <div class="filter-group">
+      <label>Package</label>
+
+      <p-select [options]="packageOptions()" [ngModel]="packageFilter()" (ngModelChange)="packageFilter.set($event)"
+        placeholder="Select Package" class="w-full">
+      </p-select>
+    </div>
+
+    <!-- Start Date -->
+    <div class="filter-group">
+      <label>Travel Date (Start)</label>
+
+      <p-datepicker [ngModel]="dateFilter()?.[0]" (ngModelChange)="onDateRangeChange($event, 0)" dateFormat="yy-mm-dd"
+        appendTo="body" class="w-full">
+      </p-datepicker>
+    </div>
+
+    <!-- End Date -->
+    <div class="filter-group">
+      <label>Travel Date (End)</label>
+
+      <p-datepicker [ngModel]="dateFilter()?.[1]" (ngModelChange)="onDateRangeChange($event, 1)" dateFormat="yy-mm-dd"
+        appendTo="body" class="w-full">
+      </p-datepicker>
+    </div>
+
+    <!-- Export Button -->
+    <div class="filter-group button-group">
+      <button pButton type="button" label="Export Excel" icon="pi pi-file-excel" class="p-button-success"
+        (click)="exportBookings()">
+      </button>
+    </div>
+
+  </div>
+
+  <p-table [value]="filteredBookings()" [paginator]="true" [rows]="rows()" dataKey="id" responsiveLayout="scroll">
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="bookingId">Booking</th>
+        <th pSortableColumn="fullName">Customer</th>
+        <th pSortableColumn="packageName">Package</th>
+        <th pSortableColumn="busType">Bus Type</th>
+        <th pSortableColumn="bookingStatus">Status</th>
+        <th pSortableColumn="paymentStatus">Payment</th>
+        <th pSortableColumn="travelDate">Travel Date</th>
+        <th pSortableColumn="totalFare">Fare</th>
+        <th>Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-booking>
+      <tr>
+        <td>{{ booking.bookingId }}</td>
+        <td>{{ booking.fullName }}</td>
+        <td>{{ booking.packageName }}</td>
+        <td>{{ booking.busType }}</td>
+        <td>{{ booking.bookingStatus }}</td>
+        <td>{{ booking.paymentStatus }}</td>
+        <td>{{ booking.travelDate | date:'mediumDate' }}</td>
+        <td>₹{{ booking.totalFare | number:'1.0-0' }}</td>
+        <td class="actions-cell">
+          <button pButton type="button" label="View" class="p-button-text" (click)="openDetails(booking)"></button>
+          <button pButton type="button" label="Delete" class="p-button-danger p-button-text"
+            (click)="deleteBooking(booking)"></button>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <p-dialog header="Booking details" [visible]="showDialog()" (visibleChange)="showDialog.set($event)" [modal]="true"
+    [style]="{ width: '760px' }" [draggable]="false" [resizable]="false">
+    <ng-container *ngIf="selectedBooking()">
+      <div class="dialog-grid">
+        <div>
+          <strong>{{ selectedBooking()?.bookingId }}</strong>
+          <p>{{ selectedBooking()?.fullName }}</p>
+          <p>{{ selectedBooking()?.email }}</p>
+          <p>{{ selectedBooking()?.mobileNumber }}</p>
+        </div>
+        <div class="dialog-status">
+          <span>Status</span>
+          <select [ngModel]="selectedBooking()?.bookingStatus" (ngModelChange)="updateStatus($event)">
+            <option *ngFor="let status of bookingStatuses" [value]="status">{{ status }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="booking-details-grid">
+        <div>
+          <h4>Travel summary</h4>
+          <p><strong>Package:</strong> {{ selectedBooking()?.packageName }}</p>
+          <p><strong>Bus type:</strong> {{ selectedBooking()?.busType }}</p>
+          <p><strong>Travel date:</strong> {{ selectedBooking()?.travelDate | date:'mediumDate' }}</p>
+          <p><strong>Return date:</strong> {{ selectedBooking()?.returnDate ? (selectedBooking()?.returnDate |
+            date:'mediumDate') : 'Not set' }}</p>
+          <p><strong>Seats:</strong> {{ selectedBooking()?.selectedSeats?.join(', ') || 'None' }}</p>
+        </div>
+        <div>
+          <h4>Booking details</h4>
+          <p><strong>Pickup:</strong> {{ selectedBooking()?.pickupLocation }}</p>
+          <p><strong>Drop:</strong> {{ selectedBooking()?.dropLocation }}</p>
+          <p><strong>Passengers:</strong> {{ selectedBooking()?.passengers }}</p>
+          <p><strong>Total fare:</strong> ₹{{ selectedBooking()?.totalFare | number:'1.0-0' }}</p>
+          <p><strong>Payment:</strong> {{ selectedBooking()?.paymentStatus }}</p>
+        </div>
+      </div>
+
+      <div class="notes-block">
+        <h4>Special requests</h4>
+        <p>{{ selectedBooking()?.specialRequests || 'None' }}</p>
+      </div>
+    </ng-container>
+  </p-dialog>
+</section>
