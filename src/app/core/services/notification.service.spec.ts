@@ -22,6 +22,7 @@ describe('NotificationService', () => {
     fullName: 'John Doe',
     mobileNumber: '9876543210',
     email: 'john@example.com',
+    aadhaarNumber: '123456789012',
     pickupLocation: 'Point A',
     dropLocation: 'Point B',
     address: '123 St',
