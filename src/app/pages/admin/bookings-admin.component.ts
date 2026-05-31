@@ -54,6 +54,7 @@ export class BookingsAdminComponent {
           booking.bookingId,
           booking.fullName,
           booking.email,
+          booking.aadhaarNumber,
           booking.packageName,
           booking.busType,
         ]
@@ -160,6 +161,7 @@ export class BookingsAdminComponent {
       BookingID: booking.bookingId,
       Name: booking.fullName,
       Email: booking.email,
+      AadhaarNumber: booking.aadhaarNumber,
       Package: booking.packageName,
       BusType: booking.busType,
       Status: booking.bookingStatus,

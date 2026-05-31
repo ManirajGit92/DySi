@@ -32,6 +32,7 @@ export interface Booking {
   paymentStatus: PaymentStatus;
   selectedSeats: string[];
   totalFare: number;
+  aadhaarNumber: string;
   createdDate?: Date | Timestamp;
   updatedDate?: Date | Timestamp;
   userId?: string | null;
@@ -69,6 +70,7 @@ export const sampleBookings: Booking[] = [
     fullName: 'Anaya Sharma',
     mobileNumber: '+919876543210',
     email: 'anaya@example.com',
+    aadhaarNumber: '987654321098',
     pickupLocation: 'MG Road, Bengaluru',
     dropLocation: 'Nandi Hills',
     address: 'No. 12, 2nd Main, Indiranagar, Bengaluru',

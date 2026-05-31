@@ -113,6 +113,7 @@ export class FirestoreService {
       fullName: booking.fullName,
       mobileNumber: booking.mobileNumber,
       email: booking.email,
+      aadhaarNumber: booking.aadhaarNumber,
       pickupLocation: booking.pickupLocation,
       dropLocation: booking.dropLocation,
       address: booking.address,

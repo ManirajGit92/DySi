@@ -82,6 +82,7 @@ describe('BookingPageComponent', () => {
       fullName: 'John Doe',
       mobileNumber: '9876543210' as any,
       email: 'john@example.com',
+      aadhaarNumber: '123456789012',
       pickupLocation: 'Station A',
       dropLocation: 'Hotel B',
       address: '123 Main St',

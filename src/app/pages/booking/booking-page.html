@@ -37,17 +37,21 @@
 
       <form [formGroup]="bookingForm" (ngSubmit)="submitBooking()">
         <div class="field-grid">
-          <label class="col-span-2">
+          <label class="col-span-3">
             <span class="label-text">Full Name <span class="required">*</span></span>
             <input pInputText formControlName="fullName" placeholder="Your full name" />
           </label>
-          <label class="col-span-2">
+          <label class="col-span-3">
             <span class="label-text">Mobile Number <span class="required">*</span></span>
             <input pInputText formControlName="mobileNumber" placeholder="+91 9876543210" />
           </label>
-          <label class="col-span-2">
+          <label class="col-span-3">
             <span class="label-text">Email Address <span class="required">*</span></span>
             <input pInputText formControlName="email" placeholder="you@example.com" />
+          </label>
+          <label class="col-span-3">
+            <span class="label-text">Aadhaar Number <span class="required">*</span></span>
+            <input pInputText formControlName="aadhaarNumber" placeholder="12-digit Aadhaar number" maxlength="12" />
           </label>
           <label class="col-span-3">
             <span class="label-text">Pickup Location <span class="required">*</span></span>
