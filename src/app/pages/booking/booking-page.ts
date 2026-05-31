@@ -19,6 +19,7 @@ import {
   defaultBookingPackages,
 } from '../../core/models/booking.models';
 import { WebsiteDataService } from '../../core/services/website-data.service';
+import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
   standalone: true,
@@ -43,6 +44,7 @@ export class BookingPageComponent {
   private readonly firestoreService = inject(FirestoreService);
   private readonly websiteData = inject(WebsiteDataService);
   private readonly messageService = inject(MessageService);
+  private readonly notificationService = inject(NotificationService);
 
   readonly isSubmitting = signal(false);
   readonly selectedSeats = signal<string[]>([]);
@@ -219,6 +221,35 @@ export class BookingPageComponent {
         summary: 'Booking submitted',
         detail: 'Your tour bus booking has been saved successfully.',
       });
+
+      this.notificationService.sendBookingConfirmation(booking).subscribe({
+        next: (results) => {
+          results.forEach((res) => {
+            if (res.success) {
+              this.messageService.add({
+                severity: 'success',
+                summary: `${res.type.toUpperCase()} Confirmation Sent`,
+                detail: `Sent successfully to ${res.recipient}.`,
+              });
+            } else {
+              this.messageService.add({
+                severity: 'error',
+                summary: `${res.type.toUpperCase()} Dispatch Failed`,
+                detail: res.error || `Could not dispatch ${res.type} notification.`,
+              });
+            }
+          });
+        },
+        error: (err) => {
+          console.error('Failed to send booking notifications:', err);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Notifications Failed',
+            detail: 'An error occurred while sending confirmation messages.',
+          });
+        },
+      });
+
       this.resetForm();
     } catch (error) {
       console.error(error);

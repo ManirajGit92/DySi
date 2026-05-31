@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { App } from './app';
 import { routes } from './app.routes';
-import { WebsiteDataService, defaultFooterSettings, defaultThemeSettings } from './core/services/website-data.service';
+import { WebsiteDataService, defaultFooterSettings, defaultThemeSettings, defaultHeaderSettings } from './core/services/website-data.service';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -40,6 +40,7 @@ describe('App', () => {
             ]),
             themeSettings$: of(defaultThemeSettings),
             footerSettings$: of(defaultFooterSettings),
+            headerSettings$: of(defaultHeaderSettings),
           },
         },
       ],

@@ -24,7 +24,7 @@ import { DynamicSectionComponent } from '../../shared/dynamic-section/dynamic-se
 
 @Component({
   selector: 'app-settings',
-  imports: [CommonModule, AsyncPipe, ReactiveFormsModule, RouterLink, DynamicSectionComponent],
+  imports: [CommonModule, AsyncPipe, ReactiveFormsModule, DynamicSectionComponent],
   templateUrl: './settings.html',
   styleUrl: './settings.scss',
 })

@@ -8,4 +8,9 @@ export const environment = {
     appId: '1:344179333498:web:0b75c9eb3136621c65dec3',
     measurementId: 'G-YXTD511F07',
   },
+  brevo: {
+    apiKey: 'YOUR_BREVO_API_KEY',
+    senderEmail: 'manirajmca.ac@gmail.com',
+    senderName: 'DySi Tours',
+  },
 };

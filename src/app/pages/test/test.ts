@@ -64,6 +64,6 @@ export class TestComponent implements OnInit {
   }
 
   objectKeys(obj: any) {
-    return Object.keys(obj);
+    return obj ? Object.keys(obj) : [];
   }
 }
