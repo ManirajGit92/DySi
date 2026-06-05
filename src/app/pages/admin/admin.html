@@ -26,6 +26,9 @@
       <button class="tab" [class.active]="activeTab === 'bookings'" (click)="selectTab('bookings')">
         Bookings
       </button>
+      <button class="tab" [class.active]="activeTab === 'booking-settings'" (click)="selectTab('booking-settings')">
+        Booking Settings
+      </button>
     </div>
 
     <div class="tab-content">
@@ -397,6 +400,10 @@
 
       <div *ngIf="activeTab === 'bookings'">
         <app-bookings-admin></app-bookings-admin>
+      </div>
+
+      <div *ngIf="activeTab === 'booking-settings'">
+        <app-booking-settings></app-booking-settings>
       </div>
 
       <div *ngIf="activeTab === 'analytics'">

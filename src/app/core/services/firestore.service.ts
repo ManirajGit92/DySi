@@ -5,14 +5,16 @@ import {
   collectionData,
   deleteDoc,
   doc,
+  docData,
   Firestore,
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
 } from '@angular/fire/firestore';
 import { catchError, map, Observable, of } from 'rxjs';
-import { Booking, sampleBookings } from '../models/booking.models';
+import { Booking, sampleBookings, BookingSettingsConfig } from '../models/booking.models';
 import { Product } from '../models/product.models';
 
 interface FirestoreOrder {
@@ -136,6 +138,20 @@ export class FirestoreService {
   async deleteBooking(bookingId: string): Promise<void> {
     const bookingRef = doc(this.firestore, 'bookings', bookingId);
     await deleteDoc(bookingRef);
+  }
+
+  getBookingSettings(): Observable<BookingSettingsConfig | null> {
+    const docRef = doc(this.firestore, 'booking_settings', 'current');
+    return docData(docRef) as Observable<BookingSettingsConfig | null>;
+  }
+
+  async saveBookingSettings(settings: BookingSettingsConfig): Promise<void> {
+    const docRef = doc(this.firestore, 'booking_settings', 'current');
+    await setDoc(docRef, {
+      fields: settings.fields,
+      seatLayout: settings.seatLayout,
+      updatedAt: serverTimestamp(),
+    });
   }
 
   getCollections(): string[] {

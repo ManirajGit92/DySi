@@ -1,0 +1,464 @@
+<div class="booking-settings-container">
+  <p-toast></p-toast>
+
+  <header class="settings-header">
+    <div>
+      <span class="eyebrow">Booking Administration</span>
+      <h1>Booking Page Configuration</h1>
+      <p>Configure the customer-facing booking form, dropdown variables, bus seat grids, and driver cabin layouts. Data is saved in Firestore.</p>
+    </div>
+    <button class="btn btn--primary save-btn" (click)="saveSettings()">
+      <i class="pi pi-save mr-2"></i> Save Configurations
+    </button>
+  </header>
+
+  <div class="settings-grid">
+    <!-- Config Accordion Panel -->
+    <div class="accordion-panel">
+      <div class="accordion">
+        
+        <!-- SECTION 1: Booking Page Fields Management -->
+        <div class="accordion-item" [class.active]="openSection() === 'fields'">
+          <button class="accordion-header" (click)="toggleSection('fields')">
+            <span class="header-text"><i class="pi pi-list icon-prefix"></i> Booking Page Fields Management</span>
+            <i class="pi accordion-chevron" [class.pi-chevron-down]="openSection() !== 'fields'" [class.pi-chevron-up]="openSection() === 'fields'"></i>
+          </button>
+          
+          <div class="accordion-content">
+            <!-- Add new custom field section -->
+            <div class="sub-card">
+              <h4>Add New Custom Field</h4>
+              <form [formGroup]="customFieldForm" (ngSubmit)="addField()" class="custom-field-form">
+                <div class="form-row">
+                  <label class="form-col">
+                    <span>Field Label *</span>
+                    <input pInputText formControlName="label" placeholder="e.g. Age, Destination Address" />
+                  </label>
+                  <label class="form-col">
+                    <span>Placeholder</span>
+                    <input pInputText formControlName="placeholder" placeholder="e.g. Enter your age" />
+                  </label>
+                </div>
+                <div class="form-row">
+                  <label class="form-col">
+                    <span>Field Type *</span>
+                    <select formControlName="type" class="native-select">
+                      <option *ngFor="let opt of fieldTypes" [value]="opt.value">{{ opt.label }}</option>
+                    </select>
+                  </label>
+                  <div class="form-col flex-center mt-4">
+                    <label class="flex-row">
+                      <input type="checkbox" formControlName="required" />
+                      <span>Required field?</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <!-- If type is dropdown or radio, allow comma-separated options -->
+                <div class="form-row" *ngIf="customFieldForm.value.type === 'dropdown' || customFieldForm.value.type === 'radio'">
+                  <label class="form-col span-12">
+                    <span>Options List (comma separated)</span>
+                    <input pInputText formControlName="options" placeholder="e.g. Option A, Option B, Option C" />
+                  </label>
+                </div>
+                
+                <button type="submit" class="btn btn--primary mt-2" [disabled]="customFieldForm.invalid">
+                  <i class="pi pi-plus mr-1"></i> Add Custom Field
+                </button>
+              </form>
+            </div>
+
+            <!-- List of existing fields -->
+            <div class="sub-card mt-4">
+              <h4>Field Configurations List</h4>
+              <p class="description">Drag and drop fields to reorder them or toggle their status. Core fields cannot be deleted.</p>
+              
+              <!-- Edit Field Modal (Inline) -->
+              <div *ngIf="editingField" class="edit-field-overlay">
+                <div class="edit-field-modal">
+                  <h3>Edit Field: {{ editingField.key }}</h3>
+                  <form [formGroup]="editFieldForm" (ngSubmit)="saveFieldEdit()">
+                    <label>
+                      <span>Label</span>
+                      <input pInputText formControlName="label" />
+                    </label>
+                    <label class="mt-2">
+                      <span>Placeholder</span>
+                      <input pInputText formControlName="placeholder" />
+                    </label>
+                    <label class="flex-row mt-2">
+                      <input type="checkbox" formControlName="required" />
+                      <span>Required field?</span>
+                    </label>
+                    <div class="form-actions mt-3">
+                      <button type="submit" class="btn btn--primary" [disabled]="editFieldForm.invalid">Save Changes</button>
+                      <button type="button" class="btn btn--ghost" (click)="cancelEditField()">Cancel</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <div class="fields-list">
+                <div 
+                  *ngFor="let field of fieldsList(); let i = index" 
+                  class="field-item-row"
+                  [class.dragging]="draggedIndex === i"
+                  draggable="true"
+                  (dragstart)="onDragStart(i)"
+                  (dragover)="onDragOver($event, i)"
+                  (drop)="onDrop($event, i)">
+                  
+                  <div class="drag-handle" title="Drag to reorder">
+                    <i class="pi pi-align-justify"></i>
+                  </div>
+                  
+                  <div class="field-meta">
+                    <strong class="field-label">{{ field.label }}</strong>
+                    <span class="field-key">{{ field.key }} <span class="badge" [class.badge-core]="isCoreField(field.key)">{{ isCoreField(field.key) ? 'Core' : 'Custom' }}</span></span>
+                  </div>
+
+                  <div class="field-type-badge">
+                    {{ field.type | titlecase }}
+                  </div>
+
+                  <div class="field-toggles">
+                    <label class="switch-container" title="Visible?">
+                      <input type="checkbox" [checked]="field.visible" (change)="toggleFieldVisibility(field)" />
+                      <span class="switch-label">Visible</span>
+                    </label>
+                    <label class="switch-container" title="Required?">
+                      <input type="checkbox" [checked]="field.required" (change)="toggleFieldRequired(field)" />
+                      <span class="switch-label">Required</span>
+                    </label>
+                  </div>
+
+                  <div class="field-actions">
+                    <button class="action-icon-btn text-info" (click)="startEditField(field)" title="Edit Label/Placeholder">
+                      <i class="pi pi-pencil"></i>
+                    </button>
+                    <button 
+                      class="action-icon-btn text-danger" 
+                      [disabled]="isCoreField(field.key)" 
+                      [class.disabled]="isCoreField(field.key)"
+                      (click)="deleteField(field)" 
+                      title="Delete custom field">
+                      <i class="pi pi-trash"></i>
+                    </button>
+                    <div class="order-arrows">
+                      <button class="arrow-btn" (click)="moveFieldUp(i)" [disabled]="i === 0" title="Move Up"><i class="pi pi-chevron-up"></i></button>
+                      <button class="arrow-btn" (click)="moveFieldDown(i)" [disabled]="i === fieldsList().length - 1" title="Move Down"><i class="pi pi-chevron-down"></i></button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: Dropdown Data Management -->
+        <div class="accordion-item" [class.active]="openSection() === 'dropdowns'">
+          <button class="accordion-header" (click)="toggleSection('dropdowns')">
+            <span class="header-text"><i class="pi pi-cog icon-prefix"></i> Dropdown Data Management</span>
+            <i class="pi accordion-chevron" [class.pi-chevron-down]="openSection() !== 'dropdowns'" [class.pi-chevron-up]="openSection() === 'dropdowns'"></i>
+          </button>
+          
+          <div class="accordion-content">
+            <div class="sub-card">
+              <h4>Select Dropdown/Radio Field</h4>
+              <div class="form-row">
+                <label class="form-col span-12">
+                  <select [ngModel]="selectedDropdownFieldKey()" (ngModelChange)="selectedDropdownFieldKey.set($event)" class="native-select">
+                    <option value="" disabled>-- Select a field --</option>
+                    <option *ngFor="let field of dropdownFields()" [value]="field.key">{{ field.label }} ({{ field.key }})</option>
+                  </select>
+                </label>
+              </div>
+
+              <div *ngIf="selectedDropdownField()" class="options-manager mt-4">
+                <div class="options-header-row">
+                  <h5>Options for "{{ selectedDropdownField()?.label }}"</h5>
+                </div>
+
+                <!-- List of current options -->
+                <div class="options-list mt-2">
+                  <div *ngFor="let opt of selectedDropdownField()?.options; let idx = index" class="option-item-row">
+                    <span class="option-index">{{ idx + 1 }}.</span>
+                    
+                    <!-- Inline editing option -->
+                    <div *ngIf="editingOptionIndex() === idx; else viewOpt" class="option-edit-wrap">
+                      <input pInputText [ngModel]="editingOptionVal()" (ngModelChange)="editingOptionVal.set($event)" />
+                      <button class="btn btn--primary btn--sm" (click)="saveOptionEdit()"><i class="pi pi-check"></i></button>
+                      <button class="btn btn--ghost btn--sm" (click)="cancelEditOption()"><i class="pi pi-times"></i></button>
+                    </div>
+                    
+                    <ng-template #viewOpt>
+                      <span class="option-text">{{ opt }}</span>
+                      <div class="option-actions">
+                        <button class="action-icon-btn text-info" (click)="startEditOption(idx, opt)"><i class="pi pi-pencil"></i></button>
+                        <button class="action-icon-btn text-danger" (click)="deleteOption(idx)"><i class="pi pi-trash"></i></button>
+                        <button class="arrow-btn" (click)="moveOption(idx, 'up')" [disabled]="idx === 0"><i class="pi pi-chevron-up"></i></button>
+                        <button class="arrow-btn" (click)="moveOption(idx, 'down')" [disabled]="idx === (selectedDropdownField()?.options?.length || 0) - 1"><i class="pi pi-chevron-down"></i></button>
+                      </div>
+                    </ng-template>
+                  </div>
+                  <div *ngIf="!selectedDropdownField()?.options?.length" class="empty-state">
+                    No options configured. Add options below.
+                  </div>
+                </div>
+
+                <!-- Add option form -->
+                <div class="add-option-form mt-3">
+                  <label class="flex-grow">
+                    <input pInputText [ngModel]="newOptionVal()" (ngModelChange)="newOptionVal.set($event)" placeholder="Enter new option value" (keyup.enter)="addOption()" />
+                  </label>
+                  <button type="button" class="btn btn--primary" (click)="addOption()">
+                    <i class="pi pi-plus mr-1"></i> Add Option
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: Seat Layout Configuration -->
+        <div class="accordion-item" [class.active]="openSection() === 'seatLayout'">
+          <button class="accordion-header" (click)="toggleSection('seatLayout')">
+            <span class="header-text"><i class="pi pi-th-large icon-prefix"></i> Seat Layout Configuration</span>
+            <i class="pi accordion-chevron" [class.pi-chevron-down]="openSection() !== 'seatLayout'" [class.pi-chevron-up]="openSection() === 'seatLayout'"></i>
+          </button>
+          
+          <div class="accordion-content">
+            <div class="sub-card">
+              <h4>Choose Seating Arrangement Pattern</h4>
+              <p class="description">Select the seat grouping template. 2+2 layout has 4 columns per row, and 3+2 layout has 5 columns per row.</p>
+              
+              <div class="layout-toggle-buttons mt-3">
+                <button 
+                  type="button" 
+                  class="layout-toggle-btn"
+                  [class.active]="settings().seatLayout.layoutType === '2+2'"
+                  (click)="changeLayout('2+2')">
+                  <i class="pi pi-table mr-2"></i> 2 + 2 Layout
+                </button>
+                <button 
+                  type="button" 
+                  class="layout-toggle-btn"
+                  [class.active]="settings().seatLayout.layoutType === '3+2'"
+                  (click)="changeLayout('3+2')">
+                  <i class="pi pi-table mr-2"></i> 3 + 2 Layout
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 4: Seat Count Configuration -->
+        <div class="accordion-item" [class.active]="openSection() === 'seatCount'">
+          <button class="accordion-header" (click)="toggleSection('seatCount')">
+            <span class="header-text"><i class="pi pi-slack icon-prefix"></i> Seat Count Configuration</span>
+            <i class="pi accordion-chevron" [class.pi-chevron-down]="openSection() !== 'seatCount'" [class.pi-chevron-up]="openSection() === 'seatCount'"></i>
+          </button>
+          
+          <div class="accordion-content">
+            <div class="sub-card">
+              <h4>Configure Total Seats Capacity</h4>
+              <p class="description">Modify the total number of seats in the bus. The row letters and labels will automatically recalculate.</p>
+              
+              <div class="seat-count-control mt-3">
+                <button class="count-btn" (click)="setTotalSeats(settings().seatLayout.totalSeats - 1)" [disabled]="settings().seatLayout.totalSeats <= 4">-</button>
+                <div class="count-display">
+                  <strong>{{ settings().seatLayout.totalSeats }}</strong>
+                  <span>Total Seats</span>
+                </div>
+                <button class="count-btn" (click)="setTotalSeats(settings().seatLayout.totalSeats + 1)" [disabled]="settings().seatLayout.totalSeats >= 60">+</button>
+              </div>
+              
+              <div class="mt-3">
+                <label>
+                  <span>Manual Input:</span>
+                  <input type="number" class="native-input" [ngModel]="settings().seatLayout.totalSeats" (ngModelChange)="setTotalSeats($event)" min="4" max="60" />
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 5: Driver & Entrance Position Configuration -->
+        <div class="accordion-item" [class.active]="openSection() === 'driverEntrance'">
+          <button class="accordion-header" (click)="toggleSection('driverEntrance')">
+            <span class="header-text"><i class="pi pi-user icon-prefix"></i> Driver & Entrance Position Configuration</span>
+            <i class="pi accordion-chevron" [class.pi-chevron-down]="openSection() !== 'driverEntrance'" [class.pi-chevron-up]="openSection() === 'driverEntrance'"></i>
+          </button>
+          
+          <div class="accordion-content">
+            <div class="sub-card">
+              <h4>Position Driver Seat and Door</h4>
+              <p class="description">Move the driver steering wheel and cabin left or right, and swap the passenger boarding entrance door position.</p>
+              
+              <div class="control-row mt-3">
+                <div class="control-item">
+                  <span>Driver Seat Side</span>
+                  <div class="toggle-buttons">
+                    <button class="toggle-side-btn" [class.active]="settings().seatLayout.driverPosition === 'left'" (click)="toggleDriverPosition()"><i class="pi pi-angle-double-left mr-1"></i> Left</button>
+                    <button class="toggle-side-btn" [class.active]="settings().seatLayout.driverPosition === 'right'" (click)="toggleDriverPosition()">Right <i class="pi pi-angle-double-right ml-1"></i></button>
+                  </div>
+                </div>
+                
+                <div class="control-item mt-3">
+                  <span>Entrance Door Side</span>
+                  <div class="toggle-buttons">
+                    <button class="toggle-side-btn" [class.active]="settings().seatLayout.entrancePosition === 'left'" (click)="toggleEntrancePosition()"><i class="pi pi-angle-double-left mr-1"></i> Left</button>
+                    <button class="toggle-side-btn" [class.active]="settings().seatLayout.entrancePosition === 'right'" (click)="toggleEntrancePosition()">Right <i class="pi pi-angle-double-right ml-1"></i></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 6: Live Preview Section -->
+        <div class="accordion-item" [class.active]="openSection() === 'livePreview'">
+          <button class="accordion-header" (click)="toggleSection('livePreview')">
+            <span class="header-text"><i class="pi pi-desktop icon-prefix"></i> Live Preview Section</span>
+            <i class="pi accordion-chevron" [class.pi-chevron-down]="openSection() !== 'livePreview'" [class.pi-chevron-up]="openSection() === 'livePreview'"></i>
+          </button>
+          
+          <div class="accordion-content">
+            <p class="description">Use the side-by-side Live Preview on the right (or displayed below on mobile) to view and test all layouts, fields, and options interactively.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Live Preview Sticky Panel -->
+    <div class="preview-panel card">
+      <div class="preview-header">
+        <span class="badge badge-info">Realtime Mock</span>
+        <h3>Live Booking Page Preview</h3>
+      </div>
+      
+      <div class="preview-scrollable-content">
+        <!-- Bus Cabin Preview -->
+        <div class="bus-preview-section">
+          <h5>1. Seat Layout Cabin ({{ settings().seatLayout.layoutType }} Layout)</h5>
+          
+          <div class="bus-selection-container">
+            <div class="bus-cabin">
+              <!-- Driver & Entrance Section -->
+              <div class="bus-dashboard">
+                <div class="driver-cabin" [style.order]="settings().seatLayout.driverPosition === 'left' ? 1 : 2">
+                  <span class="steering-wheel">
+                    <i class="pi pi-cog steering-icon"></i>
+                  </span>
+                  <span class="driver-seat-mock">
+                    <span class="seat-headrest"></span>
+                    <span class="seat-cushion">
+                      <span class="driver-icon"><i class="pi pi-user"></i></span>
+                    </span>
+                  </span>
+                </div>
+                <div class="bus-door" [style.order]="settings().seatLayout.entrancePosition === 'left' ? 1 : 2">
+                  <div class="door-indicator">Entry</div>
+                  <div class="door-steps">
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Passenger Seating Floor -->
+              <div class="bus-floor">
+                <div class="bus-row" *ngFor="let row of previewSeats()">
+                  <!-- Left side -->
+                  <div class="seat-group seat-group--left">
+                    <button *ngFor="let seat of row.leftSeats" type="button" class="bus-seat bus-seat--available">
+                      <span class="seat-headrest"></span>
+                      <span class="seat-cushion">
+                        <span class="seat-label">{{ seat }}</span>
+                      </span>
+                    </button>
+                    <!-- Spacer columns if seat is missing in row -->
+                    <div *ngFor="let spacer of getSpacers(row.leftSeats, leftColCount())" class="seat-spacer"></div>
+                  </div>
+
+                  <!-- Aisle -->
+                  <div class="bus-aisle">
+                    <span class="aisle-line"></span>
+                  </div>
+
+                  <!-- Right side -->
+                  <div class="seat-group seat-group--right">
+                    <button *ngFor="let seat of row.rightSeats" type="button" class="bus-seat bus-seat--available">
+                      <span class="seat-headrest"></span>
+                      <span class="seat-cushion">
+                        <span class="seat-label">{{ seat }}</span>
+                      </span>
+                    </button>
+                    <div *ngFor="let spacer of getSpacers(row.rightSeats, rightColCount())" class="seat-spacer"></div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Form fields layout preview -->
+        <div class="form-preview-section mt-4">
+          <h5>2. Booking Form Fields</h5>
+          
+          <div class="field-grid">
+            <ng-container *ngFor="let field of fieldsList()">
+              <div *ngIf="field.visible" [class]="'col-span-' + (field.colSpan || 3)">
+                <label>
+                  <span class="label-text">
+                    {{ field.label }}
+                    <span class="required" *ngIf="field.required">*</span>
+                  </span>
+                  
+                  <!-- textbox -->
+                  <input *ngIf="field.type === 'textbox'" pInputText [placeholder]="field.placeholder || ''" disabled />
+                  
+                  <!-- number -->
+                  <input *ngIf="field.type === 'number'" type="number" pInputText [placeholder]="field.placeholder || ''" disabled />
+                  
+                  <!-- dropdown -->
+                  <select *ngIf="field.type === 'dropdown'" class="native-select" disabled>
+                    <option>{{ field.placeholder || 'Select option' }}</option>
+                    <option *ngFor="let opt of field.options">{{ opt }}</option>
+                  </select>
+                  
+                  <!-- checkbox -->
+                  <div *ngIf="field.type === 'checkbox'" class="flex items-center gap-2 mt-2">
+                    <input type="checkbox" disabled />
+                    <span class="text-sm">{{ field.placeholder || 'Checkbox Label' }}</span>
+                  </div>
+                  
+                  <!-- radio -->
+                  <div *ngIf="field.type === 'radio'" class="flex flex-wrap gap-4 mt-2">
+                    <div *ngFor="let opt of field.options" class="flex items-center gap-2">
+                      <input type="radio" disabled />
+                      <span class="text-sm">{{ opt }}</span>
+                    </div>
+                  </div>
+                  
+                  <!-- datepicker -->
+                  <input *ngIf="field.type === 'datepicker'" type="date" pInputText disabled />
+                  
+                  <!-- textarea -->
+                  <textarea *ngIf="field.type === 'textarea'" pInputTextarea rows="2" [placeholder]="field.placeholder || ''" disabled></textarea>
+
+                </label>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

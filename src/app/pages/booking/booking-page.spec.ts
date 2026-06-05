@@ -19,6 +19,7 @@ describe('BookingPageComponent', () => {
   beforeEach(async () => {
     mockFirestoreService = {
       addBooking: vi.fn().mockResolvedValue(undefined),
+      getBookingSettings: vi.fn().mockReturnValue(of(null)),
     };
 
     mockWebsiteDataService = {
@@ -74,6 +75,14 @@ describe('BookingPageComponent', () => {
     
     component.toggleSeat('A1');
     expect(component.seatIsSelected('A1')).toBe(false);
+  });
+
+  it('should not toggle seat selections if the seat is booked', () => {
+    expect(component.seatIsBooked('A3')).toBe(true);
+    expect(component.seatIsSelected('A3')).toBe(false);
+    component.toggleSeat('A3');
+    expect(component.seatIsSelected('A3')).toBe(false);
+    expect(component.selectedSeats()).not.toContain('A3');
   });
 
   it('should call FirestoreService and NotificationService on successful submit', async () => {

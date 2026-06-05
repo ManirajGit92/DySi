@@ -5,6 +5,7 @@ import { TabsModule } from 'primeng/tabs';
 import { FirestoreService } from '../../core/services/firestore.service';
 import { Settings } from '../settings/settings';
 import { BookingsAdminComponent } from './bookings-admin.component';
+import { BookingSettingsComponent } from './booking-settings.component';
 import { Product } from '../../core/models/product.models';
 import { Router } from '@angular/router';
 
@@ -40,6 +41,7 @@ interface CategoryPerformance {
     TabsModule,
     Settings,
     BookingsAdminComponent,
+    BookingSettingsComponent,
   ],
   templateUrl: './admin.html',
   styleUrls: ['./admin.scss'],

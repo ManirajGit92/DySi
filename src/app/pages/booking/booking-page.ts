@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { computed, Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
@@ -17,9 +17,18 @@ import {
   PaymentStatus,
   BusType,
   defaultBookingPackages,
+  BookingFieldConfig,
+  BookingSettingsConfig,
+  defaultBookingFields,
 } from '../../core/models/booking.models';
 import { WebsiteDataService } from '../../core/services/website-data.service';
 import { NotificationService } from '../../core/services/notification.service';
+
+interface SeatingRow {
+  rowLetter: string;
+  leftSeats: string[];
+  rightSeats: string[];
+}
 
 @Component({
   standalone: true,
@@ -48,39 +57,75 @@ export class BookingPageComponent {
 
   readonly isSubmitting = signal(false);
   readonly selectedSeats = signal<string[]>([]);
+  readonly bookedSeats = signal<string[]>(['A3', 'B2', 'C4', 'D5']);
   readonly userId = signal<string | null>(null);
   readonly packages = signal<BookingPackage[]>(defaultBookingPackages);
-  readonly busTypes = signal<BusType[]>(['Mini Bus', 'AC Bus', 'Luxury Coach', 'Sleeper Bus']);
-  readonly paymentMethods = signal<string[]>([
-    'Credit Card',
-    'Debit Card',
-    'UPI',
-    'Cash',
-    'Net Banking',
-    'Wallet',
-  ]);
-  readonly seatLayout = signal<string[]>([
-    'A1',
-    'A2',
-    'A3',
-    'A4',
-    'A5',
-    'B1',
-    'B2',
-    'B3',
-    'B4',
-    'B5',
-    'C1',
-    'C2',
-    'C3',
-    'C4',
-    'C5',
-    'D1',
-    'D2',
-    'D3',
-    'D4',
-    'D5',
-  ]);
+  
+  // Settings Config
+  readonly bookingSettings = signal<BookingSettingsConfig | null>(null);
+  readonly fieldsList = computed(() => this.bookingSettings()?.fields || []);
+  
+  // Seating Layout Calculations
+  readonly leftColCount = computed(() => (this.bookingSettings()?.seatLayout?.layoutType === '3+2' ? 3 : 2));
+  readonly rightColCount = signal<number>(2);
+  readonly driverPosition = computed(() => this.bookingSettings()?.seatLayout?.driverPosition || 'left');
+  readonly entrancePosition = computed(() => this.bookingSettings()?.seatLayout?.entrancePosition || 'right');
+
+  readonly dynamicRows = computed<SeatingRow[]>(() => {
+    const settings = this.bookingSettings();
+    if (!settings || !settings.seatLayout) {
+      return [];
+    }
+    const total = settings.seatLayout.totalSeats || 20;
+    const leftCount = this.leftColCount();
+    const rightCount = this.rightColCount();
+    const seatsPerRow = leftCount + rightCount;
+    const rowCount = Math.ceil(total / seatsPerRow);
+
+    const rows: SeatingRow[] = [];
+    for (let r = 0; r < rowCount; r++) {
+      const rowLetter = String.fromCharCode(65 + r);
+      const leftSeats: string[] = [];
+      const rightSeats: string[] = [];
+
+      // Left group
+      for (let c = 0; c < leftCount; c++) {
+        if (r * seatsPerRow + c < total) {
+          leftSeats.push(`${rowLetter}${c + 1}`);
+        }
+      }
+
+      // Right group
+      for (let c = 0; c < rightCount; c++) {
+        if (r * seatsPerRow + leftCount + c < total) {
+          rightSeats.push(`${rowLetter}${leftCount + c + 1}`);
+        }
+      }
+
+      rows.push({ rowLetter, leftSeats, rightSeats });
+    }
+    return rows;
+  });
+
+  readonly seatLayout = computed<string[]>(() => {
+    const rows = this.dynamicRows();
+    const list: string[] = [];
+    rows.forEach((r) => {
+      list.push(...r.leftSeats, ...r.rightSeats);
+    });
+    return list;
+  });
+
+  // Keep compatibility for static options if config options are empty
+  readonly busTypes = computed(() => {
+    const field = this.fieldsList().find((f) => f.key === 'busType');
+    return field?.options || ['Mini Bus', 'AC Bus', 'Luxury Coach', 'Sleeper Bus'];
+  });
+
+  readonly paymentMethods = computed(() => {
+    const field = this.fieldsList().find((f) => f.key === 'paymentMethod');
+    return field?.options || ['Credit Card', 'Debit Card', 'UPI', 'Cash', 'Net Banking', 'Wallet'];
+  });
 
   readonly bookingForm = this.fb.group({
     fullName: ['', Validators.required],
@@ -101,7 +146,7 @@ export class BookingPageComponent {
     paymentStatus: ['Pending' as PaymentStatus],
     selectedSeats: [[] as string[]],
     totalFare: [0],
-  });
+  }) as FormGroup;
 
   readonly selectedPackage = computed(() => {
     const packageName = this.bookingForm.value.packageName;
@@ -115,9 +160,133 @@ export class BookingPageComponent {
     this.bookingForm.valueChanges.subscribe(() => {
       this.bookingForm.patchValue({ totalFare: this.fareEstimate() }, { emitEvent: false });
     });
+
+    // Load dynamic booking configurations
+    this.firestoreService.getBookingSettings().subscribe({
+      next: (settings) => {
+        if (settings && settings.fields && settings.fields.length > 0) {
+          this.bookingSettings.set(settings);
+          this.applySettings(settings);
+        } else {
+          const defaults: BookingSettingsConfig = {
+            fields: [...defaultBookingFields],
+            seatLayout: {
+              layoutType: '2+2',
+              totalSeats: 20,
+              driverPosition: 'left',
+              entrancePosition: 'right',
+            },
+          };
+          this.bookingSettings.set(defaults);
+          this.applySettings(defaults);
+        }
+      },
+      error: (err) => {
+        console.error('Error loading booking settings, using defaults:', err);
+        const defaults: BookingSettingsConfig = {
+          fields: [...defaultBookingFields],
+          seatLayout: {
+            layoutType: '2+2',
+            totalSeats: 20,
+            driverPosition: 'left',
+            entrancePosition: 'right',
+          },
+        };
+        this.bookingSettings.set(defaults);
+        this.applySettings(defaults);
+      },
+    });
+  }
+
+  applySettings(settings: BookingSettingsConfig): void {
+    const fields = settings.fields;
+
+    fields.forEach((field) => {
+      const validators = [];
+      if (field.required) {
+        validators.push(Validators.required);
+      }
+      if (field.key === 'email') {
+        validators.push(Validators.email);
+      }
+      if (field.key === 'mobileNumber') {
+        validators.push(Validators.pattern(/^\+?[0-9]{7,15}$/));
+      }
+      if (field.key === 'aadhaarNumber') {
+        validators.push(Validators.pattern(/^\d{12}$/));
+      }
+
+      let control = this.bookingForm.get(field.key);
+      if (!control) {
+        // Dynamic custom field
+        control = this.fb.control(field.type === 'checkbox' ? false : '', validators);
+        this.bookingForm.addControl(field.key, control);
+      } else {
+        // Update validators
+        control.setValidators(validators);
+        control.updateValueAndValidity();
+      }
+
+      // Toggle enable/disable based on visibility
+      if (field.visible) {
+        control.enable({ emitEvent: false });
+      } else {
+        control.disable({ emitEvent: false });
+      }
+    });
+
+    // Remove custom fields that are no longer in the settings
+    const settingKeys = new Set(fields.map((f) => f.key));
+    const coreKeys = new Set([
+      'fullName',
+      'mobileNumber',
+      'email',
+      'aadhaarNumber',
+      'pickupLocation',
+      'dropLocation',
+      'address',
+      'passengers',
+      'travelDate',
+      'returnDate',
+      'busType',
+      'packageName',
+      'paymentMethod',
+      'specialRequests',
+      'bookingStatus',
+      'paymentStatus',
+      'selectedSeats',
+      'totalFare',
+    ]);
+
+    Object.keys(this.bookingForm.controls).forEach((key) => {
+      if (!settingKeys.has(key) && !coreKeys.has(key)) {
+        this.bookingForm.removeControl(key);
+      }
+    });
+  }
+
+  getSpacers(seats: string[], targetCount: number): any[] {
+    const diff = targetCount - seats.length;
+    return diff > 0 ? new Array(diff) : [];
+  }
+
+  getFieldOptions(field: BookingFieldConfig): string[] {
+    if (field.key === 'packageName') {
+      return this.packages().map((pkg) => pkg.name);
+    }
+    if (field.key === 'busType') {
+      return this.busTypes();
+    }
+    if (field.key === 'paymentMethod') {
+      return this.paymentMethods();
+    }
+    return field.options || [];
   }
 
   toggleSeat(seat: string): void {
+    if (this.seatIsBooked(seat)) {
+      return;
+    }
     const selected = [...this.selectedSeats()];
     const index = selected.indexOf(seat);
 
@@ -135,8 +304,15 @@ export class BookingPageComponent {
     return this.selectedSeats().includes(seat);
   }
 
+  seatIsBooked(seat: string): boolean {
+    return this.bookedSeats().includes(seat);
+  }
+
   seatClass(seat: string): string {
-    return this.seatIsSelected(seat) ? 'seat seat--selected' : 'seat';
+    if (this.seatIsBooked(seat)) {
+      return 'bus-seat bus-seat--booked';
+    }
+    return this.seatIsSelected(seat) ? 'bus-seat bus-seat--selected' : 'bus-seat bus-seat--available';
   }
 
   calculateFare(): number {
@@ -192,7 +368,7 @@ export class BookingPageComponent {
     const bookingId = `DY-${crypto.randomUUID().split('-')[0].toUpperCase()}`;
     const selectedPackage = this.selectedPackage();
 
-    const booking: Booking = {
+    const booking: any = {
       bookingId,
       fullName: this.bookingForm.value.fullName || '',
       mobileNumber: String(this.bookingForm.value.mobileNumber || ''),
@@ -215,6 +391,34 @@ export class BookingPageComponent {
       totalFare: this.calculateFare(),
       userId: this.userId(),
     };
+
+    // Save custom fields dynamically
+    const coreKeys = new Set([
+      'fullName',
+      'mobileNumber',
+      'email',
+      'aadhaarNumber',
+      'pickupLocation',
+      'dropLocation',
+      'address',
+      'passengers',
+      'travelDate',
+      'returnDate',
+      'busType',
+      'packageName',
+      'paymentMethod',
+      'specialRequests',
+      'bookingStatus',
+      'paymentStatus',
+      'selectedSeats',
+      'totalFare',
+      'userId',
+    ]);
+    Object.keys(this.bookingForm.controls).forEach((key) => {
+      if (!coreKeys.has(key)) {
+        booking[key] = this.bookingForm.get(key)?.value;
+      }
+    });
 
     try {
       await this.firestoreService.addBooking(booking);

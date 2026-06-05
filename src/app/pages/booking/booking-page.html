@@ -37,66 +37,46 @@
 
       <form [formGroup]="bookingForm" (ngSubmit)="submitBooking()">
         <div class="field-grid">
-          <label class="col-span-3">
-            <span class="label-text">Full Name <span class="required">*</span></span>
-            <input pInputText formControlName="fullName" placeholder="Your full name" />
-          </label>
-          <label class="col-span-3">
-            <span class="label-text">Mobile Number <span class="required">*</span></span>
-            <input pInputText formControlName="mobileNumber" placeholder="+91 9876543210" />
-          </label>
-          <label class="col-span-3">
-            <span class="label-text">Email Address <span class="required">*</span></span>
-            <input pInputText formControlName="email" placeholder="you@example.com" />
-          </label>
-          <label class="col-span-3">
-            <span class="label-text">Aadhaar Number <span class="required">*</span></span>
-            <input pInputText formControlName="aadhaarNumber" placeholder="12-digit Aadhaar number" maxlength="12" />
-          </label>
-          <label class="col-span-3">
-            <span class="label-text">Pickup Location <span class="required">*</span></span>
-            <input pInputText formControlName="pickupLocation" placeholder="City, landmark or station" />
-          </label>
-          <label class="col-span-3">
-            <span class="label-text">Drop Location <span class="required">*</span></span>
-            <input pInputText formControlName="dropLocation" placeholder="Final destination" />
-          </label>
-          <label class="col-span-6">
-            <span class="label-text">Address <span class="required">*</span></span>
-            <textarea pInputTextarea rows="3" formControlName="address"
-              placeholder="Pickup address or hotel details"></textarea>
-          </label>
-          <label class="col-span-2">
-            <span class="label-text">Number of Passengers <span class="required">*</span></span>
-            <p-inputNumber inputId="passengers" formControlName="passengers" [min]="1" [max]="40"></p-inputNumber>
-          </label>
-          <label class="col-span-2">
-            <span class="label-text">Travel Date <span class="required">*</span></span>
-            <p-datepicker formControlName="travelDate" dateFormat="yy-mm-dd"></p-datepicker>
-          </label>
-          <label class="col-span-2">
-            <span class="label-text">Return Date</span>
-            <p-datepicker formControlName="returnDate" dateFormat="yy-mm-dd"></p-datepicker>
-          </label>
-          <label class="col-span-2">
-            <span class="label-text">Bus Type <span class="required">*</span></span>
-            <p-select [options]="busTypes()" formControlName="busType" placeholder="Select bus type"></p-select>
-          </label>
-          <label class="col-span-2">
-            <span class="label-text">Tour Package <span class="required">*</span></span>
-            <p-select [options]="packages().map(pkg => pkg.name)" formControlName="packageName"
-              placeholder="Select package"></p-select>
-          </label>
-          <label class="col-span-2">
-            <span class="label-text">Payment Method <span class="required">*</span></span>
-            <p-select [options]="paymentMethods()" formControlName="paymentMethod"
-              placeholder="Select payment method"></p-select>
-          </label>
-          <label class="col-span-6">
-            <span class="label-text">Special Requests / Notes</span>
-            <textarea pInputTextarea rows="4" formControlName="specialRequests"
-              placeholder="Any extra requests for your journey"></textarea>
-          </label>
+          <ng-container *ngFor="let field of fieldsList()">
+            <div *ngIf="field.visible" [class]="'col-span-' + (field.colSpan || 3)">
+              <label [for]="field.key">
+                <span class="label-text">
+                  {{ field.label }}
+                  <span class="required" *ngIf="field.required">*</span>
+                </span>
+                
+                <!-- Textbox -->
+                <input *ngIf="field.type === 'textbox'" pInputText [formControlName]="field.key" [id]="field.key" [placeholder]="field.placeholder || ''" />
+                
+                <!-- Number -->
+                <p-inputNumber *ngIf="field.type === 'number'" [formControlName]="field.key" [id]="field.key" [placeholder]="field.placeholder || ''" [useGrouping]="false"></p-inputNumber>
+                
+                <!-- Dropdown -->
+                <p-select *ngIf="field.type === 'dropdown'" [options]="getFieldOptions(field)" [formControlName]="field.key" [id]="field.key" [placeholder]="field.placeholder || 'Select option'"></p-select>
+                
+                <!-- Checkbox -->
+                <div *ngIf="field.type === 'checkbox'" class="flex items-center gap-2 mt-2">
+                  <input type="checkbox" [formControlName]="field.key" [id]="field.key" />
+                  <label [for]="field.key" class="m-0 cursor-pointer text-sm font-normal">{{ field.placeholder || 'Yes' }}</label>
+                </div>
+                
+                <!-- Radio -->
+                <div *ngIf="field.type === 'radio'" class="flex flex-wrap gap-4 mt-2">
+                  <div *ngFor="let opt of getFieldOptions(field)" class="flex items-center gap-2">
+                    <input type="radio" [formControlName]="field.key" [value]="opt" [id]="field.key + '_' + opt" />
+                    <label [for]="field.key + '_' + opt" class="m-0 cursor-pointer text-sm font-normal">{{ opt }}</label>
+                  </div>
+                </div>
+                
+                <!-- Datepicker -->
+                <p-datepicker *ngIf="field.type === 'datepicker'" [formControlName]="field.key" [id]="field.key" dateFormat="yy-mm-dd"></p-datepicker>
+                
+                <!-- Textarea -->
+                <textarea *ngIf="field.type === 'textarea'" pInputTextarea rows="3" [formControlName]="field.key" [id]="field.key" [placeholder]="field.placeholder || ''"></textarea>
+
+              </label>
+            </div>
+          </ng-container>
         </div>
 
         <div class="section-header section-header--small">
@@ -104,10 +84,97 @@
           <h3>Choose your seats</h3>
         </div>
 
-        <div class="seat-grid">
-          <button type="button" *ngFor="let seat of seatLayout()" [class]="seatClass(seat)" (click)="toggleSeat(seat)">
-            {{ seat }}
-          </button>
+        <div class="bus-selection-container">
+          <div class="bus-cabin">
+            <!-- Driver & Dash Section at Front -->
+            <div class="bus-dashboard">
+              <div class="driver-cabin" [style.order]="driverPosition() === 'left' ? 1 : 2">
+                <span class="steering-wheel">
+                  <i class="pi pi-cog steering-icon"></i>
+                </span>
+                <span class="driver-seat-mock">
+                  <span class="seat-headrest"></span>
+                  <span class="seat-cushion">
+                    <span class="driver-icon"><i class="pi pi-user"></i></span>
+                  </span>
+                </span>
+              </div>
+              <div class="bus-door" [style.order]="entrancePosition() === 'left' ? 1 : 2">
+                <div class="door-indicator">Entry</div>
+                <div class="door-steps">
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Passenger Seating Floor -->
+            <div class="bus-floor">
+              <div class="bus-row" *ngFor="let row of dynamicRows()">
+                <!-- Left Seating -->
+                <div class="seat-group seat-group--left">
+                  <button *ngFor="let seat of row.leftSeats"
+                          type="button"
+                          [class]="seatClass(seat)"
+                          [disabled]="seatIsBooked(seat)"
+                          [title]="seat + (seatIsBooked(seat) ? ' - Booked' : seatIsSelected(seat) ? ' - Selected' : ' - Available')"
+                          (click)="toggleSeat(seat)">
+                    <span class="seat-headrest"></span>
+                    <span class="seat-cushion">
+                      <span class="seat-label">{{ seat }}</span>
+                    </span>
+                  </button>
+                  <div *ngFor="let spacer of getSpacers(row.leftSeats, leftColCount())" class="seat-spacer"></div>
+                </div>
+
+                <!-- Center Aisle walkway -->
+                <div class="bus-aisle">
+                  <span class="aisle-line"></span>
+                </div>
+
+                <!-- Right Seating -->
+                <div class="seat-group seat-group--right">
+                  <button *ngFor="let seat of row.rightSeats"
+                          type="button"
+                          [class]="seatClass(seat)"
+                          [disabled]="seatIsBooked(seat)"
+                          [title]="seat + (seatIsBooked(seat) ? ' - Booked' : seatIsSelected(seat) ? ' - Selected' : ' - Available')"
+                          (click)="toggleSeat(seat)">
+                    <span class="seat-headrest"></span>
+                    <span class="seat-cushion">
+                      <span class="seat-label">{{ seat }}</span>
+                    </span>
+                  </button>
+                  <div *ngFor="let spacer of getSpacers(row.rightSeats, rightColCount())" class="seat-spacer"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Legend -->
+          <div class="seat-legend">
+            <div class="legend-item">
+              <div class="legend-icon bus-seat bus-seat--available">
+                <span class="seat-headrest"></span>
+                <span class="seat-cushion"></span>
+              </div>
+              <span class="legend-text">Available</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-icon bus-seat bus-seat--selected">
+                <span class="seat-headrest"></span>
+                <span class="seat-cushion"></span>
+              </div>
+              <span class="legend-text">Selected</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-icon bus-seat bus-seat--booked">
+                <span class="seat-headrest"></span>
+                <span class="seat-cushion"></span>
+              </div>
+              <span class="legend-text">Booked</span>
+            </div>
+          </div>
         </div>
 
         <div class="form-actions">

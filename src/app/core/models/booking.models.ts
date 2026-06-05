@@ -92,3 +92,43 @@ export const sampleBookings: Booking[] = [
     userId: null,
   },
 ];
+
+export interface BookingFieldConfig {
+  key: string;
+  label: string;
+  placeholder: string;
+  type: 'textbox' | 'number' | 'dropdown' | 'checkbox' | 'radio' | 'datepicker' | 'textarea';
+  required: boolean;
+  visible: boolean;
+  options?: string[];
+  colSpan?: number;
+}
+
+export interface BookingSettingsConfig {
+  id?: string;
+  fields: BookingFieldConfig[];
+  seatLayout: {
+    layoutType: '2+2' | '3+2';
+    totalSeats: number;
+    driverPosition: 'left' | 'right';
+    entrancePosition: 'left' | 'right';
+  };
+}
+
+export const defaultBookingFields: BookingFieldConfig[] = [
+  { key: 'fullName', label: 'Full Name', placeholder: 'Your full name', type: 'textbox', required: true, visible: true, colSpan: 3 },
+  { key: 'mobileNumber', label: 'Mobile Number', placeholder: '+91 9876543210', type: 'textbox', required: true, visible: true, colSpan: 3 },
+  { key: 'email', label: 'Email Address', placeholder: 'you@example.com', type: 'textbox', required: true, visible: true, colSpan: 3 },
+  { key: 'aadhaarNumber', label: 'Aadhaar Number', placeholder: '12-digit Aadhaar number', type: 'textbox', required: true, visible: true, colSpan: 3 },
+  { key: 'pickupLocation', label: 'Pickup Location', placeholder: 'City, landmark or station', type: 'textbox', required: true, visible: true, colSpan: 3 },
+  { key: 'dropLocation', label: 'Drop Location', placeholder: 'Final destination', type: 'textbox', required: true, visible: true, colSpan: 3 },
+  { key: 'address', label: 'Address', placeholder: 'Pickup address or hotel details', type: 'textarea', required: true, visible: true, colSpan: 6 },
+  { key: 'passengers', label: 'Number of Passengers', placeholder: '', type: 'number', required: true, visible: true, colSpan: 2 },
+  { key: 'travelDate', label: 'Travel Date', placeholder: '', type: 'datepicker', required: true, visible: true, colSpan: 2 },
+  { key: 'returnDate', label: 'Return Date', placeholder: '', type: 'datepicker', required: false, visible: true, colSpan: 2 },
+  { key: 'busType', label: 'Bus Type', placeholder: 'Select bus type', type: 'dropdown', required: true, visible: true, colSpan: 2, options: ['Mini Bus', 'AC Bus', 'Luxury Coach', 'Sleeper Bus'] },
+  { key: 'packageName', label: 'Tour Package', placeholder: 'Select package', type: 'dropdown', required: true, visible: true, colSpan: 2, options: ['City Explorer', 'Heritage Trail', 'Mountain Escape'] },
+  { key: 'paymentMethod', label: 'Payment Method', placeholder: 'Select payment method', type: 'dropdown', required: true, visible: true, colSpan: 2, options: ['Credit Card', 'Debit Card', 'UPI', 'Cash', 'Net Banking', 'Wallet'] },
+  { key: 'specialRequests', label: 'Special Requests / Notes', placeholder: 'Any extra requests for your journey', type: 'textarea', required: false, visible: true, colSpan: 6 }
+];
+
