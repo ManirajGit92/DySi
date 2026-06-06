@@ -29,8 +29,19 @@ service cloud.firestore {
     }
 
     match /bookings/{document} {
-      allow read: if isAdmin() && !isRestricted();
-      allow write: if !isRestricted(); // Anyone can submit booking unless restricted
+      allow read: if (request.auth != null && (resource == null || resource.data.email == request.auth.token.email)) || isAdmin();
+      allow create: if !isRestricted() && (request.auth == null || request.resource.data.email == request.auth.token.email);
+      allow update: if (request.auth != null && resource.data.email == request.auth.token.email && request.resource.data.email == request.auth.token.email) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /default_booking_info/{email} {
+      allow read, write: if request.auth != null && request.auth.token.email == email;
+    }
+
+    match /notifications/{document} {
+      allow create: if !isRestricted();
+      allow read, write: if isAdmin();
     }
 
     match /booking_settings/{document} {

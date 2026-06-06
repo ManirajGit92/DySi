@@ -12,6 +12,7 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
 } from '@angular/fire/firestore';
 import { catchError, map, Observable, of } from 'rxjs';
 import { Booking, sampleBookings, BookingSettingsConfig } from '../models/booking.models';
@@ -95,6 +96,7 @@ export class FirestoreService {
     const bookingsCollection = collection(this.firestore, 'bookings');
     await addDoc(bookingsCollection, {
       ...booking,
+      email: (booking.email || '').toLowerCase().trim(),
       totalFare: Number(booking.totalFare),
       passengers: Number(booking.passengers),
       selectedSeats: booking.selectedSeats || [],
@@ -114,7 +116,7 @@ export class FirestoreService {
     await updateDoc(bookingRef, {
       fullName: booking.fullName,
       mobileNumber: booking.mobileNumber,
-      email: booking.email,
+      email: (booking.email || '').toLowerCase().trim(),
       aadhaarNumber: booking.aadhaarNumber,
       pickupLocation: booking.pickupLocation,
       dropLocation: booking.dropLocation,
@@ -138,6 +140,54 @@ export class FirestoreService {
   async deleteBooking(bookingId: string): Promise<void> {
     const bookingRef = doc(this.firestore, 'bookings', bookingId);
     await deleteDoc(bookingRef);
+  }
+
+  private toDate(val: any): Date {
+    if (!val) {
+      return new Date(0);
+    }
+    if (val instanceof Date) {
+      return val;
+    }
+    if (typeof val.toDate === 'function') {
+      return val.toDate();
+    }
+    if (typeof val.seconds === 'number') {
+      return new Date(val.seconds * 1000 + (val.nanoseconds ? val.nanoseconds / 1000000 : 0));
+    }
+    return new Date(val);
+  }
+
+  getBookingsByUserEmail(email: string): Observable<Booking[]> {
+    if (!email) return of([]);
+    const bookingsCollection = collection(this.firestore, 'bookings');
+    const bookingsQuery = query(bookingsCollection, where('email', '==', email.toLowerCase().trim()));
+    return collectionData(bookingsQuery, { idField: 'id' }).pipe(
+      map((items) => items as Booking[]),
+      map((bookings) => bookings.sort((a, b) => {
+        const dateA = this.toDate(a.createdDate ?? a.travelDate).getTime();
+        const dateB = this.toDate(b.createdDate ?? b.travelDate).getTime();
+        return dateB - dateA;
+      })),
+      catchError(() => of([]))
+    );
+  }
+
+  getDefaultBookingInfo(email: string): Observable<any> {
+    if (!email) return of(null);
+    const docRef = doc(this.firestore, 'default_booking_info', email.toLowerCase().trim());
+    return docData(docRef) as Observable<any>;
+  }
+
+  async saveDefaultBookingInfo(email: string, info: any): Promise<void> {
+    if (!email) return;
+    const normalizedEmail = email.toLowerCase().trim();
+    const docRef = doc(this.firestore, 'default_booking_info', normalizedEmail);
+    await setDoc(docRef, {
+      ...info,
+      email: normalizedEmail,
+      updatedAt: serverTimestamp()
+    });
   }
 
   getBookingSettings(): Observable<BookingSettingsConfig | null> {

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { computed, Component, inject, signal } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
@@ -8,19 +9,12 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
+import { TabsModule } from 'primeng/tabs';
+import { TableModule } from 'primeng/table';
+import { DialogModule } from 'primeng/dialog';
 import { MessageService } from 'primeng/api';
 import { FirestoreService } from '../../core/services/firestore.service';
-import {
-  Booking,
-  BookingPackage,
-  BookingStatus,
-  PaymentStatus,
-  BusType,
-  defaultBookingPackages,
-  BookingFieldConfig,
-  BookingSettingsConfig,
-  defaultBookingFields,
-} from '../../core/models/booking.models';
+import { Booking, BookingPackage, BookingStatus, PaymentStatus, BusType, defaultBookingPackages, BookingFieldConfig, BookingSettingsConfig, defaultBookingFields } from '../../core/models/booking.models';
 import { WebsiteDataService } from '../../core/services/website-data.service';
 import { NotificationService } from '../../core/services/notification.service';
 
@@ -37,6 +31,7 @@ interface SeatingRow {
   styleUrls: ['./booking-page.scss'],
   imports: [
     CommonModule,
+    FormsModule,
     ReactiveFormsModule,
     ButtonModule,
     DatePickerModule,
@@ -45,6 +40,9 @@ interface SeatingRow {
     InputNumberModule,
     TextareaModule,
     ToastModule,
+    TabsModule,
+    TableModule,
+    DialogModule,
   ],
   providers: [MessageService],
 })
@@ -57,9 +55,84 @@ export class BookingPageComponent {
 
   readonly isSubmitting = signal(false);
   readonly selectedSeats = signal<string[]>([]);
-  readonly bookedSeats = signal<string[]>(['A3', 'B2', 'C4', 'D5']);
   readonly userId = signal<string | null>(null);
   readonly packages = signal<BookingPackage[]>(defaultBookingPackages);
+
+  // Real-time bookings from Firestore
+  readonly allBookings = toSignal(this.firestoreService.getBookings(), { initialValue: [] });
+
+  // Dynamically calculate booked/occupied seats for the chosen package, date, and bus type
+  readonly bookedSeats = computed(() => {
+    const travelDate = this.bookingForm.value.travelDate;
+    const packageName = this.bookingForm.value.packageName;
+    const busType = this.bookingForm.value.busType;
+    if (!travelDate || !packageName || !busType) {
+      return [];
+    }
+
+    const formattedDate = this.toIsoDateString(travelDate);
+    return this.allBookings()
+      .filter(b => b.bookingStatus !== 'Cancelled' && 
+                   b.packageName === packageName && 
+                   b.busType === busType &&
+                   this.toIsoDateString(b.travelDate) === formattedDate)
+      .reduce((seats, b) => {
+        if (b.selectedSeats) {
+          seats.push(...b.selectedSeats);
+        }
+        return seats;
+      }, [] as string[]);
+  });
+
+  // Default booking info form
+  readonly defaultInfoForm = this.fb.group({
+    fullName: ['', Validators.required],
+    mobileNumber: [null, [Validators.required, Validators.pattern(/^\+?[0-9]{7,15}$/)]],
+    email: ['', [Validators.required, Validators.email]],
+    aadhaarNumber: ['', [Validators.required, Validators.pattern(/^\d{12}$/)]],
+    address: ['', Validators.required],
+    pickupLocation: ['', Validators.required],
+    dropLocation: ['', Validators.required],
+  });
+
+  // Edit ticket form
+  readonly editBookingForm = this.fb.group({
+    fullName: ['', Validators.required],
+    mobileNumber: [null, [Validators.required, Validators.pattern(/^\+?[0-9]{7,15}$/)]],
+    email: ['', [Validators.required, Validators.email]],
+    aadhaarNumber: ['', [Validators.required, Validators.pattern(/^\d{12}$/)]],
+    address: ['', Validators.required],
+    pickupLocation: ['', Validators.required],
+    dropLocation: ['', Validators.required],
+    specialRequests: [''],
+  });
+
+  readonly userBookings = signal<Booking[]>([]);
+  readonly searchQuery = signal('');
+  readonly statusFilter = signal('All');
+
+  // Filtered user bookings for the table search
+  readonly filteredUserBookings = computed(() => {
+    const query = this.searchQuery().toLowerCase().trim();
+    const status = this.statusFilter();
+    
+    return this.userBookings().filter(b => {
+      const matchesSearch = 
+        b.bookingId?.toLowerCase().includes(query) ||
+        b.packageName?.toLowerCase().includes(query) ||
+        b.fullName?.toLowerCase().includes(query);
+        
+      const matchesStatus = status === 'All' || b.bookingStatus === status;
+      return matchesSearch && matchesStatus;
+    });
+  });
+
+  // Controls for Modals
+  readonly isDetailsOpen = signal(false);
+  readonly selectedViewBooking = signal<Booking | null>(null);
+
+  readonly isEditOpen = signal(false);
+  readonly selectedEditBooking = signal<Booking | null>(null);
   
   // Settings Config
   readonly bookingSettings = signal<BookingSettingsConfig | null>(null);
@@ -156,7 +229,36 @@ export class BookingPageComponent {
   readonly fareEstimate = computed(() => this.calculateFare());
 
   constructor() {
-    this.websiteData.user$.subscribe((user) => this.userId.set(user?.uid ?? null));
+    this.websiteData.user$.subscribe((user) => {
+      this.userId.set(user?.uid ?? null);
+      const email = user?.email;
+      if (email) {
+        // Load bookings history for this email in real time
+        this.firestoreService.getBookingsByUserEmail(email).subscribe({
+          next: (history) => {
+            this.userBookings.set(history);
+          },
+          error: (err) => console.error('Failed to load user bookings history:', err)
+        });
+
+        // Load default booking info
+        this.firestoreService.getDefaultBookingInfo(email).subscribe({
+          next: (defaults) => {
+            if (defaults) {
+              this.defaultInfoForm.patchValue(defaults, { emitEvent: false });
+              // Auto-populate main booking form if pristine
+              if (this.bookingForm.pristine) {
+                this.bookingForm.patchValue(defaults);
+              }
+            }
+          },
+          error: (err) => console.error('Failed to load default booking info:', err)
+        });
+      } else {
+        this.userBookings.set([]);
+      }
+    });
+
     this.bookingForm.valueChanges.subscribe(() => {
       this.bookingForm.patchValue({ totalFare: this.fareEstimate() }, { emitEvent: false });
     });
@@ -493,11 +595,157 @@ export class BookingPageComponent {
     });
   }
 
-  private toIsoString(value: Date | string | null | undefined): string | undefined {
+  private toIsoString(value: Date | string | null | undefined): string | null {
     if (!value) {
-      return undefined;
+      return null;
     }
     const date = value instanceof Date ? value : new Date(value);
     return date.toISOString();
+  }
+
+  private toIsoDateString(value: Date | string | null | undefined): string {
+    if (!value) return '';
+    const date = value instanceof Date ? value : new Date(value);
+    return date.toISOString().split('T')[0];
+  }
+
+  async saveDefaultInfo(): Promise<void> {
+    const email = this.defaultInfoForm.value.email || this.bookingForm.value.email;
+    if (!email) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Email Required',
+        detail: 'Please log in or enter an email address in Default Info to save.',
+      });
+      return;
+    }
+    
+    try {
+      await this.firestoreService.saveDefaultBookingInfo(email, this.defaultInfoForm.value);
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Defaults Saved',
+        detail: 'Your default booking information has been saved successfully.',
+      });
+    } catch (error) {
+      console.error(error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Save Failed',
+        detail: 'Unable to save default booking details. Check permissions.',
+      });
+    }
+  }
+
+  openDetails(booking: Booking): void {
+    this.selectedViewBooking.set(booking);
+    this.isDetailsOpen.set(true);
+  }
+
+  closeDetails(): void {
+    this.selectedViewBooking.set(null);
+    this.isDetailsOpen.set(false);
+  }
+
+  openEdit(booking: Booking): void {
+    if (booking.bookingStatus !== 'Pending') {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Action restricted',
+        detail: 'Only bookings with "Pending" status can be modified.',
+      });
+      return;
+    }
+    this.selectedEditBooking.set(booking);
+    this.editBookingForm.patchValue({
+      fullName: booking.fullName,
+      mobileNumber: booking.mobileNumber as any,
+      email: booking.email,
+      aadhaarNumber: booking.aadhaarNumber,
+      address: booking.address,
+      pickupLocation: booking.pickupLocation,
+      dropLocation: booking.dropLocation,
+      specialRequests: booking.specialRequests || '',
+    });
+    this.isEditOpen.set(true);
+  }
+
+  closeEdit(): void {
+    this.selectedEditBooking.set(null);
+    this.isEditOpen.set(false);
+  }
+
+  async updateTicket(): Promise<void> {
+    const booking = this.selectedEditBooking();
+    if (!booking || !booking.id) return;
+    
+    if (this.editBookingForm.invalid) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Incomplete form',
+        detail: 'Please fill in all required fields.',
+      });
+      return;
+    }
+    
+    const updated: Booking = {
+      ...booking,
+      fullName: this.editBookingForm.value.fullName || '',
+      mobileNumber: String(this.editBookingForm.value.mobileNumber || ''),
+      email: this.editBookingForm.value.email || '',
+      aadhaarNumber: this.editBookingForm.value.aadhaarNumber || '',
+      address: this.editBookingForm.value.address || '',
+      pickupLocation: this.editBookingForm.value.pickupLocation || '',
+      dropLocation: this.editBookingForm.value.dropLocation || '',
+      specialRequests: this.editBookingForm.value.specialRequests || '',
+    };
+    
+    try {
+      await this.firestoreService.updateBooking(updated);
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Booking Updated',
+        detail: 'Your booking details have been modified successfully.',
+      });
+      this.closeEdit();
+    } catch (error) {
+      console.error(error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Update Failed',
+        detail: 'Unable to update booking information.',
+      });
+    }
+  }
+
+  async cancelTicket(booking: Booking): Promise<void> {
+    if (booking.bookingStatus === 'Cancelled') {
+      return;
+    }
+    
+    if (!confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+      return;
+    }
+    
+    const updated: Booking = {
+      ...booking,
+      bookingStatus: 'Cancelled',
+    };
+    
+    try {
+      await this.firestoreService.updateBooking(updated);
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Booking Cancelled',
+        detail: `Booking ID ${booking.bookingId} has been cancelled successfully.`,
+      });
+    } catch (error) {
+      console.error(error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Cancellation Failed',
+        detail: 'Unable to cancel the booking. Please check database permissions.',
+      });
+    }
   }
 }
