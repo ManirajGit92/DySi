@@ -7,6 +7,7 @@ import {
   doc,
   docData,
   Firestore,
+  getDocs,
   orderBy,
   query,
   serverTimestamp,
@@ -92,9 +93,47 @@ export class FirestoreService {
     );
   }
 
+  constructor() {
+    this.migrateBookingsToOccupiedSeats();
+  }
+
+  private async migrateBookingsToOccupiedSeats() {
+    try {
+      const bookingsRef = collection(this.firestore, 'bookings');
+      const snapshot = await getDocs(bookingsRef);
+      const occupiedRef = collection(this.firestore, 'occupied_seats');
+      const occupiedSnapshot = await getDocs(occupiedRef);
+      
+      if (occupiedSnapshot.empty && !snapshot.empty) {
+        console.log('Seeding occupied_seats collection from existing bookings...');
+        for (const d of snapshot.docs) {
+          const booking = d.data() as Booking;
+          await setDoc(doc(this.firestore, 'occupied_seats', d.id), {
+            bookingId: booking.bookingId,
+            packageName: booking.packageName,
+            busType: booking.busType,
+            travelDate: this.toIsoDateString(booking.travelDate),
+            seats: booking.selectedSeats || [],
+            bookingStatus: booking.bookingStatus || 'Confirmed',
+            updatedAt: serverTimestamp(),
+          });
+        }
+        console.log('Seeding occupied_seats complete.');
+      }
+    } catch (e) {
+      // Bypassed if standard user lacks read permissions on 'bookings' (which is expected)
+    }
+  }
+
+  private toIsoDateString(value: Date | string | null | undefined): string {
+    if (!value) return '';
+    const date = value instanceof Date ? value : new Date(value);
+    return date.toISOString().split('T')[0];
+  }
+
   async addBooking(booking: Booking): Promise<void> {
     const bookingsCollection = collection(this.firestore, 'bookings');
-    await addDoc(bookingsCollection, {
+    const docRef = await addDoc(bookingsCollection, {
       ...booking,
       email: (booking.email || '').toLowerCase().trim(),
       totalFare: Number(booking.totalFare),
@@ -104,6 +143,17 @@ export class FirestoreService {
       paymentStatus: booking.paymentStatus,
       createdDate: serverTimestamp(),
       updatedDate: serverTimestamp(),
+    });
+
+    const occupiedRef = doc(this.firestore, 'occupied_seats', docRef.id);
+    await setDoc(occupiedRef, {
+      bookingId: booking.bookingId,
+      packageName: booking.packageName,
+      busType: booking.busType,
+      travelDate: this.toIsoDateString(booking.travelDate),
+      seats: booking.selectedSeats || [],
+      bookingStatus: booking.bookingStatus,
+      updatedAt: serverTimestamp(),
     });
   }
 
@@ -135,11 +185,25 @@ export class FirestoreService {
       totalFare: Number(booking.totalFare),
       updatedDate: serverTimestamp(),
     });
+
+    const occupiedRef = doc(this.firestore, 'occupied_seats', booking.id);
+    await setDoc(occupiedRef, {
+      bookingId: booking.bookingId,
+      packageName: booking.packageName,
+      busType: booking.busType,
+      travelDate: this.toIsoDateString(booking.travelDate),
+      seats: booking.selectedSeats || [],
+      bookingStatus: booking.bookingStatus,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
   }
 
   async deleteBooking(bookingId: string): Promise<void> {
     const bookingRef = doc(this.firestore, 'bookings', bookingId);
     await deleteDoc(bookingRef);
+
+    const occupiedRef = doc(this.firestore, 'occupied_seats', bookingId);
+    await deleteDoc(occupiedRef);
   }
 
   private toDate(val: any): Date {
@@ -173,6 +237,11 @@ export class FirestoreService {
     );
   }
 
+  getOccupiedSeats(): Observable<any[]> {
+    const colRef = collection(this.firestore, 'occupied_seats');
+    return collectionData(colRef, { idField: 'id' }) as Observable<any[]>;
+  }
+
   getDefaultBookingInfo(email: string): Observable<any> {
     if (!email) return of(null);
     const docRef = doc(this.firestore, 'default_booking_info', email.toLowerCase().trim());
@@ -188,6 +257,29 @@ export class FirestoreService {
       email: normalizedEmail,
       updatedAt: serverTimestamp()
     });
+  }
+
+  async saveColumnPreferences(email: string, fields: string[]): Promise<void> {
+    if (!email) return;
+    const docRef = doc(this.firestore, 'default_booking_info', email.toLowerCase().trim());
+    await setDoc(docRef, {
+      columnPreferences: fields
+    }, { merge: true });
+  }
+
+  async saveAdminColumnPreferences(email: string, fields: string[]): Promise<void> {
+    if (!email) return;
+    const docRef = doc(this.firestore, 'admin_preferences', email.toLowerCase().trim());
+    await setDoc(docRef, { adminColumnPreferences: fields }, { merge: true });
+  }
+
+  getAdminColumnPreferences(email: string): Observable<string[]> {
+    if (!email) return of([]);
+    const docRef = doc(this.firestore, 'admin_preferences', email.toLowerCase().trim());
+    return (docData(docRef) as Observable<any>).pipe(
+      map(data => (data?.adminColumnPreferences as string[]) || []),
+      catchError(() => of([]))
+    );
   }
 
   getBookingSettings(): Observable<BookingSettingsConfig | null> {

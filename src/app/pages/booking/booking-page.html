@@ -256,42 +256,77 @@
           <div class="table-filters flex flex-wrap gap-4 items-center mb-4">
             <div class="search-box">
               <i class="fa-solid fa-magnifying-glass search-icon"></i>
-              <input pInputText type="text" placeholder="Search by Booking ID or Package..." 
+              <input pInputText type="text" placeholder="Search by Booking ID or Package..."
                      [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" class="search-input" />
             </div>
             <div class="filter-dropdown">
-              <p-select [options]="['All', 'Pending', 'Confirmed', 'Cancelled']" 
-                        [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)" 
+              <p-select [options]="['All', 'Pending', 'Confirmed', 'Cancelled']"
+                        [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)"
                         placeholder="Status Filter"></p-select>
             </div>
+            <div class="filter-dropdown">
+              <p-multiSelect
+                [options]="columns()"
+                optionLabel="header"
+                optionValue="field"
+                [ngModel]="selectedColumnFields()"
+                (ngModelChange)="onColumnsChange($event)"
+                placeholder="Columns"
+                selectedItemsLabel="{0} columns"
+                [maxSelectedLabels]="0"
+                appendTo="body">
+              </p-multiSelect>
+            </div>
           </div>
+
 
           <div class="table-wrap">
             <p-table [value]="filteredUserBookings()" [paginator]="true" [rows]="10" responsiveLayout="scroll" class="p-table-glass">
               <ng-template pTemplate="header">
                 <tr>
-                  <th>Booking ID</th>
-                  <th>Passenger Name</th>
-                  <th>Travel Date</th>
-                  <th>Package Details</th>
-                  <th>Fare</th>
-                  <th>Status</th>
+                  <th *ngFor="let col of getVisibleColumns()">{{ col.header }}</th>
                   <th class="text-center">Actions</th>
                 </tr>
               </ng-template>
               <ng-template pTemplate="body" let-booking>
                 <tr>
-                  <td><strong>{{ booking.bookingId }}</strong></td>
-                  <td>{{ booking.fullName }}</td>
-                  <td>{{ booking.travelDate | date:'mediumDate' }}</td>
-                  <td>
-                    <span class="badge-pkg">{{ booking.packageName }}</span>
-                    <small class="badge-bus-type block text-xs text-muted">{{ booking.busType }}</small>
-                  </td>
-                  <td>₹{{ booking.totalFare | number:'1.0-0' }}</td>
-                  <td>
-                    <span class="status-chip" [class]="booking.bookingStatus.toLowerCase()">
-                      {{ booking.bookingStatus }}
+                  <td *ngFor="let col of getVisibleColumns()">
+                    <!-- Booking ID -->
+                    <span *ngIf="col.field === 'bookingId'"><strong>{{ booking.bookingId }}</strong></span>
+                    
+                    <!-- Passenger Name -->
+                    <span *ngIf="col.field === 'fullName'">{{ booking.fullName }}</span>
+                    
+                    <!-- Travel Date -->
+                    <span *ngIf="col.field === 'travelDate'">{{ booking.travelDate | date:'mediumDate' }}</span>
+                    
+                    <!-- Package Details -->
+                    <div *ngIf="col.field === 'packageName'">
+                      <span class="badge-pkg">{{ booking.packageName }}</span>
+                      <small class="badge-bus-type block text-xs text-muted">{{ booking.busType }}</small>
+                    </div>
+                    
+                    <!-- Pickup Location -->
+                    <span *ngIf="col.field === 'pickupLocation'">{{ booking.pickupLocation }}</span>
+                    
+                    <!-- Drop Location -->
+                    <span *ngIf="col.field === 'dropLocation'">{{ booking.dropLocation }}</span>
+                    
+                    <!-- Seat Number -->
+                    <span *ngIf="col.field === 'selectedSeats'">
+                      <span class="badge-pkg" style="background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2)">
+                        {{ booking.selectedSeats?.join(', ') }}
+                      </span>
+                    </span>
+                    
+                    <!-- Fare -->
+                    <span *ngIf="col.field === 'totalFare'">₹{{ booking.totalFare | number:'1.0-0' }}</span>
+                    
+                    <!-- Status -->
+                    <span *ngIf="col.field === 'bookingStatus'">
+                      <span class="status-chip" [class]="booking.bookingStatus.toLowerCase()">
+                        {{ booking.bookingStatus }}
+                      </span>
                     </span>
                   </td>
                   <td class="text-center">
@@ -308,7 +343,7 @@
               </ng-template>
               <ng-template pTemplate="emptymessage">
                 <tr>
-                  <td colspan="7" class="empty-table-row">No bookings found matching your search.</td>
+                  <td [attr.colspan]="getVisibleColumns().length + 1" class="empty-table-row">No bookings found matching your search.</td>
                 </tr>
               </ng-template>
             </p-table>

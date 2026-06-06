@@ -5,6 +5,7 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -24,6 +25,12 @@ interface SeatingRow {
   rightSeats: string[];
 }
 
+export interface TableColumn {
+  field: string;
+  header: string;
+  visible: boolean;
+}
+
 @Component({
   standalone: true,
   selector: 'app-booking-page',
@@ -36,6 +43,7 @@ interface SeatingRow {
     ButtonModule,
     DatePickerModule,
     SelectModule,
+    MultiSelectModule,
     InputTextModule,
     InputNumberModule,
     TextareaModule,
@@ -60,6 +68,8 @@ export class BookingPageComponent {
 
   // Real-time bookings from Firestore
   readonly allBookings = toSignal(this.firestoreService.getBookings(), { initialValue: [] });
+  // Real-time occupied seats from Firestore
+  readonly allOccupiedSeats = toSignal(this.firestoreService.getOccupiedSeats(), { initialValue: [] });
 
   // Dynamically calculate booked/occupied seats for the chosen package, date, and bus type
   readonly bookedSeats = computed(() => {
@@ -71,18 +81,54 @@ export class BookingPageComponent {
     }
 
     const formattedDate = this.toIsoDateString(travelDate);
-    return this.allBookings()
-      .filter(b => b.bookingStatus !== 'Cancelled' && 
-                   b.packageName === packageName && 
-                   b.busType === busType &&
-                   this.toIsoDateString(b.travelDate) === formattedDate)
-      .reduce((seats, b) => {
-        if (b.selectedSeats) {
-          seats.push(...b.selectedSeats);
+    return this.allOccupiedSeats()
+      .filter(s => s.bookingStatus !== 'Cancelled' && 
+                   s.packageName === packageName && 
+                   s.busType === busType &&
+                   s.travelDate === formattedDate)
+      .reduce((seats, s) => {
+        if (s.seats) {
+          seats.push(...s.seats);
         }
         return seats;
       }, [] as string[]);
   });
+
+  // Table Columns customization
+  readonly columns = signal<TableColumn[]>([
+    { field: 'bookingId', header: 'Booking ID', visible: true },
+    { field: 'fullName', header: 'Passenger Name', visible: true },
+    { field: 'travelDate', header: 'Travel Date', visible: true },
+    { field: 'packageName', header: 'Package Details', visible: true },
+    { field: 'pickupLocation', header: 'Pickup Location', visible: true },
+    { field: 'dropLocation', header: 'Drop Location', visible: true },
+    { field: 'selectedSeats', header: 'Seat Number', visible: true },
+    { field: 'totalFare', header: 'Fare', visible: true },
+    { field: 'bookingStatus', header: 'Status', visible: true },
+  ]);
+
+  // Drives the p-multiSelect for column visibility – list of currently-visible field keys
+  readonly selectedColumnFields = signal<string[]>(
+    this.columns().filter(c => c.visible).map(c => c.field)
+  );
+
+  /** Called when the user changes the multiSelect dropdown. Syncs visibility + persists. */
+  onColumnsChange(selectedFields: string[]): void {
+    this.selectedColumnFields.set(selectedFields);
+    this.columns.update(cols =>
+      cols.map(c => ({ ...c, visible: selectedFields.includes(c.field) }))
+    );
+    const email = this.bookingForm.value.email || this.defaultInfoForm.value.email;
+    if (email) {
+      this.firestoreService.saveColumnPreferences(email, selectedFields).catch(err => {
+        console.error('Failed to save column preferences:', err);
+      });
+    }
+  }
+
+  getVisibleColumns() {
+    return this.columns().filter(c => c.visible);
+  }
 
   // Default booking info form
   readonly defaultInfoForm = this.fb.group({
@@ -246,6 +292,16 @@ export class BookingPageComponent {
           next: (defaults) => {
             if (defaults) {
               this.defaultInfoForm.patchValue(defaults, { emitEvent: false });
+              // Apply saved column preferences
+              if (defaults.columnPreferences) {
+                const prefs = new Set(defaults.columnPreferences);
+                this.columns.update(cols => cols.map(c => ({
+                  ...c,
+                  visible: prefs.has(c.field)
+                })));
+                // keep multiSelect dropdown in sync
+                this.selectedColumnFields.set(defaults.columnPreferences as string[]);
+              }
               // Auto-populate main booking form if pristine
               if (this.bookingForm.pristine) {
                 this.bookingForm.patchValue(defaults);
@@ -463,6 +519,18 @@ export class BookingPageComponent {
     }
 
     if (this.isSubmitting()) {
+      return;
+    }
+
+    // Prevent duplicate seat booking
+    const currentBooked = this.bookedSeats();
+    const overlapping = this.selectedSeats().filter(seat => currentBooked.includes(seat));
+    if (overlapping.length > 0) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Seats already booked',
+        detail: `The following seats were just booked by another traveler: ${overlapping.join(', ')}. Please select other seats.`,
+      });
       return;
     }
 

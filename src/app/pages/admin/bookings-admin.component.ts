@@ -6,9 +6,20 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { DatePickerModule } from 'primeng/datepicker';
+import { SortIconModule } from 'primeng/sorticon';
 import * as XLSX from 'xlsx';
 import { FirestoreService } from '../../core/services/firestore.service';
 import { Booking, BookingStatus, BusType } from '../../core/models/booking.models';
+import { WebsiteDataService } from '../../core/services/website-data.service';
+
+export interface AdminTableColumn {
+  field: string;
+  header: string;
+  visible: boolean;
+  sortable?: boolean;
+}
 
 @Component({
   standalone: true,
@@ -21,12 +32,16 @@ import { Booking, BookingStatus, BusType } from '../../core/models/booking.model
     InputTextModule,
     TableModule,
     SelectModule,
+    MultiSelectModule,
+    DatePickerModule,
+    SortIconModule,
   ],
   templateUrl: './bookings-admin.component.html',
   styleUrls: ['./bookings-admin.component.scss'],
 })
 export class BookingsAdminComponent {
   private readonly firestoreService = inject(FirestoreService);
+  private readonly websiteData = inject(WebsiteDataService);
 
   readonly bookings = signal<Booking[]>([]);
   readonly selectedBooking = signal<Booking | null>(null);
@@ -45,6 +60,49 @@ export class BookingsAdminComponent {
     'All',
     ...Array.from(new Set(this.bookings().map((booking) => booking.packageName))),
   ]);
+
+  // Dynamic column definitions for admin bookings table
+  readonly columns = signal<AdminTableColumn[]>([
+    { field: 'bookingId',      header: 'Booking ID',    visible: true,  sortable: true  },
+    { field: 'fullName',       header: 'Customer',      visible: true,  sortable: true  },
+    { field: 'email',          header: 'Email',         visible: false, sortable: false },
+    { field: 'mobileNumber',   header: 'Mobile',        visible: false, sortable: false },
+    { field: 'packageName',    header: 'Package',       visible: true,  sortable: true  },
+    { field: 'busType',        header: 'Bus Type',      visible: true,  sortable: true  },
+    { field: 'pickupLocation', header: 'Pickup',        visible: false, sortable: false },
+    { field: 'dropLocation',   header: 'Drop',          visible: false, sortable: false },
+    { field: 'selectedSeats',  header: 'Seats',         visible: false, sortable: false },
+    { field: 'passengers',     header: 'Passengers',    visible: false, sortable: false },
+    { field: 'bookingStatus',  header: 'Status',        visible: true,  sortable: true  },
+    { field: 'paymentStatus',  header: 'Payment',       visible: true,  sortable: true  },
+    { field: 'travelDate',     header: 'Travel Date',   visible: true,  sortable: true  },
+    { field: 'returnDate',     header: 'Return Date',   visible: false, sortable: false },
+    { field: 'totalFare',      header: 'Fare',          visible: true,  sortable: true  },
+    { field: 'specialRequests',header: 'Special Reqs',  visible: false, sortable: false },
+  ]);
+
+  readonly selectedColumnFields = signal<string[]>(
+    this.columns().filter(c => c.visible).map(c => c.field)
+  );
+
+  getVisibleColumns(): AdminTableColumn[] {
+    return this.columns().filter(c => c.visible);
+  }
+
+  onColumnsChange(selectedFields: string[]): void {
+    this.selectedColumnFields.set(selectedFields);
+    this.columns.update(cols =>
+      cols.map(c => ({ ...c, visible: selectedFields.includes(c.field) }))
+    );
+    // Persist admin column prefs keyed to admin email
+    this.websiteData.user$.subscribe(user => {
+      if (user?.email) {
+        this.firestoreService
+          .saveAdminColumnPreferences(user.email, selectedFields)
+          .catch(err => console.error('Failed to save admin column preferences:', err));
+      }
+    }).unsubscribe();
+  }
 
   readonly filteredBookings = computed(() => {
     return this.bookings()
@@ -97,12 +155,37 @@ export class BookingsAdminComponent {
 
   constructor() {
     this.loadBookings();
+    // Load saved admin column preferences
+    this.websiteData.user$.subscribe(user => {
+      if (user?.email) {
+        this.firestoreService.getAdminColumnPreferences(user.email).subscribe(prefs => {
+          if (prefs && prefs.length) {
+            this.selectedColumnFields.set(prefs);
+            this.columns.update(cols => cols.map(c => ({ ...c, visible: prefs.includes(c.field) })));
+          }
+        });
+      }
+    });
   }
 
   async loadBookings(): Promise<void> {
     this.firestoreService.getBookings().subscribe((bookings) => {
       this.bookings.set(bookings);
     });
+  }
+
+  getCellValue(booking: Booking, field: string): string {
+    const val = (booking as any)[field];
+    if (field === 'travelDate' || field === 'returnDate') {
+      return val ? new Date(val).toLocaleDateString() : '—';
+    }
+    if (field === 'selectedSeats') {
+      return Array.isArray(val) ? val.join(', ') : (val ?? '—');
+    }
+    if (field === 'totalFare') {
+      return val != null ? `₹${Number(val).toLocaleString('en-IN')}` : '—';
+    }
+    return val ?? '—';
   }
 
   openDetails(booking: Booking): void {
