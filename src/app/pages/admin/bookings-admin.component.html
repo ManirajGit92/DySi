@@ -103,7 +103,6 @@
         <th *ngFor="let col of getVisibleColumns()"
             [pSortableColumn]="col.sortable ? col.field : undefined">
           {{ col.header }}
-          <p-sortIcon *ngIf="col.sortable" [field]="col.field"></p-sortIcon>
         </th>
         <th>Actions</th>
       </tr>

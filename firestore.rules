@@ -48,6 +48,14 @@ service cloud.firestore {
       allow read, write: if !isRestricted();
     }
 
+    match /seat_holds/{document} {
+      // Anyone can read holds to show real-time seat availability
+      allow read: if true;
+      // Anyone can create/delete holds as long as they are not restricted
+      allow create, delete: if !isRestricted();
+      allow update: if false;
+    }
+
     match /booking_settings/{document} {
       allow read: if !isRestricted();
       allow write: if isAdmin() && !isRestricted();

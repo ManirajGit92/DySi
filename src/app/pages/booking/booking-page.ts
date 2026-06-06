@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { computed, Component, inject, signal } from '@angular/core';
+import { computed, Component, inject, OnDestroy, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -14,7 +14,7 @@ import { TabsModule } from 'primeng/tabs';
 import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
 import { MessageService } from 'primeng/api';
-import { FirestoreService } from '../../core/services/firestore.service';
+import { FirestoreService, SeatHold } from '../../core/services/firestore.service';
 import { Booking, BookingPackage, BookingStatus, PaymentStatus, BusType, defaultBookingPackages, BookingFieldConfig, BookingSettingsConfig, defaultBookingFields } from '../../core/models/booking.models';
 import { WebsiteDataService } from '../../core/services/website-data.service';
 import { NotificationService } from '../../core/services/notification.service';
@@ -54,7 +54,7 @@ export interface TableColumn {
   ],
   providers: [MessageService],
 })
-export class BookingPageComponent {
+export class BookingPageComponent implements OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly firestoreService = inject(FirestoreService);
   private readonly websiteData = inject(WebsiteDataService);
@@ -66,24 +66,46 @@ export class BookingPageComponent {
   readonly userId = signal<string | null>(null);
   readonly packages = signal<BookingPackage[]>(defaultBookingPackages);
 
+  /** Unique ID for this browser session — used to group seat holds. */
+  readonly sessionId = crypto.randomUUID();
+
+  /** Maps seat label → Firestore hold document ID for THIS session. */
+  private readonly seatHoldIds = new Map<string, string>();
+
+  /** Payment modal state */
+  readonly isPaymentOpen = signal(false);
+  readonly pendingBooking = signal<{ booking: Booking; docId: string } | null>(null);
+  readonly isCompletingPayment = signal(false);
+
+  /** Countdown for payment hold timer (seconds remaining) */
+  readonly holdCountdown = signal(5 * 60);
+  private countdownInterval: any = null;
+
   // Real-time bookings from Firestore
   readonly allBookings = toSignal(this.firestoreService.getBookings(), { initialValue: [] });
   // Real-time occupied seats from Firestore
   readonly allOccupiedSeats = toSignal(this.firestoreService.getOccupiedSeats(), { initialValue: [] });
+  // Real-time active seat holds from Firestore
+  readonly allHeldSeats = toSignal(this.firestoreService.getActiveHolds(), { initialValue: [] });
+
+  // Form value signals to trigger proper Angular change detection & computed recalculations
+  readonly selectedTravelDate = signal<Date | null>(null);
+  readonly selectedPackageName = signal<string>('City Explorer');
+  readonly selectedBusType = signal<BusType | null>(null);
 
   // Dynamically calculate booked/occupied seats for the chosen package, date, and bus type
   readonly bookedSeats = computed(() => {
-    const travelDate = this.bookingForm.value.travelDate;
-    const packageName = this.bookingForm.value.packageName;
-    const busType = this.bookingForm.value.busType;
+    const travelDate = this.selectedTravelDate();
+    const packageName = this.selectedPackageName();
+    const busType = this.selectedBusType();
     if (!travelDate || !packageName || !busType) {
       return [];
     }
 
     const formattedDate = this.toIsoDateString(travelDate);
     return this.allOccupiedSeats()
-      .filter(s => s.bookingStatus !== 'Cancelled' && 
-                   s.packageName === packageName && 
+      .filter(s => s.bookingStatus !== 'Cancelled' &&
+                   s.packageName === packageName &&
                    s.busType === busType &&
                    s.travelDate === formattedDate)
       .reduce((seats, s) => {
@@ -92,6 +114,29 @@ export class BookingPageComponent {
         }
         return seats;
       }, [] as string[]);
+  });
+
+  /**
+   * Seats currently held by OTHER sessions for the same trip context.
+   * These appear amber/orange — temporarily unavailable.
+   */
+  readonly heldByOthers = computed(() => {
+    const travelDate = this.selectedTravelDate();
+    const packageName = this.selectedPackageName();
+    const busType = this.selectedBusType();
+    if (!travelDate || !packageName || !busType) return [];
+
+    const formattedDate = this.toIsoDateString(travelDate);
+    const nowMs = Date.now();
+    return this.allHeldSeats()
+      .filter(h =>
+        h.sessionId !== this.sessionId &&             // not my own hold
+        h.packageName === packageName &&
+        h.busType === busType &&
+        h.travelDate === formattedDate &&
+        h.expiresAt?.toMillis?.() > nowMs             // still active
+      )
+      .map(h => h.seat);
   });
 
   // Table Columns customization
@@ -268,13 +313,23 @@ export class BookingPageComponent {
   }) as FormGroup;
 
   readonly selectedPackage = computed(() => {
-    const packageName = this.bookingForm.value.packageName;
+    const packageName = this.selectedPackageName();
     return this.packages().find((pkg) => pkg.name === packageName) ?? this.packages()[0];
   });
 
   readonly fareEstimate = computed(() => this.calculateFare());
 
   constructor() {
+    // Sync initial form values to the signals
+    this.selectedTravelDate.set(this.bookingForm.get('travelDate')?.value);
+    this.selectedPackageName.set(this.bookingForm.get('packageName')?.value || 'City Explorer');
+    this.selectedBusType.set(this.bookingForm.get('busType')?.value);
+
+    // Subscribe to valueChanges of individual controls to keep signals updated
+    this.bookingForm.get('travelDate')?.valueChanges.subscribe(val => this.selectedTravelDate.set(val));
+    this.bookingForm.get('packageName')?.valueChanges.subscribe(val => this.selectedPackageName.set(val || ''));
+    this.bookingForm.get('busType')?.valueChanges.subscribe(val => this.selectedBusType.set(val));
+
     this.websiteData.user$.subscribe((user) => {
       this.userId.set(user?.uid ?? null);
       const email = user?.email;
@@ -442,16 +497,37 @@ export class BookingPageComponent {
   }
 
   toggleSeat(seat: string): void {
-    if (this.seatIsBooked(seat)) {
+    if (this.seatIsBooked(seat) || this.seatIsHeldByOther(seat)) {
       return;
     }
     const selected = [...this.selectedSeats()];
     const index = selected.indexOf(seat);
 
     if (index >= 0) {
+      // Deselect: release the hold in Firestore
       selected.splice(index, 1);
+      const holdId = this.seatHoldIds.get(seat);
+      if (holdId) {
+        this.firestoreService.releaseSeat(holdId);
+        this.seatHoldIds.delete(seat);
+      }
     } else {
+      // Select: place a hold in Firestore
       selected.push(seat);
+      const travelDate = this.toIsoDateString(this.bookingForm.value.travelDate);
+      const packageName = this.bookingForm.value.packageName || '';
+      const busType = this.bookingForm.value.busType || '';
+      if (travelDate && packageName && busType) {
+        this.firestoreService.holdSeat({
+          packageName,
+          busType,
+          travelDate,
+          seat,
+          sessionId: this.sessionId,
+          userId: this.userId(),
+        }).then(holdId => this.seatHoldIds.set(seat, holdId))
+          .catch(err => console.warn('Could not place seat hold:', err));
+      }
     }
 
     this.selectedSeats.set(selected);
@@ -466,10 +542,13 @@ export class BookingPageComponent {
     return this.bookedSeats().includes(seat);
   }
 
+  seatIsHeldByOther(seat: string): boolean {
+    return this.heldByOthers().includes(seat);
+  }
+
   seatClass(seat: string): string {
-    if (this.seatIsBooked(seat)) {
-      return 'bus-seat bus-seat--booked';
-    }
+    if (this.seatIsBooked(seat))        return 'bus-seat bus-seat--booked';
+    if (this.seatIsHeldByOther(seat))   return 'bus-seat bus-seat--held';
     return this.seatIsSelected(seat) ? 'bus-seat bus-seat--selected' : 'bus-seat bus-seat--available';
   }
 
@@ -591,42 +670,28 @@ export class BookingPageComponent {
     });
 
     try {
-      await this.firestoreService.addBooking(booking);
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Booking submitted',
-        detail: 'Your tour bus booking has been saved successfully.',
-      });
+      const docId = await this.firestoreService.addBooking(booking);
 
+      // Send notifications (non-blocking)
       this.notificationService.sendBookingConfirmation(booking).subscribe({
         next: (results) => {
           results.forEach((res) => {
             if (res.success) {
               this.messageService.add({
-                severity: 'success',
+                severity: 'info',
                 summary: `${res.type.toUpperCase()} Confirmation Sent`,
                 detail: `Sent successfully to ${res.recipient}.`,
-              });
-            } else {
-              this.messageService.add({
-                severity: 'error',
-                summary: `${res.type.toUpperCase()} Dispatch Failed`,
-                detail: res.error || `Could not dispatch ${res.type} notification.`,
               });
             }
           });
         },
-        error: (err) => {
-          console.error('Failed to send booking notifications:', err);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Notifications Failed',
-            detail: 'An error occurred while sending confirmation messages.',
-          });
-        },
+        error: (err) => console.error('Failed to send booking notifications:', err),
       });
 
-      this.resetForm();
+      // Open payment modal
+      this.pendingBooking.set({ booking: { ...booking, id: docId }, docId });
+      this.isPaymentOpen.set(true);
+      this.startCountdown();
     } catch (error) {
       console.error(error);
       this.messageService.add({
@@ -640,7 +705,11 @@ export class BookingPageComponent {
   }
 
   resetForm(): void {
+    // Release all seat holds for this session
+    this.seatHoldIds.forEach((holdId) => this.firestoreService.releaseSeat(holdId));
+    this.seatHoldIds.clear();
     this.selectedSeats.set([]);
+    this.clearCountdown();
     this.bookingForm.reset({
       fullName: '',
       mobileNumber: null,
@@ -675,6 +744,93 @@ export class BookingPageComponent {
     if (!value) return '';
     const date = value instanceof Date ? value : new Date(value);
     return date.toISOString().split('T')[0];
+  }
+
+  // ── Payment Modal ─────────────────────────────────────────────────────
+
+  private startCountdown(): void {
+    this.holdCountdown.set(5 * 60);
+    this.clearCountdown();
+    this.countdownInterval = setInterval(() => {
+      const remaining = this.holdCountdown() - 1;
+      if (remaining <= 0) {
+        this.clearCountdown();
+        this.holdCountdown.set(0);
+        // Auto-cancel if user let it expire
+        this.cancelPayment();
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Seat Hold Expired',
+          detail: 'Your seat reservation timed out. Please re-select your seats.',
+        });
+      } else {
+        this.holdCountdown.set(remaining);
+      }
+    }, 1000);
+  }
+
+  private clearCountdown(): void {
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+      this.countdownInterval = null;
+    }
+  }
+
+  get holdCountdownDisplay(): string {
+    const s = this.holdCountdown();
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  }
+
+  async submitPayment(): Promise<void> {
+    const pending = this.pendingBooking();
+    if (!pending) return;
+    this.isCompletingPayment.set(true);
+    try {
+      await this.firestoreService.completePayment(pending.docId, this.sessionId);
+      this.clearCountdown();
+      this.isPaymentOpen.set(false);
+      this.pendingBooking.set(null);
+      this.seatHoldIds.clear();
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Payment Successful! ✓',
+        detail: `Booking ${pending.booking.bookingId} confirmed. Your seats are reserved.`,
+        life: 6000,
+      });
+      this.resetForm();
+    } catch (error) {
+      console.error('Payment failed:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Payment Failed',
+        detail: 'Could not confirm payment. Please try again.',
+      });
+    } finally {
+      this.isCompletingPayment.set(false);
+    }
+  }
+
+  cancelPayment(): void {
+    this.clearCountdown();
+    this.isPaymentOpen.set(false);
+    this.pendingBooking.set(null);
+    // Release all seat holds — booking remains in Pending state
+    this.firestoreService.releaseSessionSeats(this.sessionId);
+    this.seatHoldIds.clear();
+    this.resetForm();
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Payment Cancelled',
+      detail: 'Your booking is saved as Pending. Complete payment later from My Bookings.',
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.clearCountdown();
+    // Best-effort: release all holds when navigating away
+    this.firestoreService.releaseSessionSeats(this.sessionId);
   }
 
   async saveDefaultInfo(): Promise<void> {

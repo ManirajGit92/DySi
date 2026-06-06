@@ -8,7 +8,6 @@ import { TableModule } from 'primeng/table';
 import { SelectModule } from 'primeng/select';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { DatePickerModule } from 'primeng/datepicker';
-import { SortIconModule } from 'primeng/sorticon';
 import * as XLSX from 'xlsx';
 import { FirestoreService } from '../../core/services/firestore.service';
 import { Booking, BookingStatus, BusType } from '../../core/models/booking.models';
@@ -34,7 +33,6 @@ export interface AdminTableColumn {
     SelectModule,
     MultiSelectModule,
     DatePickerModule,
-    SortIconModule,
   ],
   templateUrl: './bookings-admin.component.html',
   styleUrls: ['./bookings-admin.component.scss'],

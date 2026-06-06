@@ -12,12 +12,25 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  Timestamp,
   updateDoc,
   where,
 } from '@angular/fire/firestore';
 import { catchError, map, Observable, of } from 'rxjs';
 import { Booking, sampleBookings, BookingSettingsConfig } from '../models/booking.models';
 import { Product } from '../models/product.models';
+
+export interface SeatHold {
+  id?: string;
+  packageName: string;
+  busType: string;
+  travelDate: string;  // YYYY-MM-DD
+  seat: string;
+  sessionId: string;
+  userId: string | null;
+  heldAt: any;
+  expiresAt: any;      // Timestamp (heldAt + 5 min)
+}
 
 interface FirestoreOrder {
   id?: string;
@@ -131,7 +144,7 @@ export class FirestoreService {
     return date.toISOString().split('T')[0];
   }
 
-  async addBooking(booking: Booking): Promise<void> {
+  async addBooking(booking: Booking): Promise<string> {
     const bookingsCollection = collection(this.firestore, 'bookings');
     const docRef = await addDoc(bookingsCollection, {
       ...booking,
@@ -155,6 +168,8 @@ export class FirestoreService {
       bookingStatus: booking.bookingStatus,
       updatedAt: serverTimestamp(),
     });
+
+    return docRef.id;
   }
 
   async updateBooking(booking: Booking): Promise<void> {
@@ -240,6 +255,69 @@ export class FirestoreService {
   getOccupiedSeats(): Observable<any[]> {
     const colRef = collection(this.firestore, 'occupied_seats');
     return collectionData(colRef, { idField: 'id' }) as Observable<any[]>;
+  }
+
+  // ── Seat Hold / Locking ────────────────────────────────────────────────────
+
+  /** Streams all active seat holds in real-time. */
+  getActiveHolds(): Observable<SeatHold[]> {
+    const colRef = collection(this.firestore, 'seat_holds');
+    return collectionData(colRef, { idField: 'id' }) as Observable<SeatHold[]>;
+  }
+
+  /**
+   * Places a 5-minute hold on a seat for the given session.
+   * Returns the Firestore document ID of the hold.
+   */
+  async holdSeat(hold: Omit<SeatHold, 'id' | 'heldAt' | 'expiresAt'>): Promise<string> {
+    const colRef = collection(this.firestore, 'seat_holds');
+    const now = Timestamp.now();
+    const expiresAt = Timestamp.fromMillis(now.toMillis() + 5 * 60 * 1000); // +5 minutes
+    const docRef = await addDoc(colRef, {
+      ...hold,
+      heldAt: now,
+      expiresAt,
+    });
+    return docRef.id;
+  }
+
+  /** Releases a single seat hold by its document ID. */
+  async releaseSeat(holdId: string): Promise<void> {
+    try {
+      await deleteDoc(doc(this.firestore, 'seat_holds', holdId));
+    } catch {
+      // Hold may already be gone — safe to ignore
+    }
+  }
+
+  /** Releases ALL seat holds belonging to this browser session. */
+  async releaseSessionSeats(sessionId: string): Promise<void> {
+    try {
+      const colRef = collection(this.firestore, 'seat_holds');
+      const q = query(colRef, where('sessionId', '==', sessionId));
+      const snap = await getDocs(q);
+      await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+    } catch {
+      // Best-effort cleanup
+    }
+  }
+
+  /**
+   * Marks a booking as payment-completed and booking-confirmed.
+   * Also removes any lingering seat holds for this session.
+   */
+  async completePayment(bookingDocId: string, sessionId: string): Promise<void> {
+    const bookingRef = doc(this.firestore, 'bookings', bookingDocId);
+    await updateDoc(bookingRef, {
+      paymentStatus: 'Completed',
+      bookingStatus: 'Confirmed',
+      updatedDate: serverTimestamp(),
+    });
+    // Also sync occupied_seats status
+    const occupiedRef = doc(this.firestore, 'occupied_seats', bookingDocId);
+    await setDoc(occupiedRef, { bookingStatus: 'Confirmed' }, { merge: true });
+    // Clean up holds for this session
+    await this.releaseSessionSeats(sessionId);
   }
 
   getDefaultBookingInfo(email: string): Observable<any> {

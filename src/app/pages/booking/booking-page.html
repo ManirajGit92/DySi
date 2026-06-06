@@ -125,8 +125,8 @@
                         <button *ngFor="let seat of row.leftSeats"
                                 type="button"
                                 [class]="seatClass(seat)"
-                                [disabled]="seatIsBooked(seat)"
-                                [title]="seat + (seatIsBooked(seat) ? ' - Booked' : seatIsSelected(seat) ? ' - Selected' : ' - Available')"
+                                [disabled]="seatIsBooked(seat) || seatIsHeldByOther(seat)"
+                                [title]="seat + (seatIsBooked(seat) ? ' - Booked' : seatIsHeldByOther(seat) ? ' - Held (temporarily unavailable)' : seatIsSelected(seat) ? ' - Selected' : ' - Available')"
                                 (click)="toggleSeat(seat)">
                           <span class="seat-headrest"></span>
                           <span class="seat-cushion">
@@ -146,8 +146,8 @@
                         <button *ngFor="let seat of row.rightSeats"
                                 type="button"
                                 [class]="seatClass(seat)"
-                                [disabled]="seatIsBooked(seat)"
-                                [title]="seat + (seatIsBooked(seat) ? ' - Booked' : seatIsSelected(seat) ? ' - Selected' : ' - Available')"
+                                [disabled]="seatIsBooked(seat) || seatIsHeldByOther(seat)"
+                                [title]="seat + (seatIsBooked(seat) ? ' - Booked' : seatIsHeldByOther(seat) ? ' - Held (temporarily unavailable)' : seatIsSelected(seat) ? ' - Selected' : ' - Available')"
                                 (click)="toggleSeat(seat)">
                           <span class="seat-headrest"></span>
                           <span class="seat-cushion">
@@ -175,6 +175,13 @@
                       <span class="seat-cushion"></span>
                     </div>
                     <span class="legend-text">Selected</span>
+                  </div>
+                  <div class="legend-item">
+                    <div class="legend-icon bus-seat bus-seat--held">
+                      <span class="seat-headrest"></span>
+                      <span class="seat-cushion"></span>
+                    </div>
+                    <span class="legend-text">Held (5 min)</span>
                   </div>
                   <div class="legend-item">
                     <div class="legend-icon bus-seat bus-seat--booked">
@@ -569,4 +576,86 @@
     <div class="spinner"></div>
     <span>Processing booking...</span>
   </div>
+
+  <!-- ══ MOCK PAYMENT MODAL ══════════════════════════════════════════════ -->
+  <p-dialog
+    header="Complete Your Payment"
+    [visible]="isPaymentOpen()"
+    [modal]="true"
+    [closable]="false"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '95vw', maxWidth: '520px' }"
+    class="glass-dialog payment-dialog">
+
+    @if (pendingBooking(); as pb) {
+      <div class="payment-modal">
+
+        <!-- Countdown banner -->
+        <div class="payment-countdown" [class.urgent]="holdCountdown() <= 60">
+          <i class="fa-regular fa-clock"></i>
+          Seat hold expires in <strong>{{ holdCountdownDisplay }}</strong>
+        </div>
+
+        <!-- Booking reference -->
+        <div class="payment-ref">
+          <span class="payment-label">Booking ID</span>
+          <strong class="payment-value">{{ pb.booking.bookingId }}</strong>
+        </div>
+
+        <!-- QR + UPI details -->
+        <div class="payment-qr-section">
+          <div class="qr-wrapper">
+            <img src="assets/payment-qr.png" alt="Scan to Pay QR Code" class="qr-image" />
+            <p class="qr-hint"><i class="fa-solid fa-mobile-screen"></i> Scan with any UPI app</p>
+          </div>
+
+          <div class="payment-info">
+            <div class="payment-amount">
+              <span>Total Amount</span>
+              <strong>₹{{ pb.booking.totalFare | number:'1.0-0' }}</strong>
+            </div>
+            <div class="payment-meta">
+              <div><span>UPI ID</span><code>dysitours&#64;upi</code></div>
+              <div><span>Merchant</span><code>DySi Tours &amp; Travels</code></div>
+              <div><span>Seats</span><code>{{ pb.booking.selectedSeats?.join(', ') }}</code></div>
+              <div><span>Package</span><code>{{ pb.booking.packageName }}</code></div>
+              <div><span>Travel Date</span><code>{{ pb.booking.travelDate | date:'mediumDate' }}</code></div>
+            </div>
+            <div class="payment-methods">
+              <span class="pm-label">Pay via</span>
+              <div class="pm-icons">
+                <span class="pm-badge"><i class="fa-solid fa-mobile-screen-button"></i> GPay</span>
+                <span class="pm-badge"><i class="fa-solid fa-bolt"></i> PhonePe</span>
+                <span class="pm-badge"><i class="fa-brands fa-amazon-pay"></i> Paytm</span>
+                <span class="pm-badge"><i class="fa-solid fa-university"></i> Net Banking</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="payment-actions">
+          <button pButton type="button"
+            label="Submit Payment"
+            icon="pi pi-check-circle"
+            class="btn--primary payment-submit"
+            [disabled]="isCompletingPayment()"
+            (click)="submitPayment()">
+          </button>
+          <button pButton type="button"
+            label="Pay Later / Cancel"
+            class="p-button-text p-button-secondary"
+            (click)="cancelPayment()">
+          </button>
+        </div>
+
+        <p class="payment-disclaimer">
+          <i class="fa-solid fa-shield-halved"></i>
+          This is a simulated payment screen. No real transaction will occur.
+        </p>
+      </div>
+    }
+  </p-dialog>
+
 </section>
