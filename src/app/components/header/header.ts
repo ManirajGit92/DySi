@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { HeaderSettings, MenuItem } from '../../core/models/website.models';
+import { WebsiteDataService } from '../../core/services/website-data.service';
 
 @Component({
   standalone: true,
@@ -12,11 +13,16 @@ import { HeaderSettings, MenuItem } from '../../core/models/website.models';
   styleUrl: './header.scss',
 })
 export class HeaderComponent {
+  readonly websiteData = inject(WebsiteDataService);
+  readonly user$ = this.websiteData.user$;
+
   @Input() activeSection = 'home';
   @Input() isDarkTheme = false;
   @Input() showTopNavMenu = true;
   @Input() menus: MenuItem[] = [];
   @Input() headerSettings: HeaderSettings | null = null;
+  @Input() isAdmin = false;
+  @Input() isSuperAdmin = false;
   @Output() sectionSelected = new EventEmitter<string>();
   @Output() themeToggled = new EventEmitter<void>();
 

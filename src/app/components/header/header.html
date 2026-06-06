@@ -16,7 +16,22 @@
       {{ item.title }}
     </a>
     }
+    @if (isAdmin) {
     <a routerLink="/admin" class="admin-link" (click)="isMenuOpen.set(false)">Admin</a>
+    }
+    @if (isSuperAdmin) {
+    <a routerLink="/super-admin" class="super-admin-link" (click)="isMenuOpen.set(false)">Super Admin</a>
+    }
+    
+    @if (user$ | async; as user) {
+      <div class="user-profile-nav">
+        <img [src]="user.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'" class="user-avatar-nav" alt="Avatar" />
+        <span class="user-name-nav">{{ user.displayName || user.email }}</span>
+        <button class="btn-auth-logout-nav" (click)="websiteData.signOut(); isMenuOpen.set(false)">Sign Out</button>
+      </div>
+    } @else {
+      <a routerLink="/admin" class="admin-link auth-login-link" (click)="isMenuOpen.set(false)">Sign In</a>
+    }
   </nav>
 
   <div class="header-actions">

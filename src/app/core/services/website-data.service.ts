@@ -15,6 +15,7 @@ import {
   collectionData,
   deleteDoc,
   doc,
+  docData,
   getDocs,
   orderBy,
   query,
@@ -22,7 +23,7 @@ import {
   setDoc,
 } from '@angular/fire/firestore';
 import { Storage, getDownloadURL, ref, uploadBytes } from '@angular/fire/storage';
-import { Observable, catchError, map, of, startWith, tap } from 'rxjs';
+import { Observable, BehaviorSubject, catchError, combineLatest, map, of, startWith, switchMap, tap } from 'rxjs';
 
 import {
   FooterSettings,
@@ -39,6 +40,284 @@ export class WebsiteDataService {
   private readonly storage = inject(Storage);
 
   readonly user$: Observable<User | null> = authState(this.auth);
+
+  private readonly authInitialized = new BehaviorSubject<boolean>(false);
+  readonly authInitialized$ = this.authInitialized.asObservable();
+
+  readonly isRestricted$: Observable<boolean> = this.user$.pipe(
+    switchMap((user) => {
+      const email = user?.email;
+      if (!email) return of(false);
+      const docRef = doc(this.firestore, 'restricted_users', email);
+      return docData(docRef).pipe(
+        map((data) => !!data),
+        catchError(() => of(false))
+      );
+    })
+  );
+
+  readonly isSuperAdmin$: Observable<boolean> = this.user$.pipe(
+    switchMap((user) => {
+      const email = user?.email;
+      if (!email) return of(false);
+      return this.isRestricted$.pipe(
+        switchMap((isRestricted) => {
+          if (isRestricted) return of(false);
+          if (email === 'manirajmca.ac@gmail.com') return of(true);
+          const docRef = doc(this.firestore, 'super_admin', email);
+          return docData(docRef).pipe(
+            map((data) => !!data),
+            catchError(() => of(false))
+          );
+        })
+      );
+    })
+  );
+
+  readonly isAdmin$: Observable<boolean> = this.user$.pipe(
+    switchMap((user) => {
+      const email = user?.email;
+      if (!email) return of(false);
+      return this.isRestricted$.pipe(
+        switchMap((isRestricted) => {
+          if (isRestricted) return of(false);
+          if (email === 'manirajmca.ac@gmail.com') return of(true);
+          return this.isSuperAdmin$.pipe(
+            switchMap((isSuperAdmin) => {
+              if (isSuperAdmin) return of(true);
+              const docRef = doc(this.firestore, 'admins', email);
+              return docData(docRef).pipe(
+                map((data) => !!data),
+                catchError(() => of(false))
+              );
+            })
+          );
+        })
+      );
+    })
+  );
+
+  // Real-time lists for Super Admin page
+  readonly allUsers$ = collectionData(collection(this.firestore, 'users'), { idField: 'id' }) as Observable<any[]>;
+  readonly allAdmins$ = collectionData(collection(this.firestore, 'admins'), { idField: 'id' }) as Observable<any[]>;
+  readonly allSuperAdmins$ = collectionData(collection(this.firestore, 'super_admin'), { idField: 'id' }) as Observable<any[]>;
+  readonly allRestricted$ = collectionData(collection(this.firestore, 'restricted_users'), { idField: 'id' }) as Observable<any[]>;
+  readonly allAllowed$ = collectionData(collection(this.firestore, 'allowed_users'), { idField: 'id' }) as Observable<any[]>;
+
+  readonly usersWithRoles$: Observable<any[]> = combineLatest([
+    this.allUsers$.pipe(startWith([])),
+    this.allAdmins$.pipe(startWith([])),
+    this.allSuperAdmins$.pipe(startWith([])),
+    this.allRestricted$.pipe(startWith([])),
+    this.allAllowed$.pipe(startWith([])),
+  ]).pipe(
+    map(([users, admins, superAdmins, restricted, allowed]) => {
+      const adminEmails = new Set(admins.map((a) => a.id));
+      const superAdminEmails = new Set(superAdmins.map((sa) => sa.id));
+      const restrictedEmails = new Set(restricted.map((r) => r.id));
+      const allowedEmails = new Set(allowed.map((al) => al.id));
+
+      return users.map((user) => ({
+        ...user,
+        isAdmin: adminEmails.has(user.email) || user.email === 'manirajmca.ac@gmail.com',
+        isSuperAdmin: superAdminEmails.has(user.email) || user.email === 'manirajmca.ac@gmail.com',
+        isRestricted: restrictedEmails.has(user.email),
+        isAllowed: allowedEmails.has(user.email) || !restrictedEmails.has(user.email),
+      }));
+    })
+  );
+
+  readonly accessControlLogs$ = collectionData(
+    query(collection(this.firestore, 'access_control'), orderBy('timestamp', 'desc')),
+    { idField: 'id' }
+  ) as Observable<any[]>;
+
+  readonly allAdminSectionsPermissions$ = collectionData(
+    collection(this.firestore, 'admin_sections_permissions'),
+    { idField: 'id' }
+  ) as Observable<any[]>;
+
+  readonly adminsWithPermissions$: Observable<any[]> = combineLatest([
+    this.usersWithRoles$,
+    this.allAdminSectionsPermissions$.pipe(startWith([]))
+  ]).pipe(
+    map(([users, allPermissions]) => {
+      const permissionsMap = new Map(allPermissions.map((p) => [p.id, p.sections]));
+      return users
+        .filter(u => u.isAdmin)
+        .map(u => {
+          const sections = permissionsMap.get(u.email) || {
+            dashboard: true,
+            products: true,
+            settings: true,
+            users: true,
+            analytics: true,
+            bookings: true,
+            'booking-settings': true
+          };
+          return {
+            ...u,
+            sections
+          };
+        });
+    })
+  );
+
+  readonly userSectionsPermission$: Observable<Record<string, boolean>> = this.user$.pipe(
+    switchMap(user => {
+      const email = user?.email;
+      if (!email) return of({});
+      return this.isSuperAdmin$.pipe(
+        switchMap(isSuper => {
+          if (isSuper) {
+            return of({
+              dashboard: true,
+              products: true,
+              settings: true,
+              users: true,
+              analytics: true,
+              bookings: true,
+              'booking-settings': true
+            });
+          }
+          const docRef = doc(this.firestore, 'admin_sections_permissions', email);
+          return docData(docRef).pipe(
+            map((data: any) => {
+              if (!data || !data.sections) {
+                return {
+                  dashboard: true,
+                  products: true,
+                  settings: true,
+                  users: true,
+                  analytics: true,
+                  bookings: true,
+                  'booking-settings': true
+                };
+              }
+              return data.sections;
+            }),
+            catchError(() => of({
+              dashboard: true,
+              products: true,
+              settings: true,
+              users: true,
+              analytics: true,
+              bookings: true,
+              'booking-settings': true
+            }))
+          );
+        })
+      );
+    })
+  );
+
+  constructor() {
+    this.user$.subscribe(async (user) => {
+      this.authInitialized.next(true);
+      if (user && user.email) {
+        try {
+          const userRef = doc(this.firestore, 'users', user.uid);
+          await setDoc(
+            userRef,
+            {
+              uid: user.uid,
+              email: user.email,
+              displayName: user.displayName || '',
+              photoURL: user.photoURL || '',
+              lastLogin: serverTimestamp(),
+              providerId: user.providerData[0]?.providerId || 'password',
+            },
+            { merge: true }
+          );
+        } catch (error) {
+          console.error('Error synchronizing user data to Firestore:', error);
+        }
+      }
+    });
+  }
+
+  async grantAdmin(email: string, performedBy: string): Promise<void> {
+    const adminRef = doc(this.firestore, 'admins', email);
+    await setDoc(adminRef, {
+      email,
+      grantedAt: serverTimestamp(),
+      grantedBy: performedBy,
+    });
+    await this.logAccessChange(email, 'grant_admin', performedBy);
+  }
+
+  async removeAdmin(email: string, performedBy: string): Promise<void> {
+    const adminRef = doc(this.firestore, 'admins', email);
+    await deleteDoc(adminRef);
+    await this.logAccessChange(email, 'remove_admin', performedBy);
+  }
+
+  async grantSuperAdmin(email: string, performedBy: string): Promise<void> {
+    const ref = doc(this.firestore, 'super_admin', email);
+    await setDoc(ref, {
+      email,
+      grantedAt: serverTimestamp(),
+      grantedBy: performedBy,
+    });
+    await this.logAccessChange(email, 'grant_super_admin', performedBy);
+  }
+
+  async removeSuperAdmin(email: string, performedBy: string): Promise<void> {
+    if (email === 'manirajmca.ac@gmail.com') return;
+    const ref = doc(this.firestore, 'super_admin', email);
+    await deleteDoc(ref);
+    await this.logAccessChange(email, 'remove_super_admin', performedBy);
+  }
+
+  async restrictUser(email: string, performedBy: string): Promise<void> {
+    const restrictedRef = doc(this.firestore, 'restricted_users', email);
+    await setDoc(restrictedRef, {
+      email,
+      restrictedAt: serverTimestamp(),
+      restrictedBy: performedBy,
+    });
+
+    const allowedRef = doc(this.firestore, 'allowed_users', email);
+    await deleteDoc(allowedRef);
+
+    await this.logAccessChange(email, 'restrict_access', performedBy);
+  }
+
+  async allowUser(email: string, performedBy: string): Promise<void> {
+    const restrictedRef = doc(this.firestore, 'restricted_users', email);
+    await deleteDoc(restrictedRef);
+
+    const allowedRef = doc(this.firestore, 'allowed_users', email);
+    await setDoc(allowedRef, {
+      email,
+      allowedAt: serverTimestamp(),
+      allowedBy: performedBy,
+    });
+
+    await this.logAccessChange(email, 'allow_access', performedBy);
+  }
+
+  async updateAdminSectionPermission(email: string, sections: Record<string, boolean>, performedBy: string): Promise<void> {
+    const docRef = doc(this.firestore, 'admin_sections_permissions', email);
+    await setDoc(docRef, {
+      email,
+      sections,
+      updatedAt: serverTimestamp(),
+      updatedBy: performedBy
+    }, { merge: true });
+    await this.logAccessChange(email, `update_sections_visibility`, performedBy);
+  }
+
+  private async logAccessChange(email: string, action: string, performedBy: string): Promise<void> {
+    const logRef = doc(collection(this.firestore, 'access_control'));
+    await setDoc(logRef, {
+      id: logRef.id,
+      email,
+      action,
+      timestamp: serverTimestamp(),
+      performedBy,
+    });
+  }
 
   readonly menus$ = collectionData(query(collection(this.firestore, 'menus'), orderBy('order')), {
     idField: 'id',

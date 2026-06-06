@@ -1,0 +1,247 @@
+<div class="super-admin-page" [class.dark-theme]="isDarkTheme">
+  
+  <!-- Top Navigation Header -->
+  <header class="dashboard-header card">
+    <div class="header-left">
+      <div class="icon-badge">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <div>
+        <h1>Super Admin Portal</h1>
+        <p>Access control, role assignment, and security audit log</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn--ghost" (click)="toggleTheme()">
+        {{ isDarkTheme ? '☀ Light Mode' : '🌙 Dark Mode' }}
+      </button>
+      <a class="btn btn--ghost" routerLink="/admin">Admin Panel</a>
+      <a class="btn btn--ghost" routerLink="/">View Webpage</a>
+      <button class="btn btn--primary" (click)="signOut()">Sign Out</button>
+    </div>
+  </header>
+
+  <!-- Statistics Panel -->
+  <section class="stats-grid">
+    <article class="stat-card card">
+      <div class="stat-icon info"><i class="fa-solid fa-users"></i></div>
+      <div class="stat-data">
+        <span>Total Users</span>
+        <h2>{{ stats().total }}</h2>
+      </div>
+    </article>
+    <article class="stat-card card">
+      <div class="stat-icon success"><i class="fa-solid fa-user-shield"></i></div>
+      <div class="stat-data">
+        <span>Admins</span>
+        <h2>{{ stats().admins }}</h2>
+      </div>
+    </article>
+    <article class="stat-card card">
+      <div class="stat-icon warning"><i class="fa-solid fa-crown"></i></div>
+      <div class="stat-data">
+        <span>Super Admins</span>
+        <h2>{{ stats().superAdmins }}</h2>
+      </div>
+    </article>
+    <article class="stat-card card">
+      <div class="stat-icon danger"><i class="fa-solid fa-user-slash"></i></div>
+      <div class="stat-data">
+        <span>Restricted Users</span>
+        <h2>{{ stats().restricted }}</h2>
+      </div>
+    </article>
+  </section>
+
+  <!-- Main Management Panel -->
+  <main class="management-panel card">
+    <div class="panel-header">
+      <h2>User Access Management</h2>
+      <div class="panel-controls">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="search" placeholder="Search by name or email..." 
+                 [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
+        </div>
+        <div class="filter-group">
+          <button class="filter-chip" [class.active]="filterRole() === 'all'" (click)="filterRole.set('all')">All</button>
+          <button class="filter-chip" [class.active]="filterRole() === 'admin'" (click)="filterRole.set('admin')">Admins</button>
+          <button class="filter-chip" [class.active]="filterRole() === 'super_admin'" (click)="filterRole.set('super_admin')">Super Admins</button>
+          <button class="filter-chip" [class.active]="filterRole() === 'restricted'" (click)="filterRole.set('restricted')">Restricted</button>
+          <button class="filter-chip" [class.active]="filterRole() === 'allowed'" (click)="filterRole.set('allowed')">Allowed</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- User List Table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Authentication</th>
+            <th>Last Log In</th>
+            <th>Admin Role</th>
+            <th>Super Admin Role</th>
+            <th>System Access</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (u of filteredUsers(); track u.uid) {
+            <tr [class.restricted-row]="u.isRestricted">
+              <td>
+                <div class="user-cell">
+                  <img [src]="u.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'" 
+                       [alt]="u.displayName" class="user-avatar" />
+                  <div class="user-info">
+                    <strong>{{ u.displayName || 'No Name' }}</strong>
+                    <span>{{ u.email }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="provider-badge" [class.google]="u.providerId === 'google.com'">
+                  <i class="fa-brands" [class.fa-google]="u.providerId === 'google.com'" [class.fa-envelope]="u.providerId !== 'google.com'"></i>
+                  {{ u.providerId === 'google.com' ? 'Google' : 'Email' }}
+                </span>
+              </td>
+              <td>
+                <span class="date-text">
+                  {{ u.lastLogin?.seconds ? (u.lastLogin.seconds * 1000 | date:'medium') : 'Never' }}
+                </span>
+              </td>
+              <td>
+                <!-- Toggle Switch for Admin -->
+                <label class="switch">
+                  <input type="checkbox" [checked]="u.isAdmin" (change)="toggleAdmin(u)" 
+                         [disabled]="u.email === 'manirajmca.ac@gmail.com'" />
+                  <span class="slider round"></span>
+                </label>
+              </td>
+              <td>
+                <!-- Toggle Switch for Super Admin -->
+                <label class="switch">
+                  <input type="checkbox" [checked]="u.isSuperAdmin" (change)="toggleSuperAdmin(u)"
+                         [disabled]="u.email === 'manirajmca.ac@gmail.com'" />
+                  <span class="slider round"></span>
+                </label>
+              </td>
+              <td>
+                <!-- Access Button -->
+                <button class="access-btn" 
+                        [class.allow]="u.isRestricted" 
+                        [class.restrict]="!u.isRestricted"
+                        [disabled]="u.email === 'manirajmca.ac@gmail.com'"
+                        (click)="toggleAccess(u)">
+                  <i class="fa-solid" [class.fa-user-check]="u.isRestricted" [class.fa-user-slash]="!u.isRestricted"></i>
+                  {{ u.isRestricted ? 'Allow' : 'Restrict' }}
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty-row">No users found matching your search.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Admin Section Visibility Permissions Panel -->
+  <section class="management-panel card section-permissions-panel">
+    <div class="panel-header">
+      <h2><i class="fa-solid fa-user-lock"></i> Admin Section Permissions</h2>
+      <p>Manage visibility of specific admin panels for individual admin accounts (Super Admins always have full access)</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Admin User</th>
+            @for (sec of sectionsMeta; track sec.id) {
+              <th class="text-center">
+                <i class="fa-solid" [class]="'fa-' + sec.icon" [title]="sec.label"></i>
+                <span class="sec-label">{{ sec.label }}</span>
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (admin of adminsWithPermissions(); track admin.uid) {
+            @if (admin.email !== 'manirajmca.ac@gmail.com') {
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <img [src]="admin.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'" 
+                         [alt]="admin.displayName" class="user-avatar" />
+                    <div class="user-info">
+                      <strong>{{ admin.displayName || 'No Name' }}</strong>
+                      <span>{{ admin.email }}</span>
+                    </div>
+                  </div>
+                </td>
+                @for (sec of sectionsMeta; track sec.id) {
+                  <td class="text-center">
+                    <label class="switch compact">
+                      <input type="checkbox" 
+                             [checked]="admin.sections[sec.id] !== false" 
+                             (change)="toggleSectionPermission(admin, sec.id)" />
+                      <span class="slider round"></span>
+                    </label>
+                  </td>
+                }
+              </tr>
+            }
+          } @empty {
+            <tr>
+              <td colspan="8" class="empty-row">No administrators found to manage.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Security Audit Logs Panel -->
+  <section class="audit-logs card">
+    <div class="panel-header">
+      <h2><i class="fa-solid fa-clock-rotate-left"></i> Security Audit Trail</h2>
+      <p>Real-time access logs and administrative updates</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Target Account</th>
+            <th>Action Taken</th>
+            <th>Performed By</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (log of logs(); track log.id) {
+            <tr>
+              <td><strong>{{ log.email }}</strong></td>
+              <td>
+                <span class="action-badge" [class]="log.action">
+                  {{ log.action.replace('_', ' ') | uppercase }}
+                </span>
+              </td>
+              <td><span>{{ log.performedBy }}</span></td>
+              <td>
+                <span class="date-text">
+                  {{ log.timestamp?.seconds ? (log.timestamp.seconds * 1000 | date:'medium') : 'Just now' }}
+                </span>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="empty-row">No security logs recorded yet.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

@@ -37,6 +37,8 @@ export class App implements OnInit, AfterViewInit, OnDestroy {
   readonly isLoading = signal(true);
   readonly isLandingRoute = signal(true);
   readonly isAdminRoute = signal(false);
+  readonly isSuperAdmin = signal(false);
+  readonly isAdmin = signal(false);
   readonly menus = signal<MenuItem[]>([]);
   readonly sections = signal<WebsiteSection[]>([]);
   readonly footerSettings = signal<FooterSettings>(defaultFooterSettings);
@@ -84,14 +86,20 @@ export class App implements OnInit, AfterViewInit, OnDestroy {
       this.websiteData.headerSettings$.subscribe((settings) => this.headerSettings.set(settings)),
     );
     this.subscriptions.add(
+      this.websiteData.isSuperAdmin$.subscribe((isSuper) => this.isSuperAdmin.set(isSuper))
+    );
+    this.subscriptions.add(
+      this.websiteData.isAdmin$.subscribe((isAdmin) => this.isAdmin.set(isAdmin))
+    );
+    this.subscriptions.add(
       this.router.events
         .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
         .subscribe(() => {
           const path = this.router.url.split('#')[0].split('?')[0];
           const fragment = this.router.parseUrl(this.router.url).fragment;
           const landing =
-            path !== '/services' && path !== '/admin' && path !== '/test' && path !== '/bookTicket';
-          const admin = path === '/admin';
+            path !== '/services' && path !== '/admin' && path !== '/super-admin' && path !== '/test' && path !== '/bookTicket';
+          const admin = path === '/admin' || path === '/super-admin';
           this.isLandingRoute.set(landing);
           this.isAdminRoute.set(admin);
 

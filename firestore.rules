@@ -1,0 +1,102 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if the user is restricted
+    function isRestricted() {
+      return request.auth != null && exists(/databases/$(database)/documents/restricted_users/$(request.auth.token.email));
+    }
+
+    // Helper function to check if the user is a super admin
+    function isSuperAdmin() {
+      return request.auth != null && (
+        request.auth.token.email == 'manirajmca.ac@gmail.com' ||
+        exists(/databases/$(database)/documents/super_admin/$(request.auth.token.email))
+      );
+    }
+
+    // Helper function to check if the user is an admin
+    function isAdmin() {
+      return request.auth != null && (
+        isSuperAdmin() ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email))
+      );
+    }
+
+    // Standard rules for products, bookings, menus, sections, etc.
+    match /products/{document} {
+      allow read: if !isRestricted();
+      allow write: if isAdmin() && !isRestricted();
+    }
+
+    match /bookings/{document} {
+      allow read: if isAdmin() && !isRestricted();
+      allow write: if !isRestricted(); // Anyone can submit booking unless restricted
+    }
+
+    match /booking_settings/{document} {
+      allow read: if !isRestricted();
+      allow write: if isAdmin() && !isRestricted();
+    }
+
+    match /menus/{document} {
+      allow read: if !isRestricted();
+      allow write: if isAdmin() && !isRestricted();
+    }
+
+    match /sections/{document} {
+      allow read: if !isRestricted();
+      allow write: if isAdmin() && !isRestricted();
+    }
+
+    match /themeSettings/{document} {
+      allow read: if !isRestricted();
+      allow write: if isAdmin() && !isRestricted();
+    }
+
+    match /footerSettings/{document} {
+      allow read: if !isRestricted();
+      allow write: if isAdmin() && !isRestricted();
+    }
+
+    match /headerSettings/{document} {
+      allow read: if !isRestricted();
+      allow write: if isAdmin() && !isRestricted();
+    }
+
+    // Rules for Super Admin data
+    match /users/{userId} {
+      allow read: if isSuperAdmin() && !isRestricted();
+      allow write: if request.auth != null && request.auth.uid == userId && !isRestricted();
+    }
+
+    match /admins/{email} {
+      allow read: if (request.auth != null && request.auth.token.email == email) || isSuperAdmin();
+      allow write: if isSuperAdmin() && !isRestricted();
+    }
+
+    match /super_admin/{email} {
+      allow read: if (request.auth != null && request.auth.token.email == email) || isSuperAdmin();
+      allow write: if isSuperAdmin() && !isRestricted();
+    }
+
+    match /restricted_users/{email} {
+      allow read: if (request.auth != null && request.auth.token.email == email) || isSuperAdmin();
+      allow write: if isSuperAdmin() && !isRestricted();
+    }
+
+    match /allowed_users/{email} {
+      allow read: if (request.auth != null && request.auth.token.email == email) || isSuperAdmin();
+      allow write: if isSuperAdmin() && !isRestricted();
+    }
+
+    match /admin_sections_permissions/{email} {
+      allow read: if (request.auth != null && request.auth.token.email == email) || isSuperAdmin();
+      allow write: if isSuperAdmin() && !isRestricted();
+    }
+
+    match /access_control/{document} {
+      allow read: if isSuperAdmin() && !isRestricted();
+      allow write: if isSuperAdmin() && !isRestricted();
+    }
+  }
+}

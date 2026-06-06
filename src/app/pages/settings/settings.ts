@@ -1,7 +1,7 @@
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import * as XLSX from 'xlsx';
 
@@ -31,6 +31,7 @@ import { DynamicSectionComponent } from '../../shared/dynamic-section/dynamic-se
 export class Settings {
   private readonly fb = inject(FormBuilder);
   private readonly websiteData = inject(WebsiteDataService);
+  private readonly router = inject(Router);
 
   readonly user$ = this.websiteData.user$;
   readonly menus$ = this.websiteData.allMenus$;
@@ -141,11 +142,13 @@ export class Settings {
 
   async signInWithGoogle(): Promise<void> {
     await this.runTask(() => this.websiteData.signInWithGoogle(), 'Signed in with Google.');
+    await this.checkRoleAndRedirect();
   }
 
   async signInWithEmail(): Promise<void> {
     const { email, password } = this.loginForm.getRawValue();
     await this.runTask(() => this.websiteData.signInWithEmail(email, password), 'Signed in.');
+    await this.checkRoleAndRedirect();
   }
 
   async registerWithEmail(): Promise<void> {
@@ -154,6 +157,25 @@ export class Settings {
       () => this.websiteData.registerWithEmail(email, password),
       'Admin account created.',
     );
+    await this.checkRoleAndRedirect();
+  }
+
+  private async checkRoleAndRedirect(): Promise<void> {
+    try {
+      const isSuper = await firstValueFrom(this.websiteData.isSuperAdmin$);
+      if (isSuper) {
+        void this.router.navigate(['/super-admin']);
+        return;
+      }
+      const isAdmin = await firstValueFrom(this.websiteData.isAdmin$);
+      if (isAdmin) {
+        return;
+      }
+      void this.router.navigate(['/']);
+    } catch (error) {
+      console.error('Error checking role after login', error);
+      void this.router.navigate(['/']);
+    }
   }
 
   async signOut(): Promise<void> {

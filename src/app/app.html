@@ -8,6 +8,7 @@
 @if (!isAdminRoute() && themeService.settings().showHeader) {
 <app-header [menus]="menus()" [activeSection]="scrollService.activeSection()" [isDarkTheme]="themeService.isDark()"
   [showTopNavMenu]="themeService.settings().showTopNavMenu" [headerSettings]="headerSettings()"
+  [isAdmin]="isAdmin()" [isSuperAdmin]="isSuperAdmin()"
   (sectionSelected)="scrollToSection($event)" (themeToggled)="toggleTheme()" />
 }
 

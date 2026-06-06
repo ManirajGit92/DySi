@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { superAdminGuard } from './core/guards/super-admin.guard';
 
 export const routes: Routes = [
   {
@@ -13,6 +14,11 @@ export const routes: Routes = [
   {
     path: 'admin',
     loadComponent: () => import('./pages/admin/admin').then((m) => m.AdminComponent),
+  },
+  {
+    path: 'super-admin',
+    loadComponent: () => import('./pages/super-admin/super-admin').then((m) => m.SuperAdminComponent),
+    canActivate: [superAdminGuard],
   },
   {
     path: 'test',

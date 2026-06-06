@@ -183,3 +183,65 @@
     display: grid;
   }
 }
+
+/* Auth Profile in Navbar */
+.user-profile-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.8rem;
+  margin-left: 0.5rem;
+  border-left: 1px solid var(--border);
+}
+
+.user-avatar-nav {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.user-name-nav {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-auth-logout-nav {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: var(--text);
+    background: var(--gradient-soft);
+    border-color: var(--text);
+  }
+}
+
+.auth-login-link {
+  color: var(--secondary) !important;
+  font-weight: 900 !important;
+}
+
+@media (max-width: 900px) {
+  .user-profile-nav {
+    border-left: none;
+    border-top: 1px solid var(--border);
+    margin-left: 0;
+    margin-top: 0.5rem;
+    padding-top: 0.8rem;
+    justify-content: space-between;
+  }
+}

@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, OnDestroy } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TabsModule } from 'primeng/tabs';
@@ -7,7 +8,9 @@ import { Settings } from '../settings/settings';
 import { BookingsAdminComponent } from './bookings-admin.component';
 import { BookingSettingsComponent } from './booking-settings.component';
 import { Product } from '../../core/models/product.models';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { WebsiteDataService } from '../../core/services/website-data.service';
+import { firstValueFrom, Subscription } from 'rxjs';
 
 interface Order {
   id?: string;
@@ -42,12 +45,30 @@ interface CategoryPerformance {
     Settings,
     BookingsAdminComponent,
     BookingSettingsComponent,
+    RouterLink,
   ],
   templateUrl: './admin.html',
   styleUrls: ['./admin.scss'],
 })
-export class AdminComponent {
+export class AdminComponent implements OnDestroy {
+  private readonly fb = inject(FormBuilder);
+  private readonly firestoreService = inject(FirestoreService);
+  private readonly websiteData = inject(WebsiteDataService);
+
   activeTab: string = 'dashboard';
+  private readonly subscriptions = new Subscription();
+
+  readonly permissions = toSignal(this.websiteData.userSectionsPermission$, {
+    initialValue: {
+      dashboard: true,
+      products: true,
+      settings: true,
+      users: true,
+      analytics: true,
+      bookings: true,
+      'booking-settings': true
+    } as Record<string, boolean>
+  });
   isDarkTheme: boolean = false;
   products = signal<Product[]>([]);
   editing = signal(false);
@@ -143,8 +164,17 @@ export class AdminComponent {
     lowStock: this.lowStocks().length,
   }));
 
-  private fb = inject(FormBuilder);
-  private firestoreService = inject(FirestoreService);
+  // Injected services moved to the top of the class
+
+  readonly user$ = this.websiteData.user$;
+  readonly isAdmin$ = this.websiteData.isAdmin$;
+  readonly isSuperAdmin$ = this.websiteData.isSuperAdmin$;
+
+  readonly loginForm = this.fb.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', Validators.required],
+  });
+  readonly loginStatus = signal('');
 
   productForm = this.fb.group({
     id: [null as string | null],
@@ -165,6 +195,84 @@ export class AdminComponent {
   constructor(private router: Router) {
     this.firestoreService.getProducts().subscribe((products) => this.products.set(products));
     this.firestoreService.getOrders().subscribe((orders) => this.orders.set(orders));
+
+    this.subscriptions.add(
+      this.websiteData.userSectionsPermission$.subscribe((perms) => {
+        if (perms && perms[this.activeTab] === false) {
+          const allowedTab = Object.entries(perms).find(([_, allowed]) => allowed)?.[0];
+          if (allowedTab) {
+            this.activeTab = allowedTab;
+          }
+        }
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
+  async signInWithGoogle(): Promise<void> {
+    this.loginStatus.set('Signing in...');
+    try {
+      await this.websiteData.signInWithGoogle();
+      this.loginStatus.set('Signed in successfully.');
+      await this.checkRoleAndRedirect();
+    } catch (err) {
+      console.error(err);
+      this.loginStatus.set('Google sign-in failed.');
+    }
+  }
+
+  async signInWithEmail(): Promise<void> {
+    if (this.loginForm.invalid) return;
+    const { email, password } = this.loginForm.value;
+    this.loginStatus.set('Signing in...');
+    try {
+      await this.websiteData.signInWithEmail(email!, password!);
+      this.loginStatus.set('Signed in successfully.');
+      await this.checkRoleAndRedirect();
+    } catch (err) {
+      console.error(err);
+      this.loginStatus.set('Email sign-in failed.');
+    }
+  }
+
+  async registerWithEmail(): Promise<void> {
+    if (this.loginForm.invalid) return;
+    const { email, password } = this.loginForm.value;
+    this.loginStatus.set('Registering...');
+    try {
+      await this.websiteData.registerWithEmail(email!, password!);
+      this.loginStatus.set('Account created successfully.');
+      await this.checkRoleAndRedirect();
+    } catch (err) {
+      console.error(err);
+      this.loginStatus.set('Registration failed. Email might already exist.');
+    }
+  }
+
+  private async checkRoleAndRedirect(): Promise<void> {
+    try {
+      const isSuper = await firstValueFrom(this.websiteData.isSuperAdmin$);
+      if (isSuper) {
+        void this.router.navigate(['/super-admin']);
+        return;
+      }
+      const isAdmin = await firstValueFrom(this.websiteData.isAdmin$);
+      if (isAdmin) {
+        return;
+      }
+      void this.router.navigate(['/']);
+    } catch (error) {
+      console.error('Error checking role after login', error);
+      void this.router.navigate(['/']);
+    }
+  }
+
+  async signOut(): Promise<void> {
+    await this.websiteData.signOut();
+    this.loginStatus.set('Signed out.');
   }
 
   toggleTheme() {
