@@ -2,13 +2,14 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { CarouselModule } from 'primeng/carousel';
 
-import { WebsiteSection } from '../../core/models/website.models';
+import { WebsiteSection, HeroSlide } from '../../core/models/website.models';
 import { ImageValidatorService } from '../../core/services/image-validator.service';
 
 @Component({
   selector: 'app-dynamic-section',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, CarouselModule],
   templateUrl: './dynamic-section.html',
   styleUrl: './dynamic-section.scss',
 })
@@ -61,6 +62,20 @@ export class DynamicSectionComponent {
     return Array.from({ length: Math.max(0, rating) });
   }
 
+  getOverlayOpacity(): number {
+    const transparency = this.section?.bgTransparency !== undefined ? this.section.bgTransparency : 22;
+    return (100 - transparency) / 100;
+  }
+
+  slideStyles(slide: HeroSlide): Record<string, string> {
+    return {
+      'background-image': `url('${slide.imageUrl}')`,
+      'background-size': 'cover',
+      'background-position': 'center',
+      'background-repeat': 'no-repeat'
+    };
+  }
+
   sectionStyles(section: WebsiteSection): Record<string, string> {
     const styles: Record<string, string> = {
       'background-color': section.backgroundColor || '',
@@ -68,6 +83,11 @@ export class DynamicSectionComponent {
       'font-family': section.fontFamily || '',
       'font-size': section.fontSize || '',
     };
+
+    // Calculate transparency for overlay
+    const transparency = section.bgTransparency !== undefined ? section.bgTransparency : 22;
+    const opacity = (100 - transparency) / 100;
+    styles['--overlay-opacity'] = String(opacity);
 
     // Apply background image if valid
     if (this.isImageValid() && section.imageUrl) {

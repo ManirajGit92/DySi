@@ -1,12 +1,10 @@
 <main class="admin-page">
-  <section class="admin-hero">
+  <!-- <section class="admin-hero">
     <div>
-      <!-- <p class="section__eyebrow">Firestore Admin</p> -->
       <h1>Manage website sections from one panel.</h1>
       <p>Menus, sections, theme, footer, images, and preview all update through Firebase in real time.</p>
     </div>
-    <!-- <a class="btn btn--ghost" routerLink="/">View Website</a> -->
-  </section>
+  </section> -->
 
   @if (user$ | async; as user) {
   <section class="admin-shell">
@@ -86,6 +84,58 @@
             <label>Font Size <input formControlName="fontSize" /></label>
             <label class="check"><input type="checkbox" formControlName="isVisible" /> Visible</label>
             <label class="check"><input type="checkbox" formControlName="isDarkSection" /> Dark section</label>
+
+            <!-- Background overlay transparency control -->
+            <label class="wide slider-label">
+              Background Overlay Transparency: <strong>{{ sectionForm.value.bgTransparency }}%</strong>
+              <span class="slider-hint">0% = Solid dark overlay; 100% = Clear background image</span>
+              <p-slider formControlName="bgTransparency" [min]="0" [max]="100" class="transparency-slider"></p-slider>
+            </label>
+
+            <!-- Hero section slide manager -->
+            <div class="wide slide-manager-panel" *ngIf="sectionForm.value.layoutType === 'hero'">
+              <div class="panel-header">
+                <h3>Hero Carousel Slides</h3>
+                <button type="button" class="btn btn--primary btn--small" (click)="openAddSlide()">
+                  <i class="fa-solid fa-plus mr-1"></i> Add Slide
+                </button>
+              </div>
+
+              <div class="slides-list" *ngIf="editorSlides().length > 0; else noSlides">
+                <div class="slide-item-row" *ngFor="let slide of editorSlides(); let index = index">
+                  <div class="slide-thumbnail">
+                    <img [src]="slide.imageUrl" *ngIf="slide.imageUrl; else noThumb" alt="Slide thumbnail" />
+                    <ng-template #noThumb><i class="fa-regular fa-image"></i></ng-template>
+                  </div>
+                  <div class="slide-info">
+                    <strong>{{ slide.title || 'Untitled Slide' }}</strong>
+                    <span>{{ slide.subtitle || 'No subtitle' }} · Position: {{ slide.textPosition || 'left' }}</span>
+                  </div>
+                  <div class="slide-actions-btns">
+                    <button type="button" class="btn-icon" title="Move Up" [disabled]="index === 0"
+                      (click)="moveSlide(index, 'up')">
+                      <i class="fa-solid fa-arrow-up"></i>
+                    </button>
+                    <button type="button" class="btn-icon" title="Move Down"
+                      [disabled]="index === editorSlides().length - 1" (click)="moveSlide(index, 'down')">
+                      <i class="fa-solid fa-arrow-down"></i>
+                    </button>
+                    <button type="button" class="btn-icon btn-icon--edit" title="Edit Slide"
+                      (click)="editSlide(slide, index)">
+                      <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button type="button" class="btn-icon btn-icon--delete" title="Delete Slide"
+                      (click)="deleteSlide(index)">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <ng-template #noSlides>
+                <p class="no-slides-text">No slides added. Standard background image will be used as fallback.</p>
+              </ng-template>
+            </div>
+
             <label class="wide">Cards JSON <textarea rows="8" formControlName="cardsJson"></textarea></label>
             <label class="wide">FAQ JSON <textarea rows="5" formControlName="faqsJson"></textarea></label>
             <label class="wide">Gallery JSON <textarea rows="4" formControlName="galleryJson"></textarea></label>
@@ -105,8 +155,14 @@
                 <span>{{ section.sectionId }} · {{ section.layoutType }} · {{ section.isVisible ? 'Visible' : 'Hidden'
                   }}</span>
               </div>
-              <button type="button" (click)="editSection(section)">Edit</button>
-              <button type="button" (click)="deleteSection(section)">Delete</button>
+              <div class="list-item-actions">
+                <button type="button" class="btn-action btn-action--edit" (click)="editSection(section)">
+                  <i class="fa-solid fa-pen-to-square"></i> Edit
+                </button>
+                <button type="button" class="btn-action btn-action--delete" (click)="deleteSection(section)">
+                  <i class="fa-solid fa-trash"></i> Delete
+                </button>
+              </div>
             </article>
             }
           </div>
@@ -119,6 +175,57 @@
           }
         </div>
       </section>
+
+      <!-- Slide Editor Dialog -->
+      <p-dialog [header]="editingSlideIndex() !== null ? 'Edit Slide' : 'Add Slide'" [(visible)]="isSlideDialogOpen"
+        [modal]="true" [style]="{ width: '480px' }" [closable]="true" appendTo="body" class="slide-dialog">
+        <form [formGroup]="slideForm" (ngSubmit)="saveSlide()" class="slide-dialog-form">
+          <div class="dialog-field">
+            <label>Title *</label>
+            <input type="text" formControlName="title" placeholder="Slide title text" />
+          </div>
+          <div class="dialog-field">
+            <label>Subtitle / Eyebrow</label>
+            <input type="text" formControlName="subtitle" placeholder="Sub-heading or eyebrow" />
+          </div>
+          <div class="dialog-field">
+            <label>Description</label>
+            <textarea rows="3" formControlName="description" placeholder="Slide description paragraph"></textarea>
+          </div>
+          <div class="dialog-field">
+            <label>Background Image URL *</label>
+            <input type="text" formControlName="imageUrl" placeholder="https://..." />
+          </div>
+          <div class="dialog-field">
+            <label>Or Upload Background Image</label>
+            <input type="file" accept="image/*" (change)="uploadSlideImage($event)" />
+            <p class="upload-slide-status" *ngIf="uploadSlideStatus()">{{ uploadSlideStatus() }}</p>
+          </div>
+          <div class="dialog-row">
+            <div class="dialog-field">
+              <label>Button Text</label>
+              <input type="text" formControlName="buttonText" placeholder="e.g. Learn More" />
+            </div>
+            <div class="dialog-field">
+              <label>Button Link</label>
+              <input type="text" formControlName="buttonLink" placeholder="e.g. /services" />
+            </div>
+          </div>
+          <div class="dialog-field">
+            <label>Text Positioning</label>
+            <select formControlName="textPosition">
+              <option value="left">Left Align</option>
+              <option value="center">Center Align</option>
+              <option value="right">Right Align</option>
+            </select>
+          </div>
+
+          <div class="dialog-actions">
+            <button type="button" class="btn btn--ghost" (click)="isSlideDialogOpen.set(false)">Cancel</button>
+            <button type="submit" class="btn btn--primary" [disabled]="slideForm.invalid">Save Slide</button>
+          </div>
+        </form>
+      </p-dialog>
       }
 
       @if (activeTab() === 'menus') {
@@ -146,8 +253,14 @@
               <strong>{{ menu.order }}. {{ menu.title }}</strong>
               <span>{{ menu.sectionId }} · {{ menu.isVisible ? 'Enabled' : 'Disabled' }}</span>
             </div>
-            <button type="button" (click)="editMenu(menu)">Edit</button>
-            <button type="button" (click)="deleteMenu(menu)">Delete</button>
+            <div class="list-item-actions">
+              <button type="button" class="btn-action btn-action--edit" (click)="editMenu(menu)">
+                <i class="fa-solid fa-pen-to-square"></i> Edit
+              </button>
+              <button type="button" class="btn-action btn-action--delete" (click)="deleteMenu(menu)">
+                <i class="fa-solid fa-trash"></i> Delete
+              </button>
+            </div>
           </article>
           }
         </div>

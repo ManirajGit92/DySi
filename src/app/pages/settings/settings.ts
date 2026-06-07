@@ -4,6 +4,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import * as XLSX from 'xlsx';
+import { SliderModule } from 'primeng/slider';
+import { DialogModule } from 'primeng/dialog';
 
 import {
   ContentCard,
@@ -13,6 +15,7 @@ import {
   MenuItem,
   ThemeSettings,
   WebsiteSection,
+  HeroSlide,
 } from '../../core/models/website.models';
 import {
   WebsiteDataService,
@@ -24,7 +27,7 @@ import { DynamicSectionComponent } from '../../shared/dynamic-section/dynamic-se
 
 @Component({
   selector: 'app-settings',
-  imports: [CommonModule, AsyncPipe, ReactiveFormsModule, DynamicSectionComponent],
+  imports: [CommonModule, AsyncPipe, ReactiveFormsModule, DynamicSectionComponent, SliderModule, DialogModule],
   templateUrl: './settings.html',
   styleUrl: './settings.scss',
 })
@@ -76,9 +79,26 @@ export class Settings {
     isDarkSection: [false],
     isVisible: [true],
     order: [1, Validators.required],
+    bgTransparency: [22],
     cardsJson: ['[]'],
     faqsJson: ['[]'],
     galleryJson: ['[]'],
+  });
+
+  // Slide management state
+  readonly editorSlides = signal<HeroSlide[]>([]);
+  readonly isSlideDialogOpen = signal(false);
+  readonly editingSlideIndex = signal<number | null>(null);
+  readonly uploadSlideStatus = signal('');
+
+  readonly slideForm = this.fb.nonNullable.group({
+    imageUrl: ['', Validators.required],
+    title: ['', Validators.required],
+    subtitle: [''],
+    description: [''],
+    buttonText: [''],
+    buttonLink: [''],
+    textPosition: ['left' as 'left' | 'center' | 'right'],
   });
 
   readonly themeForm = this.fb.nonNullable.group({
@@ -211,10 +231,12 @@ export class Settings {
   editSection(section: WebsiteSection): void {
     this.sectionForm.patchValue({
       ...section,
+      bgTransparency: section.bgTransparency !== undefined ? section.bgTransparency : 22,
       cardsJson: JSON.stringify(section.cards ?? [], null, 2),
       faqsJson: JSON.stringify(section.faqs ?? [], null, 2),
       galleryJson: JSON.stringify(section.gallery ?? [], null, 2),
     });
+    this.editorSlides.set(section.slides || []);
     this.previewSection.set(section);
     this.activeTab.set('sections');
   }
@@ -263,6 +285,98 @@ export class Settings {
       this.uploadStatus.set('Logo uploaded and attached.');
     } catch (error) {
       this.uploadStatus.set('Logo upload failed. Check Firebase Storage rules.');
+      console.error(error);
+    }
+  }
+
+  openAddSlide(): void {
+    this.editingSlideIndex.set(null);
+    this.slideForm.reset({
+      imageUrl: '',
+      title: '',
+      subtitle: '',
+      description: '',
+      buttonText: '',
+      buttonLink: '',
+      textPosition: 'left',
+    });
+    this.uploadSlideStatus.set('');
+    this.isSlideDialogOpen.set(true);
+  }
+
+  editSlide(slide: HeroSlide, index: number): void {
+    this.editingSlideIndex.set(index);
+    this.slideForm.setValue({
+      imageUrl: slide.imageUrl || '',
+      title: slide.title || '',
+      subtitle: slide.subtitle || '',
+      description: slide.description || '',
+      buttonText: slide.buttonText || '',
+      buttonLink: slide.buttonLink || '',
+      textPosition: slide.textPosition || 'left',
+    });
+    this.uploadSlideStatus.set('');
+    this.isSlideDialogOpen.set(true);
+  }
+
+  saveSlide(): void {
+    if (this.slideForm.invalid) {
+      return;
+    }
+    const val = this.slideForm.getRawValue();
+    const slides = [...this.editorSlides()];
+    const index = this.editingSlideIndex();
+
+    if (index !== null) {
+      // Edit existing
+      slides[index] = { ...slides[index], ...val };
+    } else {
+      // Add new
+      slides.push({
+        id: crypto.randomUUID(),
+        ...val,
+      });
+    }
+
+    this.editorSlides.set(slides);
+    this.isSlideDialogOpen.set(false);
+    this.previewSection.set(this.buildSectionFromForm(false));
+  }
+
+  deleteSlide(index: number): void {
+    const slides = [...this.editorSlides()];
+    slides.splice(index, 1);
+    this.editorSlides.set(slides);
+    this.previewSection.set(this.buildSectionFromForm(false));
+  }
+
+  moveSlide(index: number, direction: 'up' | 'down'): void {
+    const slides = [...this.editorSlides()];
+    if (direction === 'up' && index > 0) {
+      const temp = slides[index];
+      slides[index] = slides[index - 1];
+      slides[index - 1] = temp;
+    } else if (direction === 'down' && index < slides.length - 1) {
+      const temp = slides[index];
+      slides[index] = slides[index + 1];
+      slides[index + 1] = temp;
+    }
+    this.editorSlides.set(slides);
+    this.previewSection.set(this.buildSectionFromForm(false));
+  }
+
+  async uploadSlideImage(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.uploadSlideStatus.set('Uploading slide image...');
+    try {
+      const url = await this.websiteData.uploadImage(file);
+      this.slideForm.patchValue({ imageUrl: url });
+      this.uploadSlideStatus.set('Image uploaded successfully.');
+    } catch (error) {
+      this.uploadSlideStatus.set('Image upload failed.');
       console.error(error);
     }
   }
@@ -346,6 +460,8 @@ export class Settings {
         isDarkSection: section.isDarkSection,
         isVisible: section.isVisible,
         order: section.order,
+        bgTransparency: section.bgTransparency !== undefined ? section.bgTransparency : 22,
+        slides: JSON.stringify(section.slides ?? []),
         cards: JSON.stringify(section.cards ?? []),
         faqs: JSON.stringify(section.faqs ?? []),
         gallery: JSON.stringify(section.gallery ?? []),
@@ -452,6 +568,8 @@ export class Settings {
         isDarkSection: this.parseBoolean(section.isDarkSection, false),
         isVisible: this.parseBoolean(section.isVisible, true),
         order: Number(section.order) || 1,
+        bgTransparency: section.bgTransparency !== undefined ? Number(section.bgTransparency) : 22,
+        slides: this.parseExcelJson(section.slides, []),
         cards: this.parseExcelJson(section.cards, []),
         faqs: this.parseExcelJson(section.faqs, []),
         gallery: this.parseExcelJson(section.gallery, []),
@@ -594,6 +712,8 @@ export class Settings {
       isDarkSection: value.isDarkSection,
       isVisible: value.isVisible,
       order: value.order,
+      bgTransparency: Number(value.bgTransparency) !== undefined ? Number(value.bgTransparency) : 22,
+      slides: this.editorSlides(),
       cards,
       faqs,
       gallery,

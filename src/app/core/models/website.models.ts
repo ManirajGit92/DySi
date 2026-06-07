@@ -20,6 +20,17 @@ export interface MenuItem {
   sectionId: string;
 }
 
+export interface HeroSlide {
+  id: string;
+  imageUrl: string;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  buttonText?: string;
+  buttonLink?: string;
+  textPosition?: 'left' | 'center' | 'right';
+}
+
 export interface WebsiteSection {
   id?: string;
   sectionId: string;
@@ -40,6 +51,8 @@ export interface WebsiteSection {
   cards: ContentCard[];
   faqs: FaqItem[];
   gallery: string[];
+  bgTransparency?: number;
+  slides?: HeroSlide[];
   createdDate?: Date | Timestamp;
   updatedDate?: Date | Timestamp;
 }

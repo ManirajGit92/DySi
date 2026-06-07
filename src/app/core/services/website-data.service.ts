@@ -644,6 +644,28 @@ export const defaultSections: WebsiteSection[] = [
       { icon: 'fa-solid fa-rocket', title: '42+', description: 'products launched' },
       { icon: 'fa-solid fa-headset', title: '24/7', description: 'delivery support' },
     ],
+    slides: [
+      {
+        id: 'slide-1',
+        imageUrl: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=80',
+        title: 'Build smarter customer experiences with DySi.',
+        subtitle: 'Digital systems that feel effortless',
+        description: 'We design scalable web platforms, automation workflows, and data-led digital products for ambitious businesses.',
+        buttonText: 'Book a Tour',
+        buttonLink: '/bookings',
+        textPosition: 'left'
+      },
+      {
+        id: 'slide-2',
+        imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1800&q=80',
+        title: 'Next-Gen Digital Systems.',
+        subtitle: 'Seamless and Responsive Integrations',
+        description: 'Empower your teams with real-time operations, modern cloud solutions, and beautifully designed user experiences.',
+        buttonText: 'Start a Project',
+        buttonLink: '/bookings',
+        textPosition: 'center'
+      }
+    ],
     faqs: [],
     gallery: [],
   },

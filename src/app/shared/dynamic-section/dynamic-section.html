@@ -3,6 +3,51 @@
   [class.dynamic-section--dark]="section.isDarkSection" [class.dynamic-section--hero]="section.layoutType === 'hero'"
   [class.has-background-image]="isImageValid() && section.imageUrl" [id]="section.sectionId"
   [ngStyle]="sectionStyles(section)">
+  @if (section.layoutType === 'hero' && section.slides && section.slides.length > 0) {
+  <div class="hero-carousel-container">
+    <p-carousel [value]="section.slides" [numVisible]="1" [numScroll]="1" [circular]="true" [autoplayInterval]="6000"
+      [showNavigators]="true" [showIndicators]="true" class="hero-carousel">
+      <ng-template let-slide pTemplate="item">
+        <div class="hero-slide" [ngStyle]="slideStyles(slide)">
+          <div class="hero-slide__overlay" [style.opacity]="getOverlayOpacity()"></div>
+          <div class="hero-slide__inner" [class]="'hero-slide__inner--' + (slide.textPosition || 'left')">
+            <div class="hero-slide__content reveal">
+              <p class="section__eyebrow" *ngIf="slide.subtitle">
+                <i class="fa-solid fa-circle-dot"></i>
+                {{ slide.subtitle }}
+              </p>
+              <h1 class="section__title hero-title">{{ slide.title }}</h1>
+              <p class="section__lead" *ngIf="slide.description">{{ slide.description }}</p>
+
+              <div class="hero-slide__actions mb-8" *ngIf="slide.buttonText">
+                <a *ngIf="slide.buttonLink?.startsWith('/')" class="btn btn--primary" [routerLink]="slide.buttonLink">
+                  {{ slide.buttonText }} <i class="fa-solid fa-arrow-right"></i>
+                </a>
+                <button *ngIf="!slide.buttonLink?.startsWith('/')" class="btn btn--primary" type="button"
+                  (click)="sectionAction.emit(slide.buttonLink)">
+                  {{ slide.buttonText }} <i class="fa-solid fa-arrow-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-template>
+    </p-carousel>
+
+    <!-- Metrics overlay at bottom of carousel -->
+    <div class="section__inner hero-carousel-metrics">
+      <div class="metric-grid">
+        @for (card of section.cards; track card.title) {
+        <article class="card metric-card">
+          <i [class]="card.icon"></i>
+          <strong>{{ card.title }}</strong>
+          <span>{{ card.description }}</span>
+        </article>
+        }
+      </div>
+    </div>
+  </div>
+  } @else {
   <div class="section__inner reveal">
     <div class="section-heading">
       <p class="section__eyebrow">
@@ -160,4 +205,5 @@
     }
     }
   </div>
+  }
 </section>
