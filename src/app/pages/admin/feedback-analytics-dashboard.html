@@ -1,0 +1,229 @@
+<!-- Actions -->
+<div class="analytics-actions" *ngIf="!isLoading()">
+  <button class="btn btn--danger btn--small" type="button" (click)="clearAnalyticsData()">
+    <i class="fa-solid fa-trash mr-1"></i> Clear Analytics Data
+  </button>
+</div>
+
+<!-- Confirmation dialog -->
+<app-confirm-dialog [isOpen]="confirmOpen()" [title]="confirmTitle()" [message]="confirmMessage()"
+  [subMessage]="confirmSub()" [isProcessing]="confirmProcessing()" (confirmed)="onConfirmed()"
+  (cancelled)="onCancelled()"></app-confirm-dialog>
+
+<!-- SUMMARY CARDS -->
+<div class="metrics-grid" *ngIf="!isLoading()">
+  <article class="metric-card">
+    <span class="metric-title"><i class="fa-solid fa-users mr-1"></i> Total Responses</span>
+    <h2>{{ responses().length }}</h2>
+    <small>Total guest survey submissions</small>
+  </article>
+
+  <article class="metric-card">
+    <span class="metric-title"><i class="fa-solid fa-circle-question mr-1"></i> Active Questions</span>
+    <h2>{{ questions().length }}</h2>
+    <small>Dynamic questions loaded</small>
+  </article>
+
+  <article class="metric-card">
+    <span class="metric-title"><i class="fa-solid fa-chart-pie mr-1"></i> Response Coverage</span>
+    <h2>{{ stats().length > 0 ? stats()[0].totalAnswers : 0 }}</h2>
+    <small>Answers on first question</small>
+  </article>
+</div>
+
+<!-- CHARTS PANEL GRID -->
+<div class="charts-grid" *ngIf="!isLoading()">
+  <!-- PIE CHART (RESPONSES PER QUESTION) -->
+  <article class="chart-card">
+    <div class="chart-header">
+      <h3>Responses per Question</h3>
+      <span>Distribution proportion</span>
+    </div>
+
+    <div class="chart-content flex-row" *ngIf="pieChartSegments().length > 0; else noPieData">
+      <div class="svg-container">
+        <svg viewBox="0 0 100 100" class="pie-svg">
+          <path *ngFor="let seg of pieChartSegments()" [attr.d]="seg.path" [attr.fill]="seg.color"
+            [attr.stroke]="'var(--admin-surface)'" stroke-width="1.5">
+            <title>{{ seg.label }}: {{ seg.value }} answers ({{ seg.percent }}%)</title>
+          </path>
+        </svg>
+      </div>
+      <div class="chart-legends">
+        <div *ngFor="let seg of pieChartSegments()" class="legend-item">
+          <span class="legend-color" [style.background-color]="seg.color"></span>
+          <span class="legend-text" [title]="seg.label">{{ seg.label }}</span>
+          <strong class="legend-val">{{ seg.percent }}%</strong>
+        </div>
+      </div>
+    </div>
+    <ng-template #noPieData>
+      <div class="no-data">
+        <p>No feedback answers to display.</p>
+      </div>
+    </ng-template>
+  </article>
+
+  <!-- DONUT CHART (ANSWER CONTENT DISTRIBUTION) -->
+  <article class="chart-card">
+    <div class="chart-header">
+      <h3>Response Format Mix</h3>
+      <span>Choice vs Free text answers</span>
+    </div>
+
+    <div class="chart-content flex-row" *ngIf="donutChartSegments().length > 0; else noDonutData">
+      <div class="svg-container">
+        <svg viewBox="0 0 100 100" class="donut-svg">
+          <!-- Outer circle segments -->
+          <circle *ngFor="let seg of donutChartSegments()" cx="50" cy="50" r="40" fill="transparent"
+            [attr.stroke]="seg.color" stroke-width="8" [attr.stroke-dasharray]="seg.dashArray"
+            [attr.stroke-dashoffset]="seg.dashOffset" transform="rotate(-90 50 50)">
+            <title>{{ seg.label }}: {{ seg.value }} responses ({{ seg.percent }}%)</title>
+          </circle>
+          <!-- Center cutout text -->
+          <text x="50" y="47" text-anchor="middle" class="donut-label">Total</text>
+          <text x="50" y="58" text-anchor="middle" class="donut-val">{{ responses().length }}</text>
+        </svg>
+      </div>
+      <div class="chart-legends">
+        <div *ngFor="let seg of donutChartSegments()" class="legend-item">
+          <span class="legend-color" [style.background-color]="seg.color"></span>
+          <span class="legend-text">{{ seg.label }}</span>
+          <strong class="legend-val">{{ seg.percent }}%</strong>
+        </div>
+      </div>
+    </div>
+    <ng-template #noDonutData>
+      <div class="no-data">
+        <p>No feedback responses to analyze.</p>
+      </div>
+    </ng-template>
+  </article>
+
+  <!-- BAR CHART (QUESTION CHOICE ANALYSIS) -->
+  <article class="chart-card span-12">
+    <div class="chart-header flex-header">
+      <div>
+        <h3>Option Selection Statistics</h3>
+        <span>Select a question to view detailed statistics</span>
+      </div>
+      <div class="select-wrapper">
+        <select [ngModel]="selectedQuestionIdForChart()" (ngModelChange)="selectedQuestionIdForChart.set($event)"
+          class="question-selector">
+          <option *ngFor="let q of questions()" [value]="q.id">{{ q.text }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="chart-content" *ngIf="selectedQuestionStat(); else noQuestionSelected">
+      <div class="question-summary">
+        <strong>Question Text:</strong> {{ selectedQuestionStat()?.text }}
+        <span class="type-badge">{{ selectedQuestionStat()?.type }}</span>
+      </div>
+
+      <!-- HORIZONTAL PROGRESS BAR LIST -->
+      <div class="bars-container" *ngIf="selectedQuestionStat()!.optionCounts.length > 0; else nonMcQuestion">
+        <div *ngFor="let opt of selectedQuestionStat()!.optionCounts" class="bar-row">
+          <div class="bar-info">
+            <span class="option-name">{{ opt.option }}</span>
+            <span class="option-count"><strong>{{ opt.count }}</strong> votes</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" [style.width.%]="opt.percent"></div>
+          </div>
+          <span class="bar-percent">{{ opt.percent }}%</span>
+        </div>
+      </div>
+
+      <ng-template #nonMcQuestion>
+        <!-- FOR TEXT RESPONSES, SHOW A SAMPLE LIST -->
+        <div class="text-answers-section">
+          <h4>Sample Text Responses ({{ selectedQuestionStat()?.textAnswers?.length }} total):</h4>
+          <div class="text-list-scroll">
+            <div *ngFor="let ans of selectedQuestionStat()?.textAnswers" class="text-answer-item">
+              <i class="fa-solid fa-quote-left mr-2"></i> {{ ans }}
+            </div>
+            <div *ngIf="selectedQuestionStat()?.textAnswers?.length === 0" class="no-text-answers">
+              No text responses submitted for this question yet.
+            </div>
+          </div>
+        </div>
+      </ng-template>
+    </div>
+    <ng-template #noQuestionSelected>
+      <div class="no-data">
+        <p>No question statistics loaded.</p>
+      </div>
+    </ng-template>
+  </article>
+</div>
+
+<!-- RESPONSES TABLE CARD -->
+<div class="card table-card" *ngIf="!isLoading()">
+  <div class="table-card-header">
+    <div>
+      <h3>Feedback Responses Log</h3>
+      <span>All guest submissions in real time</span>
+    </div>
+    <div class="table-filters">
+      <input type="search" placeholder="Search by email or answer..." [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event); currentPage.set(1)" />
+    </div>
+  </div>
+
+  <div class="table-wrap" *ngIf="paginatedResponses().length > 0; else noResponsesTable">
+    <table>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>User Email</th>
+          <th>Responses Summary</th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let r of paginatedResponses(); let idx = index">
+          <!-- Main row -->
+          <tr class="table-row">
+            <td>{{ formatDate(r.timestamp) }}</td>
+            <td class="user-email" [title]="r.userEmail">
+              <i class="fa-solid fa-envelope mr-1"></i>
+              {{ r.userEmail || r.userId }}
+            </td>
+            <td>
+              <div class="responses-grid">
+                <div *ngFor="let ans of r.answers" class="answer-bubble">
+                  <strong class="q-title" [title]="ans.questionText">{{ ans.questionText }}:</strong>
+                  <span class="ans-value">
+                    {{ ans.selectedAnswers && ans.selectedAnswers.length > 0 ? ans.selectedAnswers.join(', ') :
+                    ans.textAnswer }}
+                  </span>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+
+    <!-- TABLE PAGINATION -->
+    <div class="table-pagination">
+      <span class="page-info">Page {{ currentPage() }} of {{ totalPages() }} ({{ filteredResponses().length }}
+        responses)</span>
+      <div class="pagination-buttons">
+        <button class="btn btn-icon" [disabled]="currentPage() === 1" (click)="prevPage()">
+          <i class="fa-solid fa-chevron-left"></i> Previous
+        </button>
+        <button class="btn btn-icon" [disabled]="currentPage() === totalPages()" (click)="nextPage()">
+          Next <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #noResponsesTable>
+    <div class="empty-table-state">
+      <i class="fa-solid fa-clipboard-question"></i>
+      <p>No feedback responses matching "{{ searchQuery() }}" found.</p>
+    </div>
+  </ng-template>
+</div>

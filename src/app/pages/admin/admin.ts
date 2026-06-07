@@ -28,6 +28,9 @@ interface TrafficSource {
   change: number;
 }
 
+import { FeedbackQuestionsMgrComponent } from './feedback-questions-mgr';
+import { FeedbackAnalyticsDashboardComponent } from './feedback-analytics-dashboard';
+
 interface CategoryPerformance {
   category: string;
   sold: number;
@@ -46,6 +49,8 @@ interface CategoryPerformance {
     BookingsAdminComponent,
     BookingSettingsComponent,
     RouterLink,
+    FeedbackQuestionsMgrComponent,
+    FeedbackAnalyticsDashboardComponent
   ],
   templateUrl: './admin.html',
   styleUrls: ['./admin.scss'],

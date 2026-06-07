@@ -24,4 +24,9 @@ export const routes: Routes = [
     path: 'test',
     loadComponent: () => import('./pages/test/test').then((m) => m.TestComponent),
   },
+  {
+    path: 'add-feedback',
+    loadComponent: () =>
+      import('./pages/feedback-submission/feedback-submission').then((m) => m.FeedbackSubmissionComponent),
+  },
 ];

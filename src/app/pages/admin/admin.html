@@ -17,6 +17,16 @@
               Settings
             </button>
           }
+          @if (permissions()['settings']) {
+            <button class="tab" [class.active]="activeTab === 'feedback-questions'" (click)="selectTab('feedback-questions')">
+              Feedback Questions
+            </button>
+          }
+          @if (permissions()['analytics']) {
+            <button class="tab" [class.active]="activeTab === 'feedback-analytics'" (click)="selectTab('feedback-analytics')">
+              Feedback Analytics
+            </button>
+          }
           @if (permissions()['products']) {
             <button class="tab" [class.active]="activeTab === 'products'" (click)="selectTab('products')">
               Products/Services
@@ -52,6 +62,14 @@
         <div class="tab-content">
           <div *ngIf="activeTab === 'settings' && permissions()['settings']">
             <app-settings></app-settings>
+          </div>
+
+          <div *ngIf="activeTab === 'feedback-questions' && permissions()['settings']">
+            <app-feedback-questions-mgr></app-feedback-questions-mgr>
+          </div>
+
+          <div *ngIf="activeTab === 'feedback-analytics' && permissions()['analytics']">
+            <app-feedback-analytics-dashboard></app-feedback-analytics-dashboard>
           </div>
 
           <div *ngIf="activeTab === 'products' && permissions()['products']">

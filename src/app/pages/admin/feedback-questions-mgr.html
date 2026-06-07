@@ -1,0 +1,136 @@
+<section class="admin-grid">
+  <!-- QUESTION EDITOR CARD -->
+  <form class="card editor-form" [formGroup]="questionForm" (ngSubmit)="saveQuestion()">
+    <div class="form-header">
+      <h2>{{ editingQuestionId() ? 'Edit Question' : 'Add Question' }}</h2>
+      <div class="actions">
+        <button *ngIf="editingQuestionId()" class="btn btn--ghost mr-2" type="button"
+          (click)="resetForm()">Cancel</button>
+        <button class="btn btn--primary" type="submit">Save Question</button>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <!-- QUESTION TEXT -->
+      <label class="wide">
+        Question Text *
+        <input formControlName="text" placeholder="e.g. How satisfied are you with our services?" />
+        <div *ngIf="questionForm.get('text')?.invalid && questionForm.get('text')?.touched" class="error-text">
+          Question text is required.
+        </div>
+      </label>
+
+      <!-- QUESTION TYPE -->
+      <label>
+        Question Type
+        <select formControlName="type">
+          <option value="text">Text Input (Short Answer)</option>
+          <option value="textarea">Text Area (Paragraph Answer)</option>
+          <option value="radio">Radio Buttons (Single Choice)</option>
+          <option value="checkbox">Checkboxes (Multiple Choice)</option>
+          <option value="dropdown">Dropdown (Single Choice Select)</option>
+        </select>
+      </label>
+
+      <!-- ORDER INDEX -->
+      <label>
+        Display Order *
+        <input type="number" formControlName="order" />
+        <div *ngIf="questionForm.get('order')?.invalid && questionForm.get('order')?.touched" class="error-text">
+          Valid order is required.
+        </div>
+      </label>
+
+      <!-- REQUIRED FLAG & CUSTOM TEXT OVERRIDES -->
+      <label class="check">
+        <input type="checkbox" formControlName="required" /> Required Question
+      </label>
+
+      <label class="check"
+        *ngIf="questionForm.get('type')?.value !== 'text' && questionForm.get('type')?.value !== 'textarea'">
+        <input type="checkbox" formControlName="allowCustomText" /> Allow free text comment
+      </label>
+
+      <!-- OPTIONS BUILDER (SHOW ONLY FOR SELECT TYPES) -->
+      <div class="wide options-section"
+        *ngIf="questionForm.get('type')?.value === 'radio' || questionForm.get('type')?.value === 'checkbox' || questionForm.get('type')?.value === 'dropdown'">
+        <div class="options-header">
+          <h3>Question Options</h3>
+          <button class="btn btn--primary btn--small" type="button" (click)="addOption()">
+            <i class="fa-solid fa-plus mr-1"></i> Add Option
+          </button>
+        </div>
+
+        <div formArrayName="options" class="options-list">
+          <div *ngFor="let optCtrl of optionsFormArray.controls; let idx = index" class="option-row">
+            <span class="option-number">{{ idx + 1 }}</span>
+            <input [formControlName]="idx" placeholder="Option answer label" />
+            <button class="btn-icon btn-icon--delete" type="button" title="Remove option" (click)="removeOption(idx)"
+              [disabled]="optionsFormArray.length <= 1">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <div *ngIf="optionsFormArray.invalid && optionsFormArray.touched" class="error-text">
+            All multiple choice options must have text.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATUS/NOTIFICATIONS -->
+    <p class="status-msg" *ngIf="status()">{{ status() }}</p>
+  </form>
+
+  <!-- QUESTIONS LIST PREVIEW PANEL -->
+  <div class="card list-panel">
+    <div class="list-header">
+      <h2>Questions list</h2>
+      <div class="list-header-actions">
+        <span class="count-badge" *ngIf="!isLoading()">{{ questionsList().length }} Questions</span>
+        <button class="btn btn--danger btn--small ml-2" type="button" (click)="clearAllData()">
+          <i class="fa-solid fa-trash mr-1"></i> Clear Data
+        </button>
+      </div>
+    </div>
+
+    <!-- LOADING STATE -->
+    <div *ngIf="isLoading()" class="loading-state">
+      <i class="fa-solid fa-spinner fa-spin loader-icon"></i>
+      <p>Loading questions...</p>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div *ngIf="!isLoading() && questionsList().length === 0" class="empty-state">
+      <i class="fa-solid fa-clipboard-question"></i>
+      <p>No feedback questions created yet. Use the editor to add your first question.</p>
+    </div>
+
+    <!-- QUESTIONS STACK -->
+    <div *ngIf="!isLoading() && questionsList().length > 0" class="questions-stack">
+      <article *ngFor="let q of questionsList()" [class.active-edit]="editingQuestionId() === q.id">
+        <div class="question-info">
+          <strong>{{ q.order }}. {{ q.text }}</strong>
+          <div class="meta-row">
+            <span class="type-badge">{{ q.type }}</span>
+            <span class="required-badge" *ngIf="q.required">Required</span>
+            <span class="comment-badge" *ngIf="q.allowCustomText">+ comment</span>
+            <span class="options-count" *ngIf="q.options && q.options.length > 0">{{ q.options.length }} options</span>
+          </div>
+        </div>
+        <div class="list-item-actions">
+          <button type="button" class="btn-action btn-action--edit" (click)="editQuestion(q)">
+            <i class="fa-solid fa-pen-to-square"></i> Edit
+          </button>
+          <button type="button" class="btn-action btn-action--delete" (click)="deleteQuestion(q.id!)">
+            <i class="fa-solid fa-trash"></i> Delete
+          </button>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <!-- Confirmation dialog -->
+  <app-confirm-dialog [isOpen]="confirmOpen()" [title]="confirmTitle()" [message]="confirmMessage()"
+    [subMessage]="confirmSub()" [isProcessing]="confirmProcessing()" (confirmed)="onConfirmed()"
+    (cancelled)="onCancelled()"></app-confirm-dialog>
+</section>

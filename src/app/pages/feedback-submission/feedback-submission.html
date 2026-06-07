@@ -1,0 +1,110 @@
+<div class="feedback-page">
+  <div class="container">
+    <!-- SUCCESS CONFIRMATION -->
+    <div *ngIf="isSubmitted()" class="card success-card reveal is-visible">
+      <div class="success-icon">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <h1>Thank You!</h1>
+      <p class="lead">Your feedback has been submitted successfully. We appreciate your valuable insights and time.</p>
+      <div class="actions">
+        <a class="btn btn--primary" routerLink="/">Return Home</a>
+      </div>
+    </div>
+
+    <!-- MAIN FORM PANEL -->
+    <div *ngIf="!isSubmitted()" class="card form-card">
+      <div class="header">
+        <span class="eyebrow"><i class="fa-solid fa-star"></i> Feedback survey</span>
+        <h1>We value your input</h1>
+        <p class="subtitle">Please take a moment to answer these quick questions and help us improve our services.</p>
+      </div>
+
+      <!-- LOADING STATE -->
+      <div *ngIf="isLoading()" class="loading-state">
+        <i class="fa-solid fa-spinner fa-spin loader-icon"></i>
+        <p>Loading survey questions...</p>
+      </div>
+
+      <!-- EMPTY STATE -->
+      <div *ngIf="!isLoading() && questions().length === 0" class="empty-state">
+        <i class="fa-solid fa-clipboard-list"></i>
+        <h3>No survey questions active</h3>
+        <p>There are no feedback questions active right now. Please check back later.</p>
+        <a class="btn btn--ghost" routerLink="/">Go Back</a>
+      </div>
+
+      <!-- FEEDBACK FORM -->
+      <form *ngIf="!isLoading() && questions().length > 0" [formGroup]="feedbackForm" (ngSubmit)="onSubmit()">
+        <div class="questions-list">
+          <div *ngFor="let q of questions(); let idx = index" class="question-item" [class.error]="feedbackForm.get(q.id!)?.invalid && feedbackForm.get(q.id!)?.touched">
+            <label class="question-label">
+              {{ idx + 1 }}. {{ q.text }}
+              <span *ngIf="q.required" class="required-asterisk">*</span>
+            </label>
+
+            <!-- QUESTION TYPES -->
+            <!-- TEXT INPUT -->
+            <div *ngIf="q.type === 'text'" class="input-wrap">
+              <input [formControlName]="q.id!" type="text" placeholder="Type your answer here..." />
+            </div>
+
+            <!-- TEXTAREA INPUT -->
+            <div *ngIf="q.type === 'textarea'" class="input-wrap">
+              <textarea [formControlName]="q.id!" rows="4" placeholder="Type your detailed thoughts here..."></textarea>
+            </div>
+
+            <!-- DROPDOWN SELECT -->
+            <div *ngIf="q.type === 'dropdown'" class="input-wrap">
+              <select [formControlName]="q.id!">
+                <option value="" disabled selected>Choose an option...</option>
+                <option *ngFor="let opt of q.options" [value]="opt">{{ opt }}</option>
+              </select>
+            </div>
+
+            <!-- RADIO CHOICE -->
+            <div *ngIf="q.type === 'radio'" class="options-grid">
+              <label *ngFor="let opt of q.options" class="option-card radio-card" [class.active]="feedbackForm.get(q.id!)?.value === opt">
+                <input type="radio" [formControlName]="q.id!" [value]="opt" />
+                <span class="custom-radio"></span>
+                <span class="option-text">{{ opt }}</span>
+              </label>
+            </div>
+
+            <!-- CHECKBOX MULTIPLE CHOICE -->
+            <div *ngIf="q.type === 'checkbox'" class="options-grid">
+              <label *ngFor="let opt of q.options" class="option-card checkbox-card" [class.active]="isOptionChecked(q.id!, opt)">
+                <input type="checkbox" [checked]="isOptionChecked(q.id!, opt)" (change)="onCheckboxChange(q.id!, opt, $event)" />
+                <span class="custom-checkbox"></span>
+                <span class="option-text">{{ opt }}</span>
+              </label>
+            </div>
+
+            <!-- OPTIONAL CUSTOM FREE TEXT -->
+            <div *ngIf="q.allowCustomText" class="custom-text-wrap">
+              <label class="custom-text-label">Any additional details or comments for this question?</label>
+              <input [formControlName]="q.id! + '_customText'" type="text" placeholder="Write any extra details here..." />
+            </div>
+
+            <!-- VALIDATION ERROR HINT -->
+            <div *ngIf="feedbackForm.get(q.id!)?.invalid && feedbackForm.get(q.id!)?.touched" class="error-hint">
+              <i class="fa-solid fa-circle-info"></i> This question is required.
+            </div>
+          </div>
+        </div>
+
+        <!-- ERROR MESSAGE -->
+        <p *ngIf="submissionError()" class="status-error">{{ submissionError() }}</p>
+
+        <!-- SUBMIT ACTIONS -->
+        <div class="form-actions">
+          <button type="submit" class="btn btn--primary submit-btn" [disabled]="isSubmitting()">
+            <span *ngIf="!isSubmitting()">Submit Feedback <i class="fa-solid fa-paper-plane ml-2"></i></span>
+            <span *ngIf="isSubmitting()"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Submitting...</span>
+          </button>
+          <a class="btn btn--ghost" routerLink="/">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
