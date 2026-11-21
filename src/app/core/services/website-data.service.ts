@@ -8,6 +8,10 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  sendPasswordResetEmail,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
 } from '@angular/fire/auth';
 import {
   Firestore,
@@ -21,6 +25,7 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  where,
 } from '@angular/fire/firestore';
 import { Storage, getDownloadURL, ref, uploadBytes } from '@angular/fire/storage';
 import { Observable, BehaviorSubject, catchError, combineLatest, map, of, startWith, switchMap, tap } from 'rxjs';
@@ -32,14 +37,24 @@ import {
   ThemeSettings,
   WebsiteSection,
 } from '../models/website.models';
+import { UserProfile, SiteConfig } from '../models/tenant.models';
+import { TenantResolverService } from './tenant-resolver.service';
 
 @Injectable({ providedIn: 'root' })
 export class WebsiteDataService {
   private readonly firestore = inject(Firestore);
   private readonly auth = inject(Auth);
   private readonly storage = inject(Storage);
+  private readonly tenantResolver = inject(TenantResolverService);
 
   readonly user$: Observable<User | null> = authState(this.auth);
+
+  readonly activeOwnerUid$: Observable<string | null> = combineLatest([
+    this.user$.pipe(map((u) => u?.uid || null)),
+    this.tenantResolver.currentOwnerUid$,
+  ]).pipe(
+    map(([authUid, publicOwnerUid]) => publicOwnerUid || authUid || null)
+  );
 
   private readonly authInitialized = new BehaviorSubject<boolean>(false);
   readonly authInitialized$ = this.authInitialized.asObservable();
@@ -319,96 +334,137 @@ export class WebsiteDataService {
     });
   }
 
-  readonly menus$ = collectionData(query(collection(this.firestore, 'menus'), orderBy('order')), {
-    idField: 'id',
-  }).pipe(
-    tap({
-      next: (data) => {
-        console.log('Firestore success:', data);
-      },
-      error: (err) => {
-        console.error('Firestore stream error:', err);
-      },
-    }),
-    map((items) => {
-      console.log('Map executing');
-      return (items as MenuItem[]).filter((x) => x.isVisible !== false);
-    }),
-
-    catchError((error) => {
-      console.error('CatchError executing:', error);
-      return of(defaultMenus);
-    }),
+  readonly userSite$: Observable<SiteConfig | null> = this.user$.pipe(
+    switchMap((user) => {
+      if (!user?.uid) return of(null);
+      const sitesRef = collection(this.firestore, 'sites');
+      const q = query(sitesRef, where('ownerUid', '==', user.uid));
+      return collectionData(q, { idField: 'id' }).pipe(
+        map((docs) => (docs.length ? (docs[0] as SiteConfig) : null)),
+        catchError(() => of(null))
+      );
+    })
   );
 
-  readonly allMenus$ = collectionData(
-    query(collection(this.firestore, 'menus'), orderBy('order')),
-    {
-      idField: 'id',
-    },
-  ) as Observable<MenuItem[]>;
+  readonly allSites$ = collectionData(collection(this.firestore, 'sites'), { idField: 'id' }) as Observable<SiteConfig[]>;
 
-  readonly sections$ = collectionData(
-    query(collection(this.firestore, 'sections'), orderBy('order')),
-    {
-      idField: 'id',
-    },
-  ).pipe(
+  readonly allMenus$ = this.activeOwnerUid$.pipe(
+    switchMap((ownerUid) => {
+      if (!ownerUid) {
+        return collectionData(query(collection(this.firestore, 'menus'), orderBy('order')), { idField: 'id' }) as Observable<MenuItem[]>;
+      }
+      const q = query(collection(this.firestore, 'menus'), where('ownerUid', '==', ownerUid), orderBy('order'));
+      return collectionData(q, { idField: 'id' }).pipe(
+        switchMap((items) => {
+          if (!items || items.length === 0) {
+            return collectionData(query(collection(this.firestore, 'menus'), orderBy('order')), { idField: 'id' }) as Observable<MenuItem[]>;
+          }
+          return of(items as MenuItem[]);
+        }),
+        catchError(() => of(defaultMenus))
+      );
+    })
+  );
+
+  readonly menus$ = this.allMenus$.pipe(
+    map((items) => items.filter((x) => x.isVisible !== false)),
+    catchError(() => of(defaultMenus))
+  );
+
+  readonly allSections$ = this.activeOwnerUid$.pipe(
+    switchMap((ownerUid) => {
+      if (!ownerUid) {
+        return collectionData(query(collection(this.firestore, 'sections'), orderBy('order')), { idField: 'id' }) as Observable<WebsiteSection[]>;
+      }
+      const q = query(collection(this.firestore, 'sections'), where('ownerUid', '==', ownerUid), orderBy('order'));
+      return collectionData(q, { idField: 'id' }).pipe(
+        switchMap((items) => {
+          if (!items || items.length === 0) {
+            return collectionData(query(collection(this.firestore, 'sections'), orderBy('order')), { idField: 'id' }) as Observable<WebsiteSection[]>;
+          }
+          return of(items as WebsiteSection[]);
+        }),
+        catchError(() => of(defaultSections))
+      );
+    })
+  );
+
+  readonly sections$ = this.allSections$.pipe(
     map((items) => {
-      const sections = (items as WebsiteSection[]).filter((item) => item.isVisible !== false);
-      return sections.length ? sections : defaultSections;
+      const visible = items.filter((x) => x.isVisible !== false);
+      return visible.length ? visible : defaultSections;
     }),
     startWith(defaultSections),
-    catchError((error) => {
-      console.error('Failed to load sections from Firestore.', error);
-      return of(defaultSections);
-    }),
+    catchError(() => of(defaultSections))
   );
 
-  readonly allSections$ = collectionData(
-    query(collection(this.firestore, 'sections'), orderBy('order')),
-    {
-      idField: 'id',
-    },
-  ) as Observable<WebsiteSection[]>;
-
-  readonly themeSettingsDocs$ = collectionData(collection(this.firestore, 'themeSettings'), {
-    idField: 'id',
-  }) as Observable<ThemeSettings[]>;
+  readonly themeSettingsDocs$ = this.activeOwnerUid$.pipe(
+    switchMap((ownerUid) => {
+      if (!ownerUid) {
+        return collectionData(collection(this.firestore, 'themeSettings'), { idField: 'id' }) as Observable<ThemeSettings[]>;
+      }
+      const q = query(collection(this.firestore, 'themeSettings'), where('ownerUid', '==', ownerUid));
+      return collectionData(q, { idField: 'id' }).pipe(
+        switchMap((docs) => {
+          if (!docs || docs.length === 0) {
+            return collectionData(collection(this.firestore, 'themeSettings'), { idField: 'id' }) as Observable<ThemeSettings[]>;
+          }
+          return of(docs as ThemeSettings[]);
+        })
+      );
+    })
+  );
 
   readonly themeSettings$ = this.themeSettingsDocs$.pipe(
     map((items) => items[0] ?? defaultThemeSettings),
     startWith(defaultThemeSettings),
-    catchError((error) => {
-      console.error('Failed to load theme settings from Firestore.', error);
-      return of(defaultThemeSettings);
-    }),
+    catchError(() => of(defaultThemeSettings))
   );
 
-  readonly footerSettingsDocs$ = collectionData(collection(this.firestore, 'footerSettings'), {
-    idField: 'id',
-  }) as Observable<FooterSettings[]>;
+  readonly footerSettingsDocs$ = this.activeOwnerUid$.pipe(
+    switchMap((ownerUid) => {
+      if (!ownerUid) {
+        return collectionData(collection(this.firestore, 'footerSettings'), { idField: 'id' }) as Observable<FooterSettings[]>;
+      }
+      const q = query(collection(this.firestore, 'footerSettings'), where('ownerUid', '==', ownerUid));
+      return collectionData(q, { idField: 'id' }).pipe(
+        switchMap((docs) => {
+          if (!docs || docs.length === 0) {
+            return collectionData(collection(this.firestore, 'footerSettings'), { idField: 'id' }) as Observable<FooterSettings[]>;
+          }
+          return of(docs as FooterSettings[]);
+        })
+      );
+    })
+  );
 
   readonly footerSettings$ = this.footerSettingsDocs$.pipe(
     map((items) => items[0] ?? defaultFooterSettings),
     startWith(defaultFooterSettings),
-    catchError((error) => {
-      console.error('Failed to load footer settings from Firestore.', error);
-      return of(defaultFooterSettings);
-    }),
+    catchError(() => of(defaultFooterSettings))
   );
 
-  readonly headerSettingsDocs$ = collectionData(collection(this.firestore, 'headerSettings'), {
-    idField: 'id',
-  }) as Observable<HeaderSettings[]>;
+  readonly headerSettingsDocs$ = this.activeOwnerUid$.pipe(
+    switchMap((ownerUid) => {
+      if (!ownerUid) {
+        return collectionData(collection(this.firestore, 'headerSettings'), { idField: 'id' }) as Observable<HeaderSettings[]>;
+      }
+      const q = query(collection(this.firestore, 'headerSettings'), where('ownerUid', '==', ownerUid));
+      return collectionData(q, { idField: 'id' }).pipe(
+        switchMap((docs) => {
+          if (!docs || docs.length === 0) {
+            return collectionData(collection(this.firestore, 'headerSettings'), { idField: 'id' }) as Observable<HeaderSettings[]>;
+          }
+          return of(docs as HeaderSettings[]);
+        })
+      );
+    })
+  );
 
   readonly headerSettings$ = this.headerSettingsDocs$.pipe(
     map((items) => items[0] ?? defaultHeaderSettings),
     startWith(defaultHeaderSettings),
-    catchError((error) => {
-      console.error('Failed to load header settings from Firestore.', error);
-      return of(defaultHeaderSettings);
-    }),
+    catchError(() => of(defaultHeaderSettings))
   );
 
   signInWithGoogle(): Promise<unknown> {
@@ -423,13 +479,162 @@ export class WebsiteDataService {
     return createUserWithEmailAndPassword(this.auth, email, password);
   }
 
+  sendPasswordReset(email: string): Promise<void> {
+    return sendPasswordResetEmail(this.auth, email);
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    const user = this.auth.currentUser;
+    if (!user || !user.email) {
+      throw new Error('No authenticated user found.');
+    }
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, credential);
+    await updatePassword(user, newPassword);
+  }
+
   signOut(): Promise<void> {
     return signOut(this.auth);
   }
 
+  async getUserSite(uid: string): Promise<SiteConfig | null> {
+    if (!uid) return null;
+    const sitesRef = collection(this.firestore, 'sites');
+    const q = query(sitesRef, where('ownerUid', '==', uid));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      const docSnap = snap.docs[0];
+      return { id: docSnap.id, ...docSnap.data() } as SiteConfig;
+    }
+    return null;
+  }
+
+  async registerTenantAndSite(params: {
+    uid: string;
+    email: string;
+    displayName: string;
+    phone: string;
+    authProvider: 'google' | 'email';
+    siteName: string;
+    siteType: 'custom-domain' | 'subdomain';
+    domain?: string | null;
+    subdomain?: string | null;
+  }): Promise<SiteConfig> {
+    const userRef = doc(this.firestore, 'users', params.uid);
+    const siteRef = doc(collection(this.firestore, 'sites'));
+    const siteId = siteRef.id;
+
+    const normalizedSubdomain = params.subdomain
+      ? this.tenantResolver.normalizeSubdomain(params.subdomain)
+      : null;
+    const normalizedDomain = params.domain
+      ? this.tenantResolver.normalizeDomain(params.domain)
+      : null;
+
+    const siteConfig: SiteConfig = {
+      id: siteId,
+      siteId,
+      ownerUid: params.uid,
+      siteName: params.siteName,
+      siteType: params.siteType,
+      domain: params.domain || null,
+      subdomain: params.subdomain || null,
+      normalizedDomain,
+      normalizedSubdomain,
+      status: 'active',
+      domainStatus: params.siteType === 'custom-domain' ? 'PENDING' : 'ACTIVE',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+
+    const userProfile: UserProfile = {
+      uid: params.uid,
+      email: params.email,
+      displayName: params.displayName,
+      phone: params.phone,
+      authProvider: params.authProvider,
+      status: 'active',
+      siteId,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+
+    await setDoc(userRef, userProfile, { merge: true });
+    await setDoc(siteRef, siteConfig);
+
+    // Grant admin access so permissions & dashboard work for user
+    await this.grantAdmin(params.email, 'system_registration');
+
+    // Seed default website configuration for this tenant UID
+    await this.seedDefaultWebsiteForUser(params.uid, params.siteName);
+
+    return siteConfig;
+  }
+
+  async seedDefaultWebsiteForUser(ownerUid: string, siteName: string): Promise<void> {
+    const userMenus = defaultMenus.map((m) => ({
+      ...m,
+      id: `${ownerUid}_${m.id}`,
+      ownerUid,
+    }));
+
+    const userSections = defaultSections.map((s) => ({
+      ...s,
+      id: `${ownerUid}_${s.id}`,
+      ownerUid,
+    }));
+
+    const userTheme: ThemeSettings = {
+      ...defaultThemeSettings,
+      id: ownerUid,
+      ownerUid,
+    };
+
+    const userFooter: FooterSettings = {
+      ...defaultFooterSettings,
+      id: ownerUid,
+      ownerUid,
+    };
+
+    const userHeader: HeaderSettings = {
+      ...defaultHeaderSettings,
+      id: ownerUid,
+      websiteName: siteName || defaultHeaderSettings.websiteName,
+      ownerUid,
+    };
+
+    await Promise.all([
+      ...userMenus.map((m) => setDoc(doc(this.firestore, 'menus', m.id), m, { merge: true })),
+      ...userSections.map((s) => setDoc(doc(this.firestore, 'sections', s.id), s, { merge: true })),
+      setDoc(doc(this.firestore, 'themeSettings', ownerUid), userTheme, { merge: true }),
+      setDoc(doc(this.firestore, 'footerSettings', ownerUid), userFooter, { merge: true }),
+      setDoc(doc(this.firestore, 'headerSettings', ownerUid), userHeader, { merge: true }),
+    ]);
+  }
+
+  async updateSiteConfig(siteConfig: Partial<SiteConfig> & { id: string }): Promise<void> {
+    const siteRef = doc(this.firestore, 'sites', siteConfig.id);
+    const updates: any = {
+      ...siteConfig,
+      updatedAt: serverTimestamp(),
+    };
+    if (siteConfig.subdomain !== undefined) {
+      updates.normalizedSubdomain = siteConfig.subdomain
+        ? this.tenantResolver.normalizeSubdomain(siteConfig.subdomain)
+        : null;
+    }
+    if (siteConfig.domain !== undefined) {
+      updates.normalizedDomain = siteConfig.domain
+        ? this.tenantResolver.normalizeDomain(siteConfig.domain)
+        : null;
+    }
+    await setDoc(siteRef, updates, { merge: true });
+  }
+
   upsertMenu(menu: MenuItem): Promise<void> {
-    const id = menu.id || menu.sectionId || crypto.randomUUID();
-    return setDoc(doc(this.firestore, 'menus', id), { ...menu, id }, { merge: true });
+    const ownerUid = menu.ownerUid || this.auth.currentUser?.uid || '';
+    const id = menu.id || (ownerUid ? `${ownerUid}_${menu.sectionId || crypto.randomUUID()}` : crypto.randomUUID());
+    return setDoc(doc(this.firestore, 'menus', id), { ...menu, id, ownerUid }, { merge: true });
   }
 
   deleteMenu(id: string): Promise<void> {
@@ -437,12 +642,14 @@ export class WebsiteDataService {
   }
 
   upsertSection(section: WebsiteSection): Promise<void> {
-    const id = section.id || section.sectionId || crypto.randomUUID();
+    const ownerUid = section.ownerUid || this.auth.currentUser?.uid || '';
+    const id = section.id || (ownerUid ? `${ownerUid}_${section.sectionId || crypto.randomUUID()}` : crypto.randomUUID());
     return setDoc(
       doc(this.firestore, 'sections', id),
       {
         ...section,
         id,
+        ownerUid,
         updatedDate: serverTimestamp(),
         createdDate: section.createdDate ?? serverTimestamp(),
       },
@@ -455,25 +662,31 @@ export class WebsiteDataService {
   }
 
   saveThemeSettings(settings: ThemeSettings): Promise<void> {
+    const ownerUid = settings.ownerUid || this.auth.currentUser?.uid || 'global';
+    const id = settings.id && settings.id !== 'global' ? settings.id : ownerUid;
     return setDoc(
-      doc(this.firestore, 'themeSettings', 'global'),
-      { ...settings, id: 'global' },
+      doc(this.firestore, 'themeSettings', id),
+      { ...settings, id, ownerUid },
       { merge: true },
     );
   }
 
   saveFooterSettings(settings: FooterSettings): Promise<void> {
+    const ownerUid = settings.ownerUid || this.auth.currentUser?.uid || 'global';
+    const id = settings.id && settings.id !== 'global' ? settings.id : ownerUid;
     return setDoc(
-      doc(this.firestore, 'footerSettings', 'global'),
-      { ...settings, id: 'global' },
+      doc(this.firestore, 'footerSettings', id),
+      { ...settings, id, ownerUid },
       { merge: true },
     );
   }
 
   saveHeaderSettings(settings: HeaderSettings): Promise<void> {
+    const ownerUid = settings.ownerUid || this.auth.currentUser?.uid || 'global';
+    const id = settings.id && settings.id !== 'global' ? settings.id : ownerUid;
     return setDoc(
-      doc(this.firestore, 'headerSettings', 'global'),
-      { ...settings, id: 'global' },
+      doc(this.firestore, 'headerSettings', id),
+      { ...settings, id, ownerUid },
       { merge: true },
     );
   }
@@ -485,7 +698,11 @@ export class WebsiteDataService {
   }
 
   async seedDefaultWebsite(): Promise<void> {
-    debugger;
+    const user = this.auth.currentUser;
+    if (user?.uid) {
+      await this.seedDefaultWebsiteForUser(user.uid, 'DySi Site');
+      return;
+    }
     await this.removeNonDefaultDocuments(
       'menus',
       defaultMenus.map((menu) => menu.id ?? menu.sectionId),

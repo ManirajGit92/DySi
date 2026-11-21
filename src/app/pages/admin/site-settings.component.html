@@ -1,0 +1,122 @@
+<div class="site-settings-container">
+  <div class="panel-head">
+    <h2><i class="fa-solid fa-globe"></i> Website Configuration</h2>
+    <p>Manage your independent multi-tenant website domain, name, and public access.</p>
+  </div>
+
+  @if (statusMessage()) {
+    <div class="alert alert--success">
+      <i class="fa-solid fa-circle-check"></i>
+      <span>{{ statusMessage() }}</span>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert alert--danger">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  @if (currentSite(); as site) {
+    <!-- Public Site Overview Banner -->
+    <div class="site-overview-card">
+      <div class="overview-info">
+        <span class="site-badge" [class.active]="site.status === 'active'">
+          {{ site.status | uppercase }}
+        </span>
+        <h3 class="site-title">{{ site.siteName }}</h3>
+        <a [href]="publicUrl" target="_blank" class="site-url">
+          {{ publicUrl }}
+          <i class="fa-solid fa-arrow-up-right-from-square"></i>
+        </a>
+      </div>
+
+      <div class="overview-actions">
+        <a [href]="publicUrl" target="_blank" class="btn btn--primary">
+          <i class="fa-solid fa-globe"></i> Open Website
+        </a>
+        <a routerLink="/change-password" class="btn btn--ghost">
+          <i class="fa-solid fa-key"></i> Change Password
+        </a>
+      </div>
+    </div>
+
+    <!-- Website Settings Form -->
+    <form [formGroup]="form" (ngSubmit)="saveSiteSettings()" class="settings-form card">
+      <div class="form-group">
+        <label>Website Name</label>
+        <input type="text" formControlName="siteName" placeholder="e.g. My Travel Website" />
+      </div>
+
+      <div class="form-group">
+        <label>URL Type</label>
+        <select formControlName="siteType">
+          <option value="subdomain">DYSi Subdomain (dysi.web.app/your-name)</option>
+          <option value="custom-domain">Custom Domain (yourdomain.com)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>{{ siteType === 'subdomain' ? 'DYSi Subdomain' : 'Custom Domain' }}</label>
+        <input
+          type="text"
+          formControlName="identifier"
+          [placeholder]="siteType === 'subdomain' ? 'mysite' : 'mysite.com'"
+        />
+      </div>
+
+      @if (siteType === 'custom-domain') {
+        <!-- Custom Domain Setup Instructions Panel -->
+        <div class="dns-instructions-box">
+          <h4><i class="fa-solid fa-network-wired"></i> Custom Domain DNS Setup Instructions</h4>
+          <p>To point <strong>{{ form.value.identifier }}</strong> to your DYSi website, add the following DNS records in your domain provider (GoDaddy, Namecheap, Cloudflare, etc.):</p>
+
+          <table class="dns-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Host / Name</th>
+                <th>Value / Target</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge">CNAME</span></td>
+                <td>@ or www</td>
+                <td><code>dysi.web.app</code></td>
+              </tr>
+              <tr>
+                <td><span class="badge">A</span></td>
+                <td>@</td>
+                <td><code>199.36.158.100</code></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="domain-status-row">
+            <span>Domain Status:</span>
+            <span class="status-pill" [class.pending]="site.domainStatus === 'PENDING'" [class.active]="site.domainStatus === 'ACTIVE'">
+              {{ site.domainStatus || 'PENDING' }}
+            </span>
+          </div>
+        </div>
+      }
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
+          @if (isSaving()) {
+            <i class="fa-solid fa-spinner fa-spin"></i> Saving...
+          } @else {
+            Save Website Settings
+          }
+        </button>
+      </div>
+    </form>
+  } @else {
+    <div class="empty-site-card card">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+      <p>Loading website settings...</p>
+    </div>
+  }
+</div>

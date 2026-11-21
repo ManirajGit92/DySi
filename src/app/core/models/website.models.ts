@@ -13,6 +13,7 @@ export type LayoutType =
 
 export interface MenuItem {
   id?: string;
+  ownerUid?: string;
   title: string;
   routeKey: string;
   order: number;
@@ -33,6 +34,7 @@ export interface HeroSlide {
 
 export interface WebsiteSection {
   id?: string;
+  ownerUid?: string;
   sectionId: string;
   title: string;
   subtitle: string;
@@ -73,6 +75,7 @@ export interface FaqItem {
 
 export interface ThemeSettings {
   id?: string;
+  ownerUid?: string;
   primaryColor: string;
   secondaryColor: string;
   backgroundColor: string;
@@ -94,6 +97,7 @@ export interface ThemeSettings {
 
 export interface FooterSettings {
   id?: string;
+  ownerUid?: string;
   description: string;
   importantLinks: FooterLink[];
   socialLinks: FooterLink[];
@@ -108,6 +112,7 @@ export interface FooterLink {
 
 export interface HeaderSettings {
   id?: string;
+  ownerUid?: string;
   logoUrl: string;
   websiteName: string;
   logoAlt?: string;

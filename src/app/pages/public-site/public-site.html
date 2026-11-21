@@ -1,0 +1,70 @@
+@if (isLoading()) {
+  <div class="loader" aria-label="Loading">
+    <div class="loader__mark"></div>
+    <p>Loading website content...</p>
+  </div>
+} @else if (siteNotFound()) {
+  <div class="site-status-page">
+    <div class="status-card">
+      <div class="status-icon text-warning">
+        <i class="fa-solid fa-compass-drafting"></i>
+      </div>
+      <h1>Website Not Found</h1>
+      <p>We couldn't find a website registered for this address.</p>
+      <small>Check that the website URL is spelled correctly or build your own site with DYSi.</small>
+      <div class="status-actions">
+        <a routerLink="/" class="btn btn--secondary">Go Home</a>
+        <a routerLink="/register" class="btn btn--primary">Create Your Website</a>
+      </div>
+    </div>
+  </div>
+} @else if (isSiteRestricted()) {
+  <div class="site-status-page">
+    <div class="status-card">
+      <div class="status-icon text-danger">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h1>Website Temporarily Unavailable</h1>
+      <p>This website is currently restricted or undergoing maintenance.</p>
+      <small>Please contact the site administrator if you believe this is an error.</small>
+      <div class="status-actions">
+        <a routerLink="/" class="btn btn--secondary">Return to DYSi</a>
+      </div>
+    </div>
+  </div>
+} @else {
+  @if (themeService.settings().showHeader) {
+    <app-header
+      [menus]="menus()"
+      [activeSection]="scrollService.activeSection()"
+      [isDarkTheme]="themeService.isDark()"
+      [showTopNavMenu]="themeService.settings().showTopNavMenu"
+      [headerSettings]="headerSettings()"
+      [isAdmin]="false"
+      [isSuperAdmin]="false"
+      (sectionSelected)="scrollToSection($event)"
+      (themeToggled)="toggleTheme()"
+    />
+  }
+
+  <main>
+    @if (sections().length) {
+      @for (section of sections(); track section.id || section.sectionId) {
+        <app-dynamic-section [section]="section" (sectionAction)="scrollToSection($event)" />
+      }
+    } @else {
+      <section class="empty-state section">
+        <div class="section__inner card text-center">
+          <h2>No visible website sections</h2>
+          <p>This website owner has not published any visible sections yet.</p>
+        </div>
+      </section>
+    }
+  </main>
+
+  <app-footer
+    [menus]="menus()"
+    [footerSettings]="footerSettings()"
+    (sectionSelected)="scrollToSection($event)"
+  />
+}

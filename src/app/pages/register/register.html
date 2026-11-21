@@ -1,0 +1,331 @@
+<div class="register-page">
+  <!-- Top Navigation Header -->
+  <header class="top-nav">
+    <div class="top-nav__brand" routerLink="/">
+      <div class="brand-logo-icon">
+        <i class="fa-solid fa-layer-group"></i>
+      </div>
+      <div class="brand-text">
+        <span class="brand-title">DYSI</span>
+        <span class="brand-subtitle">Website Builder</span>
+      </div>
+    </div>
+
+    <nav class="top-nav__links">
+      <a routerLink="/" class="nav-link">Home</a>
+      <a routerLink="/" class="nav-link">Features</a>
+      <a routerLink="/" class="nav-link">Pricing</a>
+      <a routerLink="/" class="nav-link">Help</a>
+    </nav>
+
+    <div class="top-nav__actions">
+      <a routerLink="/admin" class="btn btn--login">Login</a>
+      <a routerLink="/register" class="btn btn--get-started">Get Started</a>
+    </div>
+  </header>
+
+  <!-- Main Multi-step Register Container -->
+  <main class="register-container">
+    <div class="register-header text-center">
+      <h1 class="page-title">Create <span class="highlight-text">Your Account</span></h1>
+      <p class="page-subtitle">Register and create your own website</p>
+    </div>
+
+    <!-- Step Progress Indicator -->
+    <div class="stepper">
+      <div class="stepper__item" [class.active]="currentStep() === 1" [class.completed]="currentStep() > 1" (click)="goToStep(1)">
+        <div class="step-badge">1</div>
+        <span class="step-label">Account Info</span>
+      </div>
+      <div class="stepper__line" [class.completed]="currentStep() > 1"></div>
+      <div class="stepper__item" [class.active]="currentStep() === 2" [class.completed]="currentStep() > 2" (click)="goToStep(2)">
+        <div class="step-badge">2</div>
+        <span class="step-label">Website Info</span>
+      </div>
+      <div class="stepper__line" [class.completed]="currentStep() > 2"></div>
+      <div class="stepper__item" [class.active]="currentStep() === 3" (click)="goToStep(3)">
+        <div class="step-badge">3</div>
+        <span class="step-label">Review & Create</span>
+      </div>
+    </div>
+
+    <!-- Error Alert Banner -->
+    @if (errorMessage()) {
+      <div class="alert alert--danger">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <!-- Content Grid (Form + Feature Card) -->
+    <div class="register-grid">
+      <!-- STEP 1: ACCOUNT INFORMATION -->
+      @if (currentStep() === 1) {
+        <section class="form-panel">
+          <div class="panel-header">
+            <div class="panel-icon">
+              <i class="fa-regular fa-user"></i>
+            </div>
+            <div>
+              <h2 class="panel-title">Account Information</h2>
+              <p class="panel-subtitle">Enter your personal details</p>
+            </div>
+          </div>
+
+          <form [formGroup]="accountForm" class="step-form">
+            <div class="form-group">
+              <label>Full Name <span class="req">*</span></label>
+              <div class="input-wrapper">
+                <i class="fa-regular fa-user input-icon"></i>
+                <input type="text" formControlName="fullName" placeholder="Enter your full name" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Email Address <span class="req">*</span></label>
+              <div class="input-wrapper">
+                <i class="fa-regular fa-envelope input-icon"></i>
+                <input type="email" formControlName="email" placeholder="Enter your email address" [readonly]="isGoogleAuth" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Phone Number <span class="req">*</span></label>
+              <div class="input-wrapper">
+                <i class="fa-solid fa-phone input-icon"></i>
+                <input type="tel" formControlName="phone" placeholder="Enter your contact number" />
+              </div>
+            </div>
+
+            @if (!isGoogleAuth) {
+              <div class="form-group">
+                <label>Password <span class="req">*</span></label>
+                <div class="input-wrapper">
+                  <i class="fa-solid fa-lock input-icon"></i>
+                  <input [type]="accountForm.value.showPassword ? 'text' : 'password'" formControlName="password" placeholder="Create a password" />
+                  <button type="button" class="eye-btn" (click)="accountForm.patchValue({ showPassword: !accountForm.value.showPassword })">
+                    <i class="fa-regular" [class.fa-eye]="!accountForm.value.showPassword" [class.fa-eye-slash]="accountForm.value.showPassword"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Confirm Password <span class="req">*</span></label>
+                <div class="input-wrapper">
+                  <i class="fa-solid fa-lock input-icon"></i>
+                  <input [type]="accountForm.value.showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword" placeholder="Confirm your password" />
+                  <button type="button" class="eye-btn" (click)="accountForm.patchValue({ showConfirmPassword: !accountForm.value.showConfirmPassword })">
+                    <i class="fa-regular" [class.fa-eye]="!accountForm.value.showConfirmPassword" [class.fa-eye-slash]="accountForm.value.showConfirmPassword"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="field-hint">
+                <i class="fa-solid fa-circle-check text-success"></i>
+                <span>Password must be at least 6 characters long</span>
+              </div>
+            } @else {
+              <div class="field-hint text-info">
+                <i class="fa-brands fa-google"></i>
+                <span>Signed in with Google ({{ googleUserEmail }})</span>
+              </div>
+            }
+
+            <button type="button" class="btn btn--gradient btn--full" (click)="nextToStep2()">
+              Next <i class="fa-solid fa-arrow-right"></i>
+            </button>
+
+            <div class="login-prompt text-center">
+              <span>Already have an account?</span>
+              <a routerLink="/admin" class="login-link">Login here</a>
+            </div>
+          </form>
+        </section>
+      }
+
+      <!-- STEP 2: WEBSITE INFORMATION -->
+      @if (currentStep() === 2) {
+        <section class="form-panel">
+          <div class="panel-header">
+            <div class="panel-icon">
+              <i class="fa-solid fa-globe"></i>
+            </div>
+            <div>
+              <h2 class="panel-title">Website Details</h2>
+              <p class="panel-subtitle">Configure your new site domain & name</p>
+            </div>
+          </div>
+
+          <form [formGroup]="websiteForm" class="step-form">
+            <div class="form-group">
+              <label>Website Name <span class="req">*</span></label>
+              <div class="input-wrapper">
+                <i class="fa-solid fa-heading input-icon"></i>
+                <input type="text" formControlName="websiteName" placeholder="e.g. My Travel Website" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Choose URL Type <span class="req">*</span></label>
+              <div class="radio-options">
+                <label class="radio-card" [class.selected]="siteType === 'subdomain'">
+                  <input type="radio" formControlName="siteType" value="subdomain" />
+                  <div class="radio-content">
+                    <strong>DYSi Subdomain</strong>
+                    <small>e.g. mysite.web.app</small>
+                  </div>
+                </label>
+
+                <label class="radio-card" [class.selected]="siteType === 'custom-domain'">
+                  <input type="radio" formControlName="siteType" value="custom-domain" />
+                  <div class="radio-content">
+                    <strong>Custom Domain</strong>
+                    <small>e.g. mysite.com</small>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>
+                {{ siteType === 'subdomain' ? 'Subdomain Name' : 'Custom Domain' }} <span class="req">*</span>
+              </label>
+              <div class="input-wrapper">
+                <i class="fa-solid fa-link input-icon"></i>
+                <input
+                  type="text"
+                  formControlName="identifier"
+                  [placeholder]="siteType === 'subdomain' ? 'e.g. mysite' : 'e.g. mysite.com'"
+                />
+              </div>
+
+              @if (availabilityMessage()) {
+                <div class="availability-status" [class.available]="isIdentifierAvailable()" [class.unavailable]="!isIdentifierAvailable()">
+                  @if (isCheckingAvailability()) {
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                  }
+                  <span>{{ availabilityMessage() }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- Public URL Preview Card -->
+            <div class="preview-box">
+              <span class="preview-label">Public Website URL Preview:</span>
+              <a [href]="publicUrlPreview" target="_blank" class="preview-url">
+                {{ publicUrlPreview }}
+                <i class="fa-solid fa-up-right-from-square"></i>
+              </a>
+              @if (siteType === 'custom-domain') {
+                <p class="domain-info-note">
+                  <i class="fa-solid fa-circle-info"></i>
+                  Note: A custom domain requires setting up CNAME / A records in your domain registrar. Setup instructions will be provided in your dashboard.
+                </p>
+              }
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn--ghost" (click)="goToStep(1)">
+                <i class="fa-solid fa-arrow-left"></i> Back
+              </button>
+              <button type="button" class="btn btn--gradient" (click)="nextToStep3()">
+                Next <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+          </form>
+        </section>
+      }
+
+      <!-- STEP 3: REVIEW & CREATE -->
+      @if (currentStep() === 3) {
+        <section class="form-panel">
+          <div class="panel-header">
+            <div class="panel-icon">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div>
+              <h2 class="panel-title">Review & Launch</h2>
+              <p class="panel-subtitle">Confirm your account and site settings</p>
+            </div>
+          </div>
+
+          <div class="review-card">
+            <div class="review-section">
+              <h3><i class="fa-regular fa-user"></i> Owner Profile</h3>
+              <div class="review-row"><span>Name:</span> <strong>{{ accountForm.value.fullName }}</strong></div>
+              <div class="review-row"><span>Email:</span> <strong>{{ accountForm.value.email }}</strong></div>
+              <div class="review-row"><span>Phone:</span> <strong>{{ accountForm.value.phone }}</strong></div>
+            </div>
+
+            <div class="review-divider"></div>
+
+            <div class="review-section">
+              <h3><i class="fa-solid fa-globe"></i> Website Setup</h3>
+              <div class="review-row"><span>Website Name:</span> <strong>{{ websiteForm.value.websiteName }}</strong></div>
+              <div class="review-row"><span>URL Type:</span> <strong>{{ siteType === 'subdomain' ? 'DYSi Subdomain' : 'Custom Domain' }}</strong></div>
+              <div class="review-row"><span>Public Address:</span> <strong class="text-gradient">{{ publicUrlPreview }}</strong></div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn--ghost" (click)="goToStep(2)" [disabled]="isLoading()">
+              <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
+            <button type="button" class="btn btn--gradient" (click)="completeRegistration()" [disabled]="isLoading()">
+              @if (isLoading()) {
+                <i class="fa-solid fa-spinner fa-spin"></i> Creating Website...
+              } @else {
+                <i class="fa-solid fa-rocket"></i> Create Website
+              }
+            </button>
+          </div>
+        </section>
+      }
+
+      <!-- RIGHT PROMO & FEATURE CARD (Matched with reference screenshot) -->
+      <aside class="promo-card">
+        <div class="promo-card__header">
+          <div class="promo-badge">
+            <i class="fa-solid fa-laptop-code"></i>
+          </div>
+          <h2>Create Your Website</h2>
+          <p>Build your own website with DYSi in just a few steps.</p>
+        </div>
+
+        <ul class="promo-checklist">
+          <li>
+            <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+            <span>Professional website design</span>
+          </li>
+          <li>
+            <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+            <span>No coding required</span>
+          </li>
+          <li>
+            <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+            <span>Custom domain or subdomain</span>
+          </li>
+          <li>
+            <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+            <span>Easy to manage</span>
+          </li>
+          <li>
+            <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+            <span>Mobile responsive</span>
+          </li>
+          <li>
+            <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+            <span>Free to get started</span>
+          </li>
+        </ul>
+
+        <div class="promo-image-wrapper">
+          <img
+            src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"
+            alt="Website Showcase"
+          />
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
