@@ -7,17 +7,112 @@
   align-items: center;
   justify-content: space-between;
   width: fit-content;
-  max-width: calc(100% - 1rem);
-  gap: 2rem;
-  min-height: 4.8rem;
+  max-width: calc(100% - 1.5rem);
+  gap: 1.25rem;
+  min-height: 4.4rem;
   margin-top: 0.8rem;
-  padding: 0.75rem 1rem;
+  padding: 0.6rem 1rem;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--surface-solid) 72%, transparent);
+  background: color-mix(in srgb, var(--surface-solid) 78%, transparent);
   box-shadow: var(--shadow-sm);
   backdrop-filter: blur(20px);
   transform: translateX(-50%);
+  transition: all 0.25s ease;
+
+  /* Full width mode: edge-to-edge top bar with spacious layout */
+  &--full-width {
+    left: 0;
+    right: 0;
+    width: 100% !important;
+    max-width: 100%;
+    margin-top: 0;
+    padding: 0.7rem 1.75rem;
+    gap: 1.5rem;
+    min-height: 4.6rem;
+    border-radius: 0;
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
+    transform: none;
+
+    .nav {
+      flex: 1 1 auto;
+      justify-content: center;
+      min-width: 0;
+      gap: 0.3rem;
+
+      a {
+        padding: 0.65rem 0.95rem;
+        font-size: 0.92rem;
+      }
+    }
+
+    .user-profile-nav {
+      margin-left: 0.75rem;
+      padding: 0.35rem 0.75rem;
+    }
+  }
+
+  /* No Full width mode: centered floating pill with compact spacing so nothing clips */
+  &--compact {
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100% - 1.5rem);
+    margin-top: 0.8rem;
+    padding: 0.55rem 0.9rem;
+    gap: 0.9rem;
+    min-height: 4.1rem;
+    border-radius: 999px;
+
+    .brand {
+      gap: 0.5rem;
+      font-size: 1rem;
+
+      .brand__mark {
+        width: 2.3rem;
+        height: 2.3rem;
+      }
+    }
+
+    .nav {
+      flex: 1 1 auto;
+      min-width: 0;
+      gap: 0.15rem;
+
+      a {
+        padding: 0.52rem 0.72rem;
+        font-size: 0.85rem;
+      }
+    }
+
+    .user-profile-nav {
+      margin-left: 0.35rem;
+      padding: 0.25rem 0.55rem;
+      gap: 0.45rem;
+    }
+
+    .user-avatar-nav {
+      width: 1.95rem;
+      height: 1.95rem;
+    }
+
+    .user-name-nav {
+      max-width: 96px;
+      font-size: 0.82rem;
+    }
+
+    .btn-auth-logout-nav {
+      padding: 0.4rem 0.78rem;
+      font-size: 0.8rem;
+    }
+
+    .theme-toggle,
+    .menu-toggle {
+      width: 2.35rem;
+      height: 2.35rem;
+    }
+  }
 }
 
 .brand,
@@ -31,6 +126,8 @@
   gap: 0.65rem;
   font-size: 1.1rem;
   font-weight: 900;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .brand__mark {
@@ -85,6 +182,7 @@
 .header-actions {
   gap: 0.45rem;
   position: relative;
+  flex-shrink: 0;
 }
 
 .theme-toggle,
@@ -192,6 +290,7 @@
   padding: 0.4rem 0.8rem;
   margin-left: 0.5rem;
   border-left: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .user-avatar-nav {
@@ -200,6 +299,7 @@
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .user-name-nav {
@@ -220,6 +320,8 @@
   color: var(--muted);
   font-size: 0.85rem;
   font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
   cursor: pointer;
   transition: all 0.2s ease;
 

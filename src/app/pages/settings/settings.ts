@@ -11,6 +11,7 @@ import {
   ContentCard,
   FaqItem,
   FooterSettings,
+  HeaderMenuOption,
   HeaderSettings,
   MenuItem,
   ThemeSettings,
@@ -27,7 +28,7 @@ import { DynamicSectionComponent } from '../../shared/dynamic-section/dynamic-se
 
 @Component({
   selector: 'app-settings',
-  imports: [CommonModule, AsyncPipe, ReactiveFormsModule, DynamicSectionComponent, SliderModule, DialogModule],
+  imports: [CommonModule, AsyncPipe, ReactiveFormsModule, RouterLink, DynamicSectionComponent, SliderModule, DialogModule],
   templateUrl: './settings.html',
   styleUrl: './settings.scss',
 })
@@ -37,6 +38,7 @@ export class Settings {
   private readonly router = inject(Router);
 
   readonly user$ = this.websiteData.user$;
+  readonly isSuperAdmin$ = this.websiteData.isSuperAdmin$;
   readonly menus$ = this.websiteData.allMenus$;
   readonly sections$ = this.websiteData.allSections$;
   readonly themeSettings$ = this.websiteData.themeSettings$;
@@ -47,6 +49,12 @@ export class Settings {
   readonly uploadStatus = signal('');
   readonly excelStatus = signal('');
   readonly previewSection = signal<WebsiteSection | null>(null);
+  readonly copiedId = signal(false);
+  readonly selectedImageFileName = signal('');
+  readonly selectedLogoFileName = signal('');
+  readonly showAdvancedFields = signal(false);
+  readonly draggedSectionKey = signal<string | null>(null);
+  readonly dragOverSectionKey = signal<string | null>(null);
 
   readonly loginForm = this.fb.nonNullable.group({
     email: ['', [Validators.email]],
@@ -135,6 +143,9 @@ export class Settings {
     logoWidth: [defaultHeaderSettings.logoWidth || '32px'],
     logoHeight: [defaultHeaderSettings.logoHeight || '32px'],
     headerWidth: [defaultHeaderSettings.headerWidth || 'fit-content'],
+    headerMenuOption: [
+      (defaultHeaderSettings.headerMenuOption || 'no-full-width') as HeaderMenuOption,
+    ],
   });
 
   constructor() {
@@ -155,9 +166,18 @@ export class Settings {
         { emitEvent: false },
       );
     });
-    this.headerSettings$.subscribe((settings) =>
-      this.headerForm.patchValue(settings, { emitEvent: false }),
-    );
+    this.headerSettings$.subscribe((settings) => {
+      const resolvedOption: HeaderMenuOption =
+        settings.headerMenuOption ||
+        (settings.headerWidth?.trim() === '100%' ? 'full-width' : 'no-full-width');
+      this.headerForm.patchValue(
+        {
+          ...settings,
+          headerMenuOption: resolvedOption,
+        },
+        { emitEvent: false },
+      );
+    });
   }
 
   async signInWithGoogle(): Promise<void> {
@@ -261,6 +281,7 @@ export class Settings {
     if (!file) {
       return;
     }
+    this.selectedImageFileName.set(file.name);
     this.uploadStatus.set('Uploading image...');
     try {
       const url = await this.websiteData.uploadImage(file);
@@ -278,6 +299,7 @@ export class Settings {
     if (!file) {
       return;
     }
+    this.selectedLogoFileName.set(file.name);
     this.uploadStatus.set('Uploading logo...');
     try {
       const url = await this.websiteData.uploadImage(file);
@@ -287,6 +309,115 @@ export class Settings {
       this.uploadStatus.set('Logo upload failed. Check Firebase Storage rules.');
       console.error(error);
     }
+  }
+
+  getUserInitial(user: { displayName?: string | null; email?: string | null } | null): string {
+    const label = (user?.displayName || user?.email || 'A').trim();
+    return label.charAt(0).toUpperCase();
+  }
+
+  getSectionKey(section: WebsiteSection): string {
+    return section.id || section.sectionId;
+  }
+
+  getSectionThumbnail(section: WebsiteSection): string {
+    return section.imageUrl || section.slides?.[0]?.imageUrl || '';
+  }
+
+  async copySectionId(): Promise<void> {
+    const value = this.sectionForm.controls.id.value || this.sectionForm.controls.sectionId.value;
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      this.copiedId.set(true);
+      setTimeout(() => this.copiedId.set(false), 1800);
+    } catch {
+      // Fallback ignored if clipboard unavailable
+    }
+  }
+
+  applyDescriptionFormat(action: 'bold' | 'italic' | 'bullet' | 'clear'): void {
+    const current = this.sectionForm.controls.description.value || '';
+    if (action === 'clear') {
+      this.sectionForm.controls.description.setValue('');
+      return;
+    }
+    if (action === 'bold') {
+      this.sectionForm.controls.description.setValue(`${current}${current ? ' ' : ''}**bold text**`);
+    } else if (action === 'italic') {
+      this.sectionForm.controls.description.setValue(`${current}${current ? ' ' : ''}_italic text_`);
+    } else if (action === 'bullet') {
+      this.sectionForm.controls.description.setValue(`${current}${current ? '\n' : ''}• `);
+    }
+  }
+
+  viewLiveSite(): void {
+    void this.router.navigate(['/']);
+  }
+
+  onSectionDragStart(event: DragEvent, section: WebsiteSection): void {
+    const key = this.getSectionKey(section);
+    this.draggedSectionKey.set(key);
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', key);
+    }
+  }
+
+  onSectionDragOver(event: DragEvent, section: WebsiteSection): void {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    const key = this.getSectionKey(section);
+    if (this.draggedSectionKey() !== key) {
+      this.dragOverSectionKey.set(key);
+    }
+  }
+
+  onSectionDragLeave(section: WebsiteSection): void {
+    if (this.dragOverSectionKey() === this.getSectionKey(section)) {
+      this.dragOverSectionKey.set(null);
+    }
+  }
+
+  async onSectionDrop(event: DragEvent, targetSection: WebsiteSection, sections: WebsiteSection[]): Promise<void> {
+    event.preventDefault();
+    const draggedKey = this.draggedSectionKey();
+    const targetKey = this.getSectionKey(targetSection);
+    this.draggedSectionKey.set(null);
+    this.dragOverSectionKey.set(null);
+
+    if (!draggedKey || draggedKey === targetKey) {
+      return;
+    }
+
+    const ordered = [...sections].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const fromIdx = ordered.findIndex((s) => this.getSectionKey(s) === draggedKey);
+    const toIdx = ordered.findIndex((s) => this.getSectionKey(s) === targetKey);
+    if (fromIdx === -1 || toIdx === -1) {
+      return;
+    }
+
+    const [moved] = ordered.splice(fromIdx, 1);
+    ordered.splice(toIdx, 0, moved);
+
+    await this.runTask(async () => {
+      await Promise.all(
+        ordered.map((sec, idx) => {
+          const newOrder = idx + 1;
+          if (sec.order !== newOrder) {
+            return this.websiteData.upsertSection({ ...sec, order: newOrder });
+          }
+          return Promise.resolve();
+        }),
+      );
+    }, 'Section order updated.');
+  }
+
+  onSectionDragEnd(): void {
+    this.draggedSectionKey.set(null);
+    this.dragOverSectionKey.set(null);
   }
 
   openAddSlide(): void {
@@ -412,7 +543,8 @@ export class Settings {
       logoAlt: value.logoAlt,
       logoWidth: value.logoWidth,
       logoHeight: value.logoHeight,
-      headerWidth: value.headerWidth,
+      headerWidth: value.headerMenuOption === 'full-width' ? '100%' : value.headerWidth || 'fit-content',
+      headerMenuOption: value.headerMenuOption,
     };
     await this.runTask(
       () => this.websiteData.saveHeaderSettings(settings),
@@ -483,6 +615,7 @@ export class Settings {
           logoWidth: header.logoWidth,
           logoHeight: header.logoHeight,
           headerWidth: header.headerWidth,
+          headerMenuOption: header.headerMenuOption || 'no-full-width',
         },
       ];
 
@@ -618,6 +751,14 @@ export class Settings {
         logoWidth: headerData.logoWidth || '32px',
         logoHeight: headerData.logoHeight || '32px',
         headerWidth: headerData.headerWidth || 'fit-content',
+        headerMenuOption:
+          headerData.headerMenuOption === 'full-width' ||
+          headerData.headerMenuOption === 'no-full-width' ||
+          headerData.headerMenuOption === 'no-header'
+            ? headerData.headerMenuOption
+            : headerData.headerWidth === '100%'
+              ? 'full-width'
+              : 'no-full-width',
       });
 
       await Promise.all([

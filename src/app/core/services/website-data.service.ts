@@ -780,6 +780,7 @@ export const defaultHeaderSettings: HeaderSettings = {
   logoWidth: '32px',
   logoHeight: '32px',
   headerWidth: 'fit-content',
+  headerMenuOption: 'no-full-width',
 };
 
 export const defaultMenus: MenuItem[] = [

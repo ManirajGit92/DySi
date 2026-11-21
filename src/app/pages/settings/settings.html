@@ -1,178 +1,498 @@
-<main class="admin-page">
-  <!-- <section class="admin-hero">
-    <div>
-      <h1>Manage website sections from one panel.</h1>
-      <p>Menus, sections, theme, footer, images, and preview all update through Firebase in real time.</p>
-    </div>
-  </section> -->
-
+<main class="dysi-manager-page">
   @if (user$ | async; as user) {
-  <section class="admin-shell">
-    <aside class="admin-sidebar card">
-      <div class="admin-user">
-        <strong>{{ user.displayName || user.email }}</strong>
-        <span>Administrator</span>
+  <section class="dysi-shell">
+    <!-- Left Sidebar -->
+    <aside class="dysi-sidebar">
+      <!-- Scenic Profile Card -->
+      <div class="sidebar-profile-card">
+        <div class="profile-scenic-bg" aria-hidden="true">
+          <svg viewBox="0 0 260 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="profileSky" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#4c1d95" />
+                <stop offset="48%" stop-color="#7c3aed" />
+                <stop offset="85%" stop-color="#f472b6" />
+                <stop offset="100%" stop-color="#fbbf24" />
+              </linearGradient>
+            </defs>
+            <rect width="260" height="120" fill="url(#profileSky)" />
+            <path d="M0 95 Q55 68 115 88 T260 72 L260 120 L0 120 Z" fill="rgba(30, 27, 75, 0.45)" />
+            <path d="M0 108 Q80 82 165 98 T260 88 L260 120 L0 120 Z" fill="rgba(17, 12, 40, 0.68)" />
+            <path d="M204 28 L220 22 L212 31 L215 36 L208 32 Z" fill="rgba(30, 27, 75, 0.7)" />
+          </svg>
+        </div>
+        <div class="profile-content">
+          <div class="profile-avatar">{{ getUserInitial(user) }}</div>
+          <div class="profile-meta">
+            <strong>{{ user.displayName || user.email }}</strong>
+            <span>Administrator</span>
+          </div>
+        </div>
       </div>
-      <button type="button" [class.active]="activeTab() === 'sections'" (click)="activeTab.set('sections')">
-        <i class="fa-solid fa-layer-group"></i> Sections
-      </button>
-      <button type="button" [class.active]="activeTab() === 'menus'" (click)="activeTab.set('menus')">
-        <i class="fa-solid fa-bars-staggered"></i> Menus
-      </button>
-      <button type="button" [class.active]="activeTab() === 'theme'" (click)="activeTab.set('theme')">
-        <i class="fa-solid fa-palette"></i> Theme
-      </button>
-      <button type="button" [class.active]="activeTab() === 'header'" (click)="activeTab.set('header')">
-        <i class="fa-solid fa-heading"></i> Header
-      </button>
-      <button type="button" [class.active]="activeTab() === 'footer'" (click)="activeTab.set('footer')">
-        <i class="fa-solid fa-shoe-prints"></i> Footer
-      </button>
-      <button class="btn btn--primary" type="button" (click)="seedDefaults()">Seed Sample Content</button>
-      <button class="btn btn--ghost" type="button" (click)="signOut()">Sign Out</button>
-      @if (status()) {
-      <p class="status">{{ status() }}</p>
-      }
-    </aside>
 
-    <div class="admin-content">
-      <div class="settings-actions card">
-        <div class="action-group">
-          <button class="btn btn--ghost" type="button" (click)="exportSettings()">Export Excel</button>
-          <button class="btn btn--primary" type="button" (click)="excelImporter.click()">Import Excel</button>
+      <!-- Sidebar Navigation -->
+      <nav class="sidebar-nav" aria-label="Website manager sections">
+        <button type="button" class="sidebar-nav-btn" [class.active]="activeTab() === 'sections'" (click)="activeTab.set('sections')">
+          <i class="fa-solid fa-layer-group"></i>
+          <span>Sections</span>
+        </button>
+        <button type="button" class="sidebar-nav-btn" [class.active]="activeTab() === 'menus'" (click)="activeTab.set('menus')">
+          <i class="fa-solid fa-bars-staggered"></i>
+          <span>Menus</span>
+        </button>
+        <button type="button" class="sidebar-nav-btn" [class.active]="activeTab() === 'theme'" (click)="activeTab.set('theme')">
+          <i class="fa-solid fa-palette"></i>
+          <span>Theme</span>
+        </button>
+        <button type="button" class="sidebar-nav-btn" [class.active]="activeTab() === 'header'" (click)="activeTab.set('header')">
+          <i class="fa-solid fa-heading"></i>
+          <span>Header</span>
+        </button>
+        <button type="button" class="sidebar-nav-btn" [class.active]="activeTab() === 'footer'" (click)="activeTab.set('footer')">
+          <i class="fa-solid fa-shoe-prints"></i>
+          <span>Footer</span>
+        </button>
+
+        <div class="sidebar-divider"></div>
+
+        <button type="button" class="sidebar-nav-btn sidebar-nav-btn--seed" (click)="seedDefaults()">
+          <i class="fa-solid fa-database"></i>
+          <span>Seed Sample Content</span>
+        </button>
+      </nav>
+
+      <!-- Data Transfer Section (Export / Import Excel) -->
+      <div class="sidebar-section">
+        <span class="sidebar-section-label">Data Transfer</span>
+        <div class="sidebar-section-actions">
+          <button class="dysi-btn dysi-btn--outline sidebar-action-btn" type="button" (click)="exportSettings()">
+            <i class="fa-solid fa-download"></i>
+            <span>Export Excel</span>
+          </button>
+          <button class="dysi-btn dysi-btn--primary sidebar-action-btn" type="button" (click)="excelImporter.click()">
+            <i class="fa-solid fa-upload"></i>
+            <span>Import Excel</span>
+          </button>
           <input #excelImporter type="file" accept=".xlsx,.xls" hidden (change)="importSettings($event)" />
         </div>
         @if (excelStatus()) {
-        <p class="status">{{ excelStatus() }}</p>
+        <p class="status-toast">
+          <i class="fa-solid fa-circle-check"></i>
+          <span>{{ excelStatus() }}</span>
+        </p>
         }
       </div>
-      @if (activeTab() === 'sections') {
-      <section class="admin-grid">
-        <form class="card editor-form" [formGroup]="sectionForm" (ngSubmit)="saveSection()">
-          <div class="form-header">
-            <h2>Section Editor</h2>
-            <button class="btn btn--primary" type="submit">Save Section</button>
+
+      <!-- Quick Access Section (Super Admin Portal / View Webpage) -->
+      <div class="sidebar-section">
+        <span class="sidebar-section-label">Quick Access</span>
+        <div class="sidebar-section-actions">
+          @if (isSuperAdmin$ | async) {
+          <button type="button" routerLink="/super-admin" class="sidebar-quick-btn sidebar-quick-btn--super">
+            <i class="fa-solid fa-crown"></i>
+            <span>Super Admin Portal</span>
+          </button>
+          }
+          <button type="button" class="sidebar-quick-btn sidebar-quick-btn--web" (click)="viewLiveSite()">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            <span>View Webpage</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="sidebar-signout-btn" type="button" (click)="signOut()">
+          <i class="fa-solid fa-power-off"></i>
+          <span>Sign Out</span>
+        </button>
+        @if (status()) {
+        <p class="status-toast">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>{{ status() }}</span>
+        </p>
+        }
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="dysi-main">
+      <!-- Hero Title Banner -->
+      <section class="editor-hero-banner">
+        <div class="hero-banner-copy">
+          <div class="hero-accent-bar"></div>
+          <div>
+            <h1>Website Content Editor</h1>
+            <p>Manage and update your website content, sections and appearance easily.</p>
           </div>
-          <div class="form-grid">
-            <label>ID <input formControlName="id" placeholder="auto from sectionId" /></label>
-            <label>Section ID <input formControlName="sectionId" placeholder="portfolio" /></label>
-            <label>Order <input type="number" formControlName="order" /></label>
-            <label>
-              Layout
-              <select formControlName="layoutType">
-                <option value="hero">Hero</option>
-                <option value="about">About</option>
-                <option value="services">Services</option>
-                <option value="team">Team</option>
-                <option value="testimonials">Testimonials</option>
-                <option value="contact">Contact</option>
-                <option value="faq">FAQ</option>
-                <option value="gallery">Gallery</option>
-                <option value="default">Default Cards</option>
-              </select>
-            </label>
-            <label>Subtitle <input formControlName="subtitle" /></label>
-            <label>Title <input formControlName="title" /></label>
-            <label class="wide">Description <textarea rows="3" formControlName="description"></textarea></label>
-            <label>Image URL <input formControlName="imageUrl" /></label>
-            <label>Upload Image <input type="file" accept="image/*" (change)="uploadImage($event)" /></label>
-            <label>Button Text <input formControlName="buttonText" /></label>
-            <label>Button Link <input formControlName="buttonLink" placeholder="contact or /services" /></label>
-            <label>Background Color <input formControlName="backgroundColor" placeholder="#ffffff" /></label>
-            <label>Text Color <input formControlName="textColor" placeholder="#172033" /></label>
-            <label>Font Family <input formControlName="fontFamily" /></label>
-            <label>Font Size <input formControlName="fontSize" /></label>
-            <label class="check"><input type="checkbox" formControlName="isVisible" /> Visible</label>
-            <label class="check"><input type="checkbox" formControlName="isDarkSection" /> Dark section</label>
+        </div>
+        <div class="hero-banner-art" aria-hidden="true">
+          <svg viewBox="0 0 520 110" preserveAspectRatio="xMaxYMax slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="bannerGlow" x1="0" y1="0" x2="1" y2="0.8">
+                <stop offset="0%" stop-color="#f4f1fe" stop-opacity="0" />
+                <stop offset="35%" stop-color="#f9a8d4" stop-opacity="0.35" />
+                <stop offset="70%" stop-color="#c084fc" stop-opacity="0.45" />
+                <stop offset="100%" stop-color="#818cf8" stop-opacity="0.55" />
+              </linearGradient>
+              <linearGradient id="mountainBack" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.55" />
+                <stop offset="100%" stop-color="#6d28d9" stop-opacity="0.82" />
+              </linearGradient>
+              <linearGradient id="mountainFront" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#5b21b6" stop-opacity="0.78" />
+                <stop offset="100%" stop-color="#312e81" stop-opacity="0.95" />
+              </linearGradient>
+            </defs>
+            <rect width="520" height="110" fill="url(#bannerGlow)" />
+            <circle cx="385" cy="48" r="24" fill="#fde68a" opacity="0.55" />
+            <path d="M120 110 L210 52 L285 92 L355 46 L445 88 L520 55 L520 110 Z" fill="url(#mountainBack)" />
+            <path d="M180 110 L265 72 L340 98 L415 58 L465 36 L478 58 L520 75 L520 110 Z" fill="url(#mountainFront)" />
+            <path d="M275 82 Q335 30 398 34" stroke="#7c3aed" stroke-width="1.8" stroke-dasharray="4 4" fill="none" opacity="0.7" />
+            <path d="M402 30 L419 25 L410 35 L414 41 L406 36 Z" fill="#6d28d9" />
+          </svg>
+        </div>
+      </section>
 
-            <!-- Background overlay transparency control -->
-            <label class="wide slider-label">
-              Background Overlay Transparency: <strong>{{ sectionForm.value.bgTransparency }}%</strong>
-              <span class="slider-hint">0% = Solid dark overlay; 100% = Clear background image</span>
-              <p-slider formControlName="bgTransparency" [min]="0" [max]="100" class="transparency-slider"></p-slider>
-            </label>
+      <!-- SECTIONS TAB -->
+      @if (activeTab() === 'sections') {
+      <section class="workspace-grid">
+        <!-- Left Column: Section Editor -->
+        <form class="dysi-card editor-card" [formGroup]="sectionForm" (ngSubmit)="saveSection()">
+          <div class="card-header">
+            <div class="card-header-title">
+              <span class="card-icon"><i class="fa-solid fa-layer-group"></i></span>
+              <h2>Section Editor</h2>
+            </div>
+            <div class="card-header-actions">
+              <span class="editing-pill">
+                <span class="pulse-dot"></span>
+                Editing: {{ sectionForm.value.title || 'New Section' }}
+              </span>
+              <button class="dysi-btn dysi-btn--primary" type="submit">
+                <i class="fa-regular fa-floppy-disk"></i>
+                <span>Save Section</span>
+              </button>
+            </div>
+          </div>
 
-            <!-- Hero section slide manager -->
-            <div class="wide slide-manager-panel" *ngIf="sectionForm.value.layoutType === 'hero'">
-              <div class="panel-header">
-                <h3>Hero Carousel Slides</h3>
-                <button type="button" class="btn btn--primary btn--small" (click)="openAddSlide()">
-                  <i class="fa-solid fa-plus mr-1"></i> Add Slide
+          <div class="form-grid-2">
+            <!-- Row 1: ID & Section ID -->
+            <div class="field-group">
+              <label for="sec-id"><i class="fa-solid fa-fingerprint"></i> ID</label>
+              <div class="input-with-action">
+                <input id="sec-id" formControlName="id" placeholder="auto from sectionId" />
+                <button type="button" class="input-icon-btn" (click)="copySectionId()" [title]="copiedId() ? 'Copied!' : 'Copy ID'">
+                  <i class="fa-regular" [class.fa-copy]="!copiedId()" [class.fa-circle-check]="copiedId()"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="sec-sectionId"><i class="fa-solid fa-tag"></i> Section ID</label>
+              <input id="sec-sectionId" formControlName="sectionId" placeholder="home, aboutus, portfolio" />
+            </div>
+
+            <!-- Row 2: Order & Layout -->
+            <div class="field-group">
+              <label for="sec-order"><i class="fa-solid fa-list-ol"></i> Order</label>
+              <input id="sec-order" type="number" formControlName="order" />
+            </div>
+
+            <div class="field-group">
+              <label for="sec-layout"><i class="fa-solid fa-table-cells-large"></i> Layout</label>
+              <div class="select-wrap">
+                <select id="sec-layout" formControlName="layoutType">
+                  <option value="hero">Hero</option>
+                  <option value="about">About</option>
+                  <option value="services">Services</option>
+                  <option value="team">Team</option>
+                  <option value="testimonials">Testimonials</option>
+                  <option value="contact">Contact</option>
+                  <option value="faq">FAQ</option>
+                  <option value="gallery">Gallery</option>
+                  <option value="default">Default Cards</option>
+                </select>
+                <i class="fa-solid fa-chevron-down select-chevron"></i>
+              </div>
+            </div>
+
+            <!-- Row 3: Subtitle & Title -->
+            <div class="field-group">
+              <label for="sec-subtitle"><i class="fa-solid fa-font"></i> Subtitle</label>
+              <input id="sec-subtitle" formControlName="subtitle" placeholder="Explore Beautiful Destinations..." />
+            </div>
+
+            <div class="field-group">
+              <label for="sec-title"><i class="fa-solid fa-heading"></i> Title</label>
+              <input id="sec-title" formControlName="title" placeholder="Welcome to Dysi" />
+            </div>
+
+            <!-- Row 4: Full-width Description with Toolbar -->
+            <div class="field-group field-wide">
+              <label for="sec-desc"><i class="fa-solid fa-align-left"></i> Description</label>
+              <div class="rich-textarea-box">
+                <div class="rich-toolbar">
+                  <span class="toolbar-chip">Paragraph</span>
+                  <div class="toolbar-divider"></div>
+                  <button type="button" class="toolbar-btn" title="Bold" (click)="applyDescriptionFormat('bold')"><strong>B</strong></button>
+                  <button type="button" class="toolbar-btn" title="Italic" (click)="applyDescriptionFormat('italic')"><em>I</em></button>
+                  <button type="button" class="toolbar-btn" title="Bullet List" (click)="applyDescriptionFormat('bullet')"><i class="fa-solid fa-list-ul"></i></button>
+                  <button type="button" class="toolbar-btn" title="Clear Description" (click)="applyDescriptionFormat('clear')"><i class="fa-solid fa-eraser"></i></button>
+                </div>
+                <textarea id="sec-desc" rows="4" formControlName="description" placeholder="Write a compelling section description..."></textarea>
+                <div class="textarea-footer">
+                  <span>{{ (sectionForm.value.description || '').length }} / 500</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 5: Image URL & Upload Image -->
+            <div class="field-group">
+              <label for="sec-imgUrl"><i class="fa-solid fa-link"></i> Image URL</label>
+              <input id="sec-imgUrl" formControlName="imageUrl" placeholder="https://..." />
+            </div>
+
+            <div class="field-group">
+              <label><i class="fa-regular fa-image"></i> Upload Image</label>
+              <div class="file-upload-control">
+                <button type="button" class="file-choose-btn" (click)="sectionImageInput.click()">Choose File</button>
+                <span class="file-name-text">{{ selectedImageFileName() || 'No file chosen' }}</span>
+                <input #sectionImageInput type="file" accept="image/*" hidden (change)="uploadImage($event)" />
+              </div>
+            </div>
+
+            <!-- Row 6: Visibility Switch & Dark Section Checkbox -->
+            <div class="field-wide toggles-row">
+              <label class="toggle-switch">
+                <input type="checkbox" formControlName="isVisible" />
+                <span class="toggle-track"></span>
+                <span class="toggle-label">Visible on Website</span>
+              </label>
+
+              <label class="styled-checkbox">
+                <input type="checkbox" formControlName="isDarkSection" />
+                <span class="checkbox-box"><i class="fa-solid fa-check"></i></span>
+                <span class="toggle-label">Dark Section (Use dark background)</span>
+              </label>
+            </div>
+
+            <!-- Row 7: Background Overlay Transparency & Hero Carousel Slides -->
+            <div class="field-group slider-card" [class.field-wide]="sectionForm.value.layoutType !== 'hero'">
+              <div class="slider-card-head">
+                <label><i class="fa-solid fa-droplet"></i> Background Overlay Transparency</label>
+                <span class="percent-badge">{{ sectionForm.value.bgTransparency }}%</span>
+              </div>
+              <p-slider formControlName="bgTransparency" [min]="0" [max]="100" class="dysi-slider"></p-slider>
+              <div class="slider-scale-hints">
+                <span>0% – No overlay (clear image)</span>
+                <span>100% – Full background overlay</span>
+              </div>
+            </div>
+
+            @if (sectionForm.value.layoutType === 'hero') {
+            <div class="field-group slide-manager-card">
+              <div class="slide-manager-head">
+                <label><i class="fa-solid fa-film"></i> Hero Carousel Slides</label>
+                <button type="button" class="dysi-btn dysi-btn--outline dysi-btn--sm" (click)="openAddSlide()">
+                  <i class="fa-solid fa-plus"></i> Add Slide
                 </button>
               </div>
 
-              <div class="slides-list" *ngIf="editorSlides().length > 0; else noSlides">
-                <div class="slide-item-row" *ngFor="let slide of editorSlides(); let index = index">
+              @if (editorSlides().length > 0) {
+              <div class="slides-list">
+                @for (slide of editorSlides(); track slide.id || $index; let index = $index) {
+                <div class="slide-item-row">
                   <div class="slide-thumbnail">
-                    <img [src]="slide.imageUrl" *ngIf="slide.imageUrl; else noThumb" alt="Slide thumbnail" />
-                    <ng-template #noThumb><i class="fa-regular fa-image"></i></ng-template>
+                    @if (slide.imageUrl) {
+                      <img [src]="slide.imageUrl" alt="Slide thumbnail" />
+                    } @else {
+                      <i class="fa-regular fa-image"></i>
+                    }
                   </div>
                   <div class="slide-info">
                     <strong>{{ slide.title || 'Untitled Slide' }}</strong>
-                    <span>{{ slide.subtitle || 'No subtitle' }} · Position: {{ slide.textPosition || 'left' }}</span>
+                    <span>{{ slide.subtitle || 'No subtitle' }} · {{ slide.textPosition || 'left' }}</span>
                   </div>
                   <div class="slide-actions-btns">
-                    <button type="button" class="btn-icon" title="Move Up" [disabled]="index === 0"
-                      (click)="moveSlide(index, 'up')">
+                    <button type="button" class="icon-mini-btn" title="Move Up" [disabled]="index === 0" (click)="moveSlide(index, 'up')">
                       <i class="fa-solid fa-arrow-up"></i>
                     </button>
-                    <button type="button" class="btn-icon" title="Move Down"
-                      [disabled]="index === editorSlides().length - 1" (click)="moveSlide(index, 'down')">
+                    <button type="button" class="icon-mini-btn" title="Move Down" [disabled]="index === editorSlides().length - 1" (click)="moveSlide(index, 'down')">
                       <i class="fa-solid fa-arrow-down"></i>
                     </button>
-                    <button type="button" class="btn-icon btn-icon--edit" title="Edit Slide"
-                      (click)="editSlide(slide, index)">
+                    <button type="button" class="icon-mini-btn icon-mini-btn--edit" title="Edit Slide" (click)="editSlide(slide, index)">
                       <i class="fa-solid fa-pen"></i>
                     </button>
-                    <button type="button" class="btn-icon btn-icon--delete" title="Delete Slide"
-                      (click)="deleteSlide(index)">
-                      <i class="fa-solid fa-trash"></i>
+                    <button type="button" class="icon-mini-btn icon-mini-btn--delete" title="Delete Slide" (click)="deleteSlide(index)">
+                      <i class="fa-solid fa-trash-can"></i>
                     </button>
                   </div>
                 </div>
+                }
               </div>
-              <ng-template #noSlides>
-                <p class="no-slides-text">No slides added. Standard background image will be used as fallback.</p>
-              </ng-template>
+              } @else {
+              <div class="no-slides-pill">No slides added yet.</div>
+              }
             </div>
+            }
 
-            <label class="wide">Cards JSON <textarea rows="8" formControlName="cardsJson"></textarea></label>
-            <label class="wide">FAQ JSON <textarea rows="5" formControlName="faqsJson"></textarea></label>
-            <label class="wide">Gallery JSON <textarea rows="4" formControlName="galleryJson"></textarea></label>
+            <!-- Collapsible Advanced Styling, CTA & JSON Data -->
+            <div class="field-wide advanced-drawer">
+              <button type="button" class="advanced-toggle-btn" (click)="showAdvancedFields.set(!showAdvancedFields())">
+                <span>
+                  <i class="fa-solid fa-sliders"></i>
+                  Button, Colors, Typography &amp; Structured JSON Data
+                </span>
+                <i class="fa-solid" [class.fa-chevron-down]="!showAdvancedFields()" [class.fa-chevron-up]="showAdvancedFields()"></i>
+              </button>
+
+              @if (showAdvancedFields()) {
+              <div class="advanced-body form-grid-2">
+                <div class="field-group">
+                  <label><i class="fa-solid fa-hand-pointer"></i> Button Text</label>
+                  <input formControlName="buttonText" placeholder="e.g. Book Your Tours" />
+                </div>
+                <div class="field-group">
+                  <label><i class="fa-solid fa-arrow-up-right-from-square"></i> Button Link</label>
+                  <input formControlName="buttonLink" placeholder="contact or /services" />
+                </div>
+                <div class="field-group">
+                  <label><i class="fa-solid fa-fill-drip"></i> Background Color</label>
+                  <input formControlName="backgroundColor" placeholder="#ffffff" />
+                </div>
+                <div class="field-group">
+                  <label><i class="fa-solid fa-palette"></i> Text Color</label>
+                  <input formControlName="textColor" placeholder="#172033" />
+                </div>
+                <div class="field-group">
+                  <label><i class="fa-solid fa-font"></i> Font Family</label>
+                  <input formControlName="fontFamily" />
+                </div>
+                <div class="field-group">
+                  <label><i class="fa-solid fa-text-height"></i> Font Size</label>
+                  <input formControlName="fontSize" />
+                </div>
+                <div class="field-group field-wide">
+                  <label><i class="fa-solid fa-code"></i> Cards JSON</label>
+                  <textarea rows="6" formControlName="cardsJson" class="code-textarea"></textarea>
+                </div>
+                <div class="field-group field-wide">
+                  <label><i class="fa-solid fa-circle-question"></i> FAQ JSON</label>
+                  <textarea rows="4" formControlName="faqsJson" class="code-textarea"></textarea>
+                </div>
+                <div class="field-group field-wide">
+                  <label><i class="fa-regular fa-images"></i> Gallery JSON</label>
+                  <textarea rows="3" formControlName="galleryJson" class="code-textarea"></textarea>
+                </div>
+              </div>
+              }
+            </div>
           </div>
+
           @if (uploadStatus()) {
-          <p class="status">{{ uploadStatus() }}</p>
+          <p class="status-inline">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            {{ uploadStatus() }}
+          </p>
           }
         </form>
 
-        <div class="manager-stack">
-          <div class="card list-panel">
-            <h2>Sections</h2>
-            @for (section of sections$ | async; track section.id || section.sectionId) {
-            <article>
-              <div>
-                <strong>{{ section.order }}. {{ section.title }}</strong>
-                <span>{{ section.sectionId }} · {{ section.layoutType }} · {{ section.isVisible ? 'Visible' : 'Hidden'
-                  }}</span>
+        <!-- Right Column: Sections List + Live Preview -->
+        <div class="right-panels-stack">
+          <!-- Sections Management Card -->
+          @if (sections$ | async; as sections) {
+          <div class="dysi-card sections-panel">
+            <div class="card-header card-header--compact">
+              <div class="card-header-title">
+                <span class="card-icon"><i class="fa-solid fa-layer-group"></i></span>
+                <h2>Sections</h2>
               </div>
-              <div class="list-item-actions">
-                <button type="button" class="btn-action btn-action--edit" (click)="editSection(section)">
-                  <i class="fa-solid fa-pen-to-square"></i> Edit
-                </button>
-                <button type="button" class="btn-action btn-action--delete" (click)="deleteSection(section)">
-                  <i class="fa-solid fa-trash"></i> Delete
-                </button>
-              </div>
-            </article>
-            }
-          </div>
+              <span class="count-pill">{{ sections.length }} Sections</span>
+            </div>
 
-          @if (previewSection()) {
-          <div class="live-preview">
-            <p class="section__eyebrow">Live Preview</p>
-            <app-dynamic-section [section]="previewSection()!" />
+            <div class="sections-list">
+              @for (section of sections; track section.id || section.sectionId) {
+              <article
+                class="section-row"
+                draggable="true"
+                [class.is-active]="(sectionForm.value.id && sectionForm.value.id === section.id) || (sectionForm.value.sectionId && sectionForm.value.sectionId === section.sectionId)"
+                [class.is-dragging]="draggedSectionKey() === getSectionKey(section)"
+                [class.is-drag-over]="dragOverSectionKey() === getSectionKey(section)"
+                (dragstart)="onSectionDragStart($event, section)"
+                (dragover)="onSectionDragOver($event, section)"
+                (dragleave)="onSectionDragLeave(section)"
+                (drop)="onSectionDrop($event, section, sections)"
+                (dragend)="onSectionDragEnd()"
+              >
+                <span class="drag-handle" title="Drag to reorder">
+                  <i class="fa-solid fa-grip-vertical"></i>
+                </span>
+
+                <div class="section-thumb">
+                  @if (getSectionThumbnail(section)) {
+                    <img [src]="getSectionThumbnail(section)" [alt]="section.title" />
+                  } @else {
+                    <div class="thumb-placeholder">
+                      <i class="fa-regular fa-image"></i>
+                    </div>
+                  }
+                </div>
+
+                <div class="section-meta" (click)="editSection(section)">
+                  <strong>{{ section.order }}. {{ section.title }}</strong>
+                  <span>{{ section.sectionId }} · {{ section.layoutType }} · {{ section.isVisible ? 'visible' : 'hidden' }}</span>
+                </div>
+
+                <div class="section-row-actions">
+                  <button type="button" class="row-icon-btn row-icon-btn--edit" title="Edit section" (click)="editSection(section)">
+                    <i class="fa-solid fa-pen"></i>
+                  </button>
+                  <button type="button" class="row-icon-btn row-icon-btn--delete" title="Delete section" (click)="deleteSection(section)">
+                    <i class="fa-regular fa-trash-can"></i>
+                  </button>
+                </div>
+              </article>
+              }
+            </div>
           </div>
           }
+
+          <!-- Live Preview Card -->
+          <div class="dysi-card live-preview-card">
+            <div class="card-header card-header--compact">
+              <div class="card-header-title">
+                <span class="card-icon"><i class="fa-regular fa-eye"></i></span>
+                <h2>Live Preview</h2>
+              </div>
+              <span class="published-pill" [class.is-hidden]="sectionForm.value.isVisible === false">
+                <span class="pulse-dot"></span>
+                {{ sectionForm.value.isVisible === false ? 'Hidden' : 'Published' }}
+              </span>
+            </div>
+
+            @if (previewSection()) {
+            <div class="preview-stage">
+              <app-dynamic-section [section]="previewSection()!" />
+            </div>
+            } @else {
+            <div class="preview-empty">
+              <p>Select a section or edit fields on the left to preview live changes.</p>
+            </div>
+            }
+
+            <div class="preview-footer-actions">
+              <button type="button" class="dysi-btn dysi-btn--primary preview-cta" (click)="saveSection()">
+                <i class="fa-solid fa-rocket"></i>
+                <span>{{ sectionForm.value.buttonText || 'Publish Changes' }}</span>
+                <i class="fa-solid fa-arrow-right"></i>
+              </button>
+              <button type="button" class="dysi-btn dysi-btn--outline preview-cta" (click)="viewLiveSite()">
+                <i class="fa-solid fa-globe"></i>
+                <span>View Live Site</span>
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -199,7 +519,9 @@
           <div class="dialog-field">
             <label>Or Upload Background Image</label>
             <input type="file" accept="image/*" (change)="uploadSlideImage($event)" />
-            <p class="upload-slide-status" *ngIf="uploadSlideStatus()">{{ uploadSlideStatus() }}</p>
+            @if (uploadSlideStatus()) {
+            <p class="upload-slide-status">{{ uploadSlideStatus() }}</p>
+            }
           </div>
           <div class="dialog-row">
             <div class="dialog-field">
@@ -221,127 +543,249 @@
           </div>
 
           <div class="dialog-actions">
-            <button type="button" class="btn btn--ghost" (click)="isSlideDialogOpen.set(false)">Cancel</button>
-            <button type="submit" class="btn btn--primary" [disabled]="slideForm.invalid">Save Slide</button>
+            <button type="button" class="dysi-btn dysi-btn--outline" (click)="isSlideDialogOpen.set(false)">Cancel</button>
+            <button type="submit" class="dysi-btn dysi-btn--primary" [disabled]="slideForm.invalid">Save Slide</button>
           </div>
         </form>
       </p-dialog>
       }
 
+      <!-- MENUS TAB -->
       @if (activeTab() === 'menus') {
-      <section class="admin-grid">
-        <form class="card editor-form" [formGroup]="menuForm" (ngSubmit)="saveMenu()">
-          <div class="form-header">
-            <h2>Menu Editor</h2>
-            <button class="btn btn--primary" type="submit">Save Menu</button>
+      <section class="workspace-grid">
+        <form class="dysi-card editor-card" [formGroup]="menuForm" (ngSubmit)="saveMenu()">
+          <div class="card-header">
+            <div class="card-header-title">
+              <span class="card-icon"><i class="fa-solid fa-bars-staggered"></i></span>
+              <h2>Menu Editor</h2>
+            </div>
+            <button class="dysi-btn dysi-btn--primary" type="submit">
+              <i class="fa-regular fa-floppy-disk"></i>
+              <span>Save Menu</span>
+            </button>
           </div>
-          <div class="form-grid">
-            <label>ID <input formControlName="id" placeholder="auto from sectionId" /></label>
-            <label>Title <input formControlName="title" /></label>
-            <label>Route Key <input formControlName="routeKey" /></label>
-            <label>Section ID <input formControlName="sectionId" /></label>
-            <label>Order <input type="number" formControlName="order" /></label>
-            <label class="check"><input type="checkbox" formControlName="isVisible" /> Visible</label>
+          <div class="form-grid-2">
+            <div class="field-group">
+              <label><i class="fa-solid fa-fingerprint"></i> ID</label>
+              <input formControlName="id" placeholder="auto from sectionId" />
+            </div>
+            <div class="field-group">
+              <label><i class="fa-solid fa-heading"></i> Title</label>
+              <input formControlName="title" placeholder="Menu label" />
+            </div>
+            <div class="field-group">
+              <label><i class="fa-solid fa-route"></i> Route Key</label>
+              <input formControlName="routeKey" placeholder="home" />
+            </div>
+            <div class="field-group">
+              <label><i class="fa-solid fa-tag"></i> Section ID</label>
+              <input formControlName="sectionId" placeholder="home" />
+            </div>
+            <div class="field-group">
+              <label><i class="fa-solid fa-list-ol"></i> Order</label>
+              <input type="number" formControlName="order" />
+            </div>
+            <div class="field-group toggles-row">
+              <label class="toggle-switch">
+                <input type="checkbox" formControlName="isVisible" />
+                <span class="toggle-track"></span>
+                <span class="toggle-label">Visible in Navigation</span>
+              </label>
+            </div>
           </div>
         </form>
 
-        <div class="card list-panel">
-          <h2>Menus</h2>
-          @for (menu of menus$ | async; track menu.id || menu.sectionId) {
-          <article>
-            <div>
-              <strong>{{ menu.order }}. {{ menu.title }}</strong>
-              <span>{{ menu.sectionId }} · {{ menu.isVisible ? 'Enabled' : 'Disabled' }}</span>
+        @if (menus$ | async; as menus) {
+        <div class="dysi-card sections-panel">
+          <div class="card-header card-header--compact">
+            <div class="card-header-title">
+              <span class="card-icon"><i class="fa-solid fa-bars"></i></span>
+              <h2>Menus</h2>
             </div>
-            <div class="list-item-actions">
-              <button type="button" class="btn-action btn-action--edit" (click)="editMenu(menu)">
-                <i class="fa-solid fa-pen-to-square"></i> Edit
-              </button>
-              <button type="button" class="btn-action btn-action--delete" (click)="deleteMenu(menu)">
-                <i class="fa-solid fa-trash"></i> Delete
-              </button>
-            </div>
-          </article>
-          }
+            <span class="count-pill">{{ menus.length }} Menus</span>
+          </div>
+          <div class="sections-list">
+            @for (menu of menus; track menu.id || menu.sectionId) {
+            <article class="section-row">
+              <div class="section-meta" (click)="editMenu(menu)">
+                <strong>{{ menu.order }}. {{ menu.title }}</strong>
+                <span>{{ menu.sectionId }} · {{ menu.isVisible ? 'Enabled' : 'Disabled' }}</span>
+              </div>
+              <div class="section-row-actions">
+                <button type="button" class="row-icon-btn row-icon-btn--edit" title="Edit menu" (click)="editMenu(menu)">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button type="button" class="row-icon-btn row-icon-btn--delete" title="Delete menu" (click)="deleteMenu(menu)">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </div>
+            </article>
+            }
+          </div>
         </div>
+        }
       </section>
       }
 
+      <!-- THEME TAB -->
       @if (activeTab() === 'theme') {
-      <form class="card editor-form" [formGroup]="themeForm" (ngSubmit)="saveTheme()">
-        <div class="form-header">
-          <h2>Customization Panel</h2>
-          <button class="btn btn--primary" type="submit">Save Theme</button>
+      <form class="dysi-card editor-card" [formGroup]="themeForm" (ngSubmit)="saveTheme()">
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="card-icon"><i class="fa-solid fa-palette"></i></span>
+            <h2>Customization Panel</h2>
+          </div>
+          <button class="dysi-btn dysi-btn--primary" type="submit">
+            <i class="fa-regular fa-floppy-disk"></i>
+            <span>Save Theme</span>
+          </button>
         </div>
-        <div class="form-grid">
-          <label>Primary Color <input type="color" formControlName="primaryColor" /></label>
-          <label>Secondary Color <input type="color" formControlName="secondaryColor" /></label>
-          <label>Background Color <input type="color" formControlName="backgroundColor" /></label>
-          <label>Text Color <input type="color" formControlName="textColor" /></label>
-          <label>Button Color <input type="color" formControlName="buttonColor" /></label>
-          <label>Font Family <input formControlName="fontFamily" /></label>
-          <label>Font Size <input formControlName="fontSize" /></label>
-          <label>Font Weight <input formControlName="fontWeight" /></label>
-          <label>Letter Spacing <input formControlName="letterSpacing" /></label>
-          <label>Line Height <input formControlName="lineHeight" /></label>
-          <label>Section Spacing <input formControlName="sectionSpacing" /></label>
-          <label>Border Radius <input formControlName="borderRadius" /></label>
-          <label>Card Shadow <input formControlName="cardShadow" /></label>
-          <label>Container Width <input formControlName="containerWidth" /></label>
-          <label class="check"><input type="checkbox" formControlName="showHeader" /> Show header</label>
-          <label class="check"><input type="checkbox" formControlName="showTopNavMenu" /> Show top nav menu</label>
-          <label>
-            Theme Mode
-            <select formControlName="themeMode">
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="auto">Auto</option>
-            </select>
-          </label>
+        <div class="form-grid-2">
+          <div class="field-group">
+            <label>Primary Color</label>
+            <input type="color" formControlName="primaryColor" class="color-input" />
+          </div>
+          <div class="field-group">
+            <label>Secondary Color</label>
+            <input type="color" formControlName="secondaryColor" class="color-input" />
+          </div>
+          <div class="field-group">
+            <label>Background Color</label>
+            <input type="color" formControlName="backgroundColor" class="color-input" />
+          </div>
+          <div class="field-group">
+            <label>Text Color</label>
+            <input type="color" formControlName="textColor" class="color-input" />
+          </div>
+          <div class="field-group">
+            <label>Button Color</label>
+            <input type="color" formControlName="buttonColor" class="color-input" />
+          </div>
+          <div class="field-group">
+            <label>Theme Mode</label>
+            <div class="select-wrap">
+              <select formControlName="themeMode">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="auto">Auto</option>
+              </select>
+              <i class="fa-solid fa-chevron-down select-chevron"></i>
+            </div>
+          </div>
+          <div class="field-group"><label>Font Family</label><input formControlName="fontFamily" /></div>
+          <div class="field-group"><label>Font Size</label><input formControlName="fontSize" /></div>
+          <div class="field-group"><label>Font Weight</label><input formControlName="fontWeight" /></div>
+          <div class="field-group"><label>Letter Spacing</label><input formControlName="letterSpacing" /></div>
+          <div class="field-group"><label>Line Height</label><input formControlName="lineHeight" /></div>
+          <div class="field-group"><label>Section Spacing</label><input formControlName="sectionSpacing" /></div>
+          <div class="field-group"><label>Border Radius</label><input formControlName="borderRadius" /></div>
+          <div class="field-group"><label>Card Shadow</label><input formControlName="cardShadow" /></div>
+          <div class="field-group"><label>Container Width</label><input formControlName="containerWidth" /></div>
+          <div class="field-wide toggles-row">
+            <label class="toggle-switch">
+              <input type="checkbox" formControlName="showHeader" />
+              <span class="toggle-track"></span>
+              <span class="toggle-label">Show Header</span>
+            </label>
+            <label class="toggle-switch">
+              <input type="checkbox" formControlName="showTopNavMenu" />
+              <span class="toggle-track"></span>
+              <span class="toggle-label">Show Top Nav Menu</span>
+            </label>
+          </div>
         </div>
       </form>
       }
 
+      <!-- HEADER TAB -->
       @if (activeTab() === 'header') {
-      <form class="card editor-form" [formGroup]="headerForm" (ngSubmit)="saveHeader()">
-        <div class="form-header">
-          <h2>Header Settings</h2>
-          <button class="btn btn--primary" type="submit">Save Header</button>
+      <form class="dysi-card editor-card" [formGroup]="headerForm" (ngSubmit)="saveHeader()">
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="card-icon"><i class="fa-solid fa-heading"></i></span>
+            <h2>Header Settings</h2>
+          </div>
+          <button class="dysi-btn dysi-btn--primary" type="submit">
+            <i class="fa-regular fa-floppy-disk"></i>
+            <span>Save Header</span>
+          </button>
         </div>
-        <div class="form-grid">
-          <label class="wide">Website Name <input formControlName="websiteName" placeholder="DySi" /></label>
-          <label>Logo URL <input formControlName="logoUrl" placeholder="https://..." /></label>
-          <label>Upload Logo <input type="file" accept="image/*" (change)="uploadLogoImage($event)" /></label>
-          <label>Logo Alt Text <input formControlName="logoAlt" placeholder="Logo alternative text" /></label>
-          <label>Logo Width <input formControlName="logoWidth" placeholder="32px" /></label>
-          <label>Logo Height <input formControlName="logoHeight" placeholder="32px" /></label>
-          <label>Header Width <input formControlName="headerWidth" placeholder="fit-content or 100%" /></label>
+        <div class="form-grid-2">
+          <div class="field-group field-wide">
+            <label>Website Name</label>
+            <input formControlName="websiteName" placeholder="DySi" />
+          </div>
+          <div class="field-group">
+            <label>Logo URL</label>
+            <input formControlName="logoUrl" placeholder="https://..." />
+          </div>
+          <div class="field-group">
+            <label>Upload Logo</label>
+            <div class="file-upload-control">
+              <button type="button" class="file-choose-btn" (click)="logoFileInput.click()">Choose File</button>
+              <span class="file-name-text">{{ selectedLogoFileName() || 'No file chosen' }}</span>
+              <input #logoFileInput type="file" accept="image/*" hidden (change)="uploadLogoImage($event)" />
+            </div>
+          </div>
+          <div class="field-group"><label>Logo Alt Text</label><input formControlName="logoAlt" placeholder="Logo alternative text" /></div>
+          <div class="field-group"><label>Logo Width</label><input formControlName="logoWidth" placeholder="32px" /></div>
+          <div class="field-group"><label>Logo Height</label><input formControlName="logoHeight" placeholder="32px" /></div>
+          <div class="field-group">
+            <label for="header-menu-option"><i class="fa-solid fa-window-maximize"></i> Header Menu Option</label>
+            <div class="select-wrap">
+              <select id="header-menu-option" formControlName="headerMenuOption">
+                <option value="full-width">Full width</option>
+                <option value="no-full-width">No Full width</option>
+                <option value="no-header">No Header</option>
+              </select>
+              <i class="fa-solid fa-chevron-down select-chevron"></i>
+            </div>
+          </div>
+          <div class="field-group"><label>Header Width</label><input formControlName="headerWidth" placeholder="fit-content or 100%" /></div>
         </div>
         @if (uploadStatus()) {
-        <p class="status">{{ uploadStatus() }}</p>
+        <p class="status-inline"><i class="fa-solid fa-cloud-arrow-up"></i> {{ uploadStatus() }}</p>
         }
       </form>
       }
 
+      <!-- FOOTER TAB -->
       @if (activeTab() === 'footer') {
-      <form class="card editor-form" [formGroup]="footerForm" (ngSubmit)="saveFooter()">
-        <div class="form-header">
-          <h2>Footer Editor</h2>
-          <button class="btn btn--primary" type="submit">Save Footer</button>
+      <form class="dysi-card editor-card" [formGroup]="footerForm" (ngSubmit)="saveFooter()">
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="card-icon"><i class="fa-solid fa-shoe-prints"></i></span>
+            <h2>Footer Editor</h2>
+          </div>
+          <button class="dysi-btn dysi-btn--primary" type="submit">
+            <i class="fa-regular fa-floppy-disk"></i>
+            <span>Save Footer</span>
+          </button>
         </div>
-        <div class="form-grid">
-          <label class="wide">Description <textarea rows="3" formControlName="description"></textarea></label>
-          <label class="wide">Important Links JSON <textarea rows="7"
-              formControlName="importantLinksJson"></textarea></label>
-          <label class="wide">Social Links JSON <textarea rows="7" formControlName="socialLinksJson"></textarea></label>
-          <label class="wide">Copyright <input formControlName="copyright" /></label>
+        <div class="form-grid-2">
+          <div class="field-group field-wide">
+            <label>Description</label>
+            <textarea rows="3" formControlName="description"></textarea>
+          </div>
+          <div class="field-group field-wide">
+            <label>Important Links JSON</label>
+            <textarea rows="7" formControlName="importantLinksJson" class="code-textarea"></textarea>
+          </div>
+          <div class="field-group field-wide">
+            <label>Social Links JSON</label>
+            <textarea rows="7" formControlName="socialLinksJson" class="code-textarea"></textarea>
+          </div>
+          <div class="field-group field-wide">
+            <label>Copyright</label>
+            <input formControlName="copyright" />
+          </div>
         </div>
       </form>
       }
     </div>
   </section>
   } @else {
-  <section class="login-card card">
+  <section class="login-card dysi-card">
     <h2>Admin Login</h2>
     <p>Sign in with Google or email/password to manage website content.</p>
     <form [formGroup]="loginForm">
@@ -349,12 +793,12 @@
       <input type="password" formControlName="password" placeholder="Password" />
     </form>
     <div class="login-actions">
-      <button class="btn btn--primary" type="button" (click)="signInWithGoogle()">Google Login</button>
-      <button class="btn btn--ghost" type="button" (click)="signInWithEmail()">Email Login</button>
-      <button class="btn btn--ghost" type="button" (click)="registerWithEmail()">Create Account</button>
+      <button class="dysi-btn dysi-btn--primary" type="button" (click)="signInWithGoogle()">Google Login</button>
+      <button class="dysi-btn dysi-btn--outline" type="button" (click)="signInWithEmail()">Email Login</button>
+      <button class="dysi-btn dysi-btn--outline" type="button" (click)="registerWithEmail()">Create Account</button>
     </div>
     @if (status()) {
-    <p class="status">{{ status() }}</p>
+    <p class="status-inline">{{ status() }}</p>
     }
   </section>
   }

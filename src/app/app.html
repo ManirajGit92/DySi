@@ -5,7 +5,7 @@
 </div>
 }
 
-@if (!isAdminRoute() && themeService.settings().showHeader) {
+@if (!isAdminRoute() && themeService.settings().showHeader && headerSettings().headerMenuOption !== 'no-header') {
 <app-header [menus]="menus()" [activeSection]="scrollService.activeSection()" [isDarkTheme]="themeService.isDark()"
   [showTopNavMenu]="themeService.settings().showTopNavMenu" [headerSettings]="headerSettings()"
   [isAdmin]="isAdmin()" [isSuperAdmin]="isSuperAdmin()"

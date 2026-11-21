@@ -110,6 +110,8 @@ export interface FooterLink {
   icon?: string;
 }
 
+export type HeaderMenuOption = 'full-width' | 'no-full-width' | 'no-header';
+
 export interface HeaderSettings {
   id?: string;
   ownerUid?: string;
@@ -119,4 +121,5 @@ export interface HeaderSettings {
   logoWidth?: string;
   logoHeight?: string;
   headerWidth?: string;
+  headerMenuOption?: HeaderMenuOption;
 }

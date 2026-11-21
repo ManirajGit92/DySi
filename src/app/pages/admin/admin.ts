@@ -284,6 +284,11 @@ export class AdminComponent implements OnDestroy {
     this.isDarkTheme = !this.isDarkTheme;
   }
 
+  getUserInitial(user: { displayName?: string | null; email?: string | null } | null): string {
+    const label = (user?.displayName || user?.email || 'A').trim();
+    return label.charAt(0).toUpperCase();
+  }
+
   toggleAndNavigate() {
     this.toggleTheme();             // 1. Toggle the theme
     this.router.navigate(['/']);    // 2. Navigate to the homepage

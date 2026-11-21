@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { HeaderSettings, MenuItem } from '../../core/models/website.models';
+import { HeaderMenuOption, HeaderSettings, MenuItem } from '../../core/models/website.models';
 import { WebsiteDataService } from '../../core/services/website-data.service';
 
 @Component({
@@ -29,6 +29,14 @@ export class HeaderComponent {
   readonly isMenuOpen = signal(false);
   readonly isSearchOpen = signal(false);
   readonly searchTerm = signal('');
+
+  get resolvedHeaderMode(): HeaderMenuOption {
+    const option = this.headerSettings?.headerMenuOption;
+    if (option === 'full-width' || option === 'no-full-width' || option === 'no-header') {
+      return option;
+    }
+    return this.headerSettings?.headerWidth?.trim() === '100%' ? 'full-width' : 'no-full-width';
+  }
 
   selectSection(sectionId: string): void {
     this.sectionSelected.emit(sectionId);

@@ -1,65 +1,102 @@
 <div class="page" [class.dark-theme]="isDarkTheme">
 
-  <div class="theme-toggle">
-    @if (isSuperAdmin$ | async) {
-      <button routerLink="/super-admin" class="mr-2">Super Admin Portal</button>
-    }
-    <button (click)="toggleTheme()" class="mr-2">{{ isDarkTheme ? '☀ Light Mode' : '🌙 Dark Mode' }}</button>
-    <button (click)="toggleAndNavigate()">View Webpage</button>
-  </div>
-
   @if (user$ | async; as user) {
     @if (isAdmin$ | async) {
-      <div class="tabs-container">
-        <div class="tabs">
+      <!-- Top SaaS Navigation Bar -->
+      <header class="dysi-topbar">
+        <div class="dysi-brand" (click)="selectTab('settings')" role="button" tabindex="0">
+          <div class="dysi-logo-mark" aria-hidden="true">
+            <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="dysiLogoGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#4f46e5" />
+                  <stop offset="55%" stop-color="#7c3aed" />
+                  <stop offset="100%" stop-color="#a855f7" />
+                </linearGradient>
+              </defs>
+              <path d="M6 6H18.5C25.9558 6 31 11.0442 31 18C31 24.9558 25.9558 30 18.5 30H6V22.5H17.5C20.5 22.5 22.8 20.6 22.8 18C22.8 15.4 20.5 13.5 17.5 13.5H6V6Z" fill="url(#dysiLogoGrad)"/>
+              <rect x="6" y="15.2" width="11" height="5.6" rx="2.8" fill="#c4b5fd"/>
+            </svg>
+          </div>
+          <div class="dysi-brand-text">
+            <span class="dysi-brand-name">Dysi</span>
+            <span class="dysi-brand-sub">Website Manager</span>
+          </div>
+        </div>
+
+        <nav class="dysi-nav-pill" aria-label="Admin navigation">
           @if (permissions()['settings']) {
-            <button class="tab" [class.active]="activeTab === 'settings'" (click)="selectTab('settings')">
-              Settings
+            <button type="button" class="nav-pill-item" [class.active]="activeTab === 'settings'" (click)="selectTab('settings')">
+              <i class="fa-solid fa-gear"></i>
+              <span>Settings</span>
             </button>
           }
           @if (permissions()['settings']) {
-            <button class="tab" [class.active]="activeTab === 'feedback-questions'" (click)="selectTab('feedback-questions')">
-              Feedback Questions
+            <button type="button" class="nav-pill-item" [class.active]="activeTab === 'feedback-questions'" (click)="selectTab('feedback-questions')">
+              <i class="fa-regular fa-comment-dots"></i>
+              <span>Feedback Questions</span>
             </button>
           }
           @if (permissions()['analytics']) {
-            <button class="tab" [class.active]="activeTab === 'feedback-analytics'" (click)="selectTab('feedback-analytics')">
-              Feedback Analytics
+            <button type="button" class="nav-pill-item" [class.active]="activeTab === 'feedback-analytics'" (click)="selectTab('feedback-analytics')">
+              <i class="fa-solid fa-chart-column"></i>
+              <span>Feedback Analytics</span>
             </button>
           }
           @if (permissions()['products']) {
-            <button class="tab" [class.active]="activeTab === 'products'" (click)="selectTab('products')">
-              Products/Services
+            <button type="button" class="nav-pill-item" [class.active]="activeTab === 'products'" (click)="selectTab('products')">
+              <i class="fa-solid fa-cube"></i>
+              <span>Products/Services</span>
             </button>
           }
           @if (permissions()['dashboard']) {
-            <button class="tab" [class.active]="activeTab === 'dashboard'" (click)="selectTab('dashboard')">
-              Dashboard
+            <button type="button" class="nav-pill-item" [class.active]="activeTab === 'dashboard'" (click)="selectTab('dashboard')">
+              <i class="fa-solid fa-table-cells-large"></i>
+              <span>Dashboard</span>
             </button>
           }
           @if (permissions()['users']) {
-            <button class="tab" [class.active]="activeTab === 'users'" (click)="selectTab('users')">
-              Users
+            <button type="button" class="nav-pill-item" [class.active]="activeTab === 'users'" (click)="selectTab('users')">
+              <i class="fa-solid fa-users"></i>
+              <span>Users</span>
             </button>
           }
           @if (permissions()['analytics']) {
-            <button class="tab" [class.active]="activeTab === 'analytics'" (click)="selectTab('analytics')">
-              Analytics
+            <button type="button" class="nav-pill-item" [class.active]="activeTab === 'analytics'" (click)="selectTab('analytics')">
+              <i class="fa-solid fa-arrow-trend-up"></i>
+              <span>Analytics</span>
             </button>
           }
           @if (permissions()['bookings']) {
-            <button class="tab" [class.active]="activeTab === 'bookings'" (click)="selectTab('bookings')">
-              Bookings
+            <button type="button" class="nav-pill-item" [class.active]="activeTab === 'bookings'" (click)="selectTab('bookings')">
+              <i class="fa-regular fa-calendar-check"></i>
+              <span>Bookings</span>
             </button>
           }
           @if (permissions()['booking-settings']) {
-            <button class="tab" [class.active]="activeTab === 'booking-settings'" (click)="selectTab('booking-settings')">
-              Booking Settings
+            <button type="button" class="nav-pill-item" [class.active]="activeTab === 'booking-settings'" (click)="selectTab('booking-settings')">
+              <i class="fa-solid fa-sliders"></i>
+              <span>Booking Settings</span>
             </button>
           }
-        </div>
+        </nav>
 
-        <div class="tab-content">
+        <div class="dysi-topbar-right">
+          <button type="button" class="theme-switch-pill" (click)="toggleTheme()" [attr.aria-label]="isDarkTheme ? 'Switch to light mode' : 'Switch to dark mode'" [class.is-dark]="isDarkTheme">
+            <span class="switch-thumb">
+              <i class="fa-solid" [class.fa-sun]="!isDarkTheme" [class.fa-moon]="isDarkTheme"></i>
+            </span>
+          </button>
+
+          <div class="topbar-user-chip">
+            <span class="user-avatar">{{ getUserInitial(user) }}</span>
+            <span class="user-name">{{ user.displayName || user.email }} <small>(Admin)</small></span>
+          </div>
+        </div>
+      </header>
+
+      <div class="tabs-container">
+        <div class="tab-content" [class.tab-content--flush]="activeTab === 'settings'">
           <div *ngIf="activeTab === 'settings' && permissions()['settings']">
             <app-settings></app-settings>
           </div>

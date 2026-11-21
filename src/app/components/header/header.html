@@ -1,4 +1,10 @@
-<header class="site-header" [style.width]="headerSettings?.headerWidth">
+@if (resolvedHeaderMode !== 'no-header') {
+<header
+  class="site-header"
+  [class.site-header--full-width]="resolvedHeaderMode === 'full-width'"
+  [class.site-header--compact]="resolvedHeaderMode === 'no-full-width'"
+  [style.width]="resolvedHeaderMode === 'full-width' ? '100%' : (headerSettings?.headerWidth || 'fit-content')"
+>
   <a class="brand" href="#home" (click)="$event.preventDefault(); selectSection('home')" aria-label="DySi home">
     @if (headerSettings?.logoUrl) {
     <img [src]="headerSettings?.logoUrl" [alt]="headerSettings?.logoAlt || 'Logo'"
@@ -58,3 +64,4 @@
     </button>
   </div>
 </header>
+}
