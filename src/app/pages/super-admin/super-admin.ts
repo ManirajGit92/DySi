@@ -25,15 +25,31 @@ export class SuperAdminComponent {
   readonly searchQuery = signal('');
 
   readonly sectionsMeta = [
-    { id: 'dashboard', label: 'Dashboard', icon: 'fa-chart-pie' },
-    { id: 'products', label: 'Products', icon: 'fa-box' },
-    { id: 'settings', label: 'Settings', icon: 'fa-sliders' },
+    { id: 'dashboard', label: 'Dashboard', icon: 'fa-table-cells-large' },
+    { id: 'products', label: 'Products', icon: 'fa-cube' },
+    { id: 'settings', label: 'Settings', icon: 'fa-gear' },
     { id: 'users', label: 'Users', icon: 'fa-users' },
     { id: 'analytics', label: 'Analytics', icon: 'fa-chart-line' },
-    { id: 'bookings', label: 'Bookings', icon: 'fa-calendar-days' },
-    { id: 'booking-settings', label: 'Booking Settings', icon: 'fa-calendar-gear' }
+    { id: 'bookings', label: 'Bookings', icon: 'fa-calendar-check' },
+    { id: 'booking-settings', label: 'Booking Settings', icon: 'fa-sliders' }
   ];
   readonly filterRole = signal<'all' | 'admin' | 'super_admin' | 'restricted' | 'allowed'>('all');
+  readonly logActionFilter = signal<string>('all');
+
+  readonly logActionOptions = computed(() => {
+    const actions = new Set(
+      this.logs()
+        .map((l: any) => l.action)
+        .filter(Boolean),
+    );
+    return ['all', ...Array.from(actions)];
+  });
+
+  readonly filteredLogs = computed(() => {
+    const action = this.logActionFilter();
+    if (action === 'all') return this.logs();
+    return this.logs().filter((l: any) => l.action === action);
+  });
   
   readonly stats = computed(() => {
     const list = this.users();
@@ -139,6 +155,52 @@ export class SuperAdminComponent {
       console.error('Failed to update admin section permission', error);
       alert('Action failed. Check console and security rules.');
     }
+  }
+
+  getInitial(name?: string | null, email?: string | null): string {
+    const text = (name || email || 'U').trim();
+    return text.charAt(0).toUpperCase();
+  }
+
+  exportUsersCsv(): void {
+    const rows = [
+      ['Name', 'Email', 'Provider', 'Admin', 'Super Admin', 'Restricted'],
+      ...this.filteredUsers().map((u: any) => [
+        u.displayName || 'No Name',
+        u.email || '',
+        u.providerId === 'google.com' ? 'Google' : 'Email',
+        u.isAdmin ? 'Yes' : 'No',
+        u.isSuperAdmin ? 'Yes' : 'No',
+        u.isRestricted ? 'Restricted' : 'Active',
+      ]),
+    ];
+    this.downloadCsv(rows, 'dysi-users-access.csv');
+  }
+
+  exportAuditLogCsv(): void {
+    const rows = [
+      ['Timestamp', 'Performed By', 'Action', 'Target Account'],
+      ...this.filteredLogs().map((l: any) => [
+        l.timestamp?.seconds ? new Date(l.timestamp.seconds * 1000).toISOString() : '',
+        l.performedBy || '',
+        l.action || '',
+        l.email || '',
+      ]),
+    ];
+    this.downloadCsv(rows, 'dysi-security-audit-log.csv');
+  }
+
+  private downloadCsv(rows: string[][], filename: string): void {
+    const csv = rows
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   async signOut() {

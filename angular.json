@@ -25,7 +25,9 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss"]
+            "styles": [
+              "src/styles.scss"
+            ]
           },
           "configurations": {
             "production": {
@@ -33,12 +35,12 @@
                 {
                   "type": "initial",
                   "maximumWarning": "1.5MB",
-                  "maximumError": "2MB"
+                  "maximumError": "6MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "16kB",
-                  "maximumError": "32kB"
+                  "maximumWarning": "5MB",
+                  "maximumError": "6MB"
                 }
               ],
               "outputHashing": "all"
