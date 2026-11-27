@@ -45,7 +45,14 @@ export class BookingSettingsComponent implements OnInit {
   private readonly messageService = inject(MessageService);
 
   // Accordion Sections State
-  openSection = signal<string>('fields');
+  openSection = signal<string>('seatLayout');
+
+  // Preview UI State
+  showLivePreview = signal<boolean>(true);
+  previewTab = signal<'seatLayout' | 'bookingForm' | 'mobileView'>('seatLayout');
+  mockSelectedSeats = signal<string[]>(['E3']);
+  readonly mockBookedSeats = ['C1'];
+  quickRowsInput = signal<number>(6);
 
   // Booking Settings signal
   settings = signal<BookingSettingsConfig>({
@@ -109,6 +116,11 @@ export class BookingSettingsComponent implements OnInit {
   // Seat layout computed logic for Live Preview
   leftColCount = computed(() => (this.settings().seatLayout?.layoutType === '3+2' ? 3 : 2));
   rightColCount = signal<number>(2);
+  columnsPerRow = computed(() => this.leftColCount() + this.rightColCount());
+  totalRowsCount = computed(() => {
+    const total = this.settings().seatLayout?.totalSeats || 20;
+    return Math.ceil(total / this.columnsPerRow());
+  });
 
   previewSeats = computed(() => {
     const layout = this.settings().seatLayout;
@@ -567,5 +579,40 @@ export class BookingSettingsComponent implements OnInit {
   getSpacers(seats: string[], targetCount: number): any[] {
     const diff = targetCount - seats.length;
     return diff > 0 ? new Array(diff) : [];
+  }
+
+  applyQuickLayout(rows: number): void {
+    const clampedRows = Math.max(1, Math.min(15, Number(rows) || 5));
+    const totalSeats = Math.max(4, Math.min(60, clampedRows * this.columnsPerRow()));
+    this.setTotalSeats(totalSeats);
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Layout Applied',
+      detail: `Updated to ${clampedRows} rows (${totalSeats} total seats).`,
+    });
+  }
+
+  toggleMockSeat(seat: string): void {
+    if (this.mockBookedSeats.includes(seat)) return;
+    this.mockSelectedSeats.update((list) =>
+      list.includes(seat) ? list.filter((s) => s !== seat) : [...list, seat],
+    );
+  }
+
+  isMockSeatSelected(seat: string): boolean {
+    return this.mockSelectedSeats().includes(seat);
+  }
+
+  isMockSeatBooked(seat: string): boolean {
+    return this.mockBookedSeats.includes(seat);
+  }
+
+  resetMockPreview(): void {
+    this.mockSelectedSeats.set(['E3']);
+    this.previewTab.set('seatLayout');
+  }
+
+  openBookingInNewTab(): void {
+    window.open('/bookTicket', '_blank', 'noopener');
   }
 }

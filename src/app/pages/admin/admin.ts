@@ -8,7 +8,7 @@ import { Settings } from '../settings/settings';
 import { BookingsAdminComponent } from './bookings-admin.component';
 import { BookingSettingsComponent } from './booking-settings.component';
 import { Product } from '../../core/models/product.models';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { WebsiteDataService } from '../../core/services/website-data.service';
 import { firstValueFrom, Subscription } from 'rxjs';
 
@@ -48,7 +48,6 @@ interface CategoryPerformance {
     Settings,
     BookingsAdminComponent,
     BookingSettingsComponent,
-    RouterLink,
     FeedbackQuestionsMgrComponent,
     FeedbackAnalyticsDashboardComponent
   ],
@@ -130,6 +129,71 @@ export class AdminComponent implements OnDestroy {
     refunded: this.orders().filter((order) => order.status === 'Refunded').length,
   }));
 
+  revenueMetric = signal<'Revenue' | 'Orders' | 'Profit'>('Revenue');
+  activeChartIndex = signal(4);
+
+  orderStatusPercents = computed(() => {
+    const total = this.orders().length;
+    if (!total) {
+      return { completed: 77, pending: 20, refunded: 3 };
+    }
+    const s = this.orderStatuses();
+    return {
+      completed: Math.round((s.completed / total) * 100),
+      pending: Math.round((s.pending / total) * 100),
+      refunded: Math.round((s.refunded / total) * 100),
+    };
+  });
+
+  totalVisits = computed(() => this.visitorTrend().reduce((sum, v) => sum + v, 0));
+
+  revenueChartPoints = computed(() => {
+    const metric = this.revenueMetric();
+    const period = this.selectedPeriod();
+    const multiplier = period === 'Daily' ? 0.35 : period === 'Monthly' ? 3.2 : 1;
+    const labels =
+      period === 'Daily'
+        ? ['9 AM', '11 AM', '1 PM', '3 PM', '5 PM', '7 PM', '9 PM']
+        : period === 'Monthly'
+          ? ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov']
+          : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    const sales = this.salesTrend();
+    const visitors = this.visitorTrend();
+
+    const rawValues = sales.map((val, i) => {
+      if (metric === 'Orders') return Math.round((visitors[i] ?? val) * 0.85 * multiplier);
+      if (metric === 'Profit') return Math.round(val * 0.42 * 22 * multiplier);
+      return Math.round(val * 24 * multiplier);
+    });
+    const maxVal = Math.max(...rawValues, 1);
+
+    return labels.map((label, idx) => {
+      const value = rawValues[idx] ?? 0;
+      const orderCount = Math.round((visitors[idx] ?? 500) * 0.85 * multiplier);
+      const heightPct = Math.max(18, Math.round((value / maxVal) * 86));
+      return {
+        label,
+        value,
+        orderCount,
+        heightPct,
+        lineBottomPct: Math.min(92, Math.max(22, heightPct + 8)),
+      };
+    });
+  });
+
+  revenueLinePolyline = computed(() => {
+    const pts = this.revenueChartPoints();
+    if (!pts.length) return '';
+    return pts
+      .map((p, idx) => {
+        const x = ((idx + 0.5) / pts.length) * 100;
+        const y = 100 - p.lineBottomPct;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(' ');
+  });
+
   topProducts = computed(() => {
     const counts = this.orders().reduce(
       (map, order) => {
@@ -168,6 +232,71 @@ export class AdminComponent implements OnDestroy {
     outOfStock: this.products().filter((product) => !product.available).length,
     lowStock: this.lowStocks().length,
   }));
+
+  productSearchQuery = signal('');
+  selectedProductCategory = signal('All');
+  productsPerPage = signal(8);
+  currentProductPage = signal(1);
+  productUploadStatus = signal('');
+
+  productCategories = computed(() => {
+    const cats = new Set(
+      this.products()
+        .map((p) => (p.category || 'General').trim())
+        .filter(Boolean),
+    );
+    return ['All', ...Array.from(cats).sort()];
+  });
+
+  averageProductRating = computed(() => {
+    const list = this.products();
+    if (!list.length) return '0.0';
+    const sum = list.reduce((acc, p) => acc + (p.rating ?? 4.5), 0);
+    return (sum / list.length).toFixed(1);
+  });
+
+  filteredProducts = computed(() => {
+    const q = this.productSearchQuery().toLowerCase().trim();
+    const cat = this.selectedProductCategory();
+    return this.products().filter((p) => {
+      const matchesCat = cat === 'All' || (p.category || 'General') === cat;
+      const matchesQuery =
+        !q ||
+        [p.name, p.category, p.description, ...(p.tags || [])]
+          .join(' ')
+          .toLowerCase()
+          .includes(q);
+      return matchesCat && matchesQuery;
+    });
+  });
+
+  totalProductPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredProducts().length / this.productsPerPage())),
+  );
+
+  productPageNumbers = computed(() =>
+    Array.from({ length: this.totalProductPages() }, (_, i) => i + 1),
+  );
+
+  paginatedProducts = computed(() => {
+    const page = Math.min(this.currentProductPage(), this.totalProductPages());
+    const perPage = this.productsPerPage();
+    const start = (page - 1) * perPage;
+    return this.filteredProducts().slice(start, start + perPage);
+  });
+
+  productPageStart = computed(() => {
+    if (!this.filteredProducts().length) return 0;
+    const page = Math.min(this.currentProductPage(), this.totalProductPages());
+    return (page - 1) * this.productsPerPage() + 1;
+  });
+
+  productPageEnd = computed(() => {
+    const total = this.filteredProducts().length;
+    if (!total) return 0;
+    const page = Math.min(this.currentProductPage(), this.totalProductPages());
+    return Math.min(page * this.productsPerPage(), total);
+  });
 
   // Injected services moved to the top of the class
 
@@ -289,6 +418,68 @@ export class AdminComponent implements OnDestroy {
     return label.charAt(0).toUpperCase();
   }
 
+  getFirstName(user: { displayName?: string | null; email?: string | null } | null): string {
+    if (user?.displayName) {
+      return user.displayName.split(' ')[0];
+    }
+    if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    return 'Admin';
+  }
+
+  getGreeting(): string {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }
+
+  getCustomerInitial(name: string): string {
+    return (name || 'C').trim().charAt(0).toUpperCase();
+  }
+
+  getProductImage(productName: string): string {
+    const match = this.products().find(
+      (p) => p.name.toLowerCase() === productName.toLowerCase(),
+    );
+    return match?.imageUrl || '';
+  }
+
+  setRevenueMetric(metric: 'Revenue' | 'Orders' | 'Profit'): void {
+    this.revenueMetric.set(metric);
+  }
+
+  openAddProduct(): void {
+    this.createProduct();
+    this.selectTab('products');
+  }
+
+  exportDashboardReport(): void {
+    const rows = [
+      ['Order ID', 'Customer', 'Product', 'Items', 'Status', 'Total', 'Date'],
+      ...this.filteredOrders().map((o) => [
+        o.id || '',
+        o.customer,
+        o.product,
+        String(o.items),
+        o.status,
+        o.total.toFixed(2),
+        o.date,
+      ]),
+    ];
+    const csv = rows
+      .map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `dysi-dashboard-report-${this.selectedPeriod().toLowerCase()}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   toggleAndNavigate() {
     this.toggleTheme();             // 1. Toggle the theme
     this.router.navigate(['/']);    // 2. Navigate to the homepage
@@ -322,8 +513,57 @@ export class AdminComponent implements OnDestroy {
     this.setStatus(value as 'All' | 'Completed' | 'Pending' | 'Refunded');
   }
 
+  updateProductSearch(value: string): void {
+    this.productSearchQuery.set(value);
+    this.currentProductPage.set(1);
+  }
+
+  updateProductCategory(value: string): void {
+    this.selectedProductCategory.set(value);
+    this.currentProductPage.set(1);
+  }
+
+  updateProductsPerPage(value: number): void {
+    this.productsPerPage.set(Number(value) || 8);
+    this.currentProductPage.set(1);
+  }
+
+  setProductPage(page: number): void {
+    const clamped = Math.max(1, Math.min(page, this.totalProductPages()));
+    this.currentProductPage.set(clamped);
+  }
+
+  resetProductFilters(): void {
+    this.productSearchQuery.set('');
+    this.selectedProductCategory.set('All');
+    this.currentProductPage.set(1);
+  }
+
+  formatProductCode(index: number): string {
+    const num = this.productPageStart() + index;
+    return `#P${String(num).padStart(3, '0')}`;
+  }
+
+  async uploadProductImage(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.productUploadStatus.set('Uploading image...');
+    try {
+      const url = await this.websiteData.uploadImage(file);
+      this.productForm.patchValue({ imageUrl: url });
+      this.productUploadStatus.set('Image uploaded successfully.');
+    } catch (err) {
+      console.error(err);
+      this.productUploadStatus.set('Upload failed. You can also paste an Image URL.');
+    } finally {
+      input.value = '';
+    }
+  }
+
   createProduct(): void {
     this.editing.set(false);
+    this.productUploadStatus.set('');
     this.productForm.reset({
       id: null,
       name: '',
@@ -341,6 +581,7 @@ export class AdminComponent implements OnDestroy {
 
   editProduct(product: Product): void {
     this.editing.set(true);
+    this.productUploadStatus.set('');
     this.productForm.setValue({
       id: product.id ?? null,
       name: product.name,
@@ -354,7 +595,7 @@ export class AdminComponent implements OnDestroy {
       description: product.description,
       tags: (product.tags || []).join(', '),
     });
-    this.activeTab = 'dashboard';
+    this.activeTab = 'products';
   }
 
   async saveProduct(): Promise<void> {

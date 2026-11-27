@@ -96,7 +96,7 @@
       </header>
 
       <div class="tabs-container">
-        <div class="tab-content" [class.tab-content--flush]="activeTab === 'settings'">
+        <div class="tab-content" [class.tab-content--flush]="activeTab === 'settings' || activeTab === 'dashboard' || activeTab === 'products' || activeTab === 'bookings' || activeTab === 'booking-settings'">
           <div *ngIf="activeTab === 'settings' && permissions()['settings']">
             <app-settings></app-settings>
           </div>
@@ -109,272 +109,775 @@
             <app-feedback-analytics-dashboard></app-feedback-analytics-dashboard>
           </div>
 
-          <div *ngIf="activeTab === 'products' && permissions()['products']">
-            <div class="products-admin">
-              <section class="product-form-panel">
-                <div class="panel-head">
-                  <h2>{{ editing() ? 'Edit Product' : 'Add New Product' }}</h2>
-                  <p>Manage the product catalog with realtime Firestore updates.</p>
+          <div *ngIf="activeTab === 'products' && permissions()['products']" class="saas-products">
+            <div class="prod-layout">
+              <!-- Left Column: Add / Edit Product Form Card -->
+              <section class="prod-form-card">
+                <div class="prod-form-banner">
+                  <span class="prod-banner-icon"><i class="fa-solid fa-cube"></i></span>
+                  <div>
+                    <h2>{{ editing() ? 'Edit Product' : 'Add New Product' }}</h2>
+                    <p>Manage the product catalog with real-time updates.</p>
+                  </div>
                 </div>
 
-                <form [formGroup]="productForm" (ngSubmit)="saveProduct()">
-                  <label>
-                    Product Name
-                    <input formControlName="name" placeholder="Enter product title" />
-                  </label>
+                <form [formGroup]="productForm" (ngSubmit)="saveProduct()" class="prod-form-body">
+                  <div class="prod-field">
+                    <label>Product Name <span class="req">*</span></label>
+                    <div class="prod-input-icon">
+                      <i class="fa-regular fa-user"></i>
+                      <input formControlName="name" placeholder="Enter product title" />
+                    </div>
+                  </div>
 
-                  <label>
-                    Category
-                    <input formControlName="category" placeholder="e.g. SaaS, Design, Analytics" />
-                  </label>
+                  <div class="prod-field">
+                    <label>Category <span class="req">*</span></label>
+                    <div class="prod-input-icon">
+                      <i class="fa-solid fa-table-cells-large"></i>
+                      <input formControlName="category" placeholder="General, SaaS, Design..." />
+                    </div>
+                  </div>
 
-                  <label>
-                    Price
-                    <input type="number" formControlName="price" min="0" />
-                  </label>
+                  <div class="prod-field-row">
+                    <div class="prod-field">
+                      <label>Price <span class="req">*</span></label>
+                      <div class="prod-input-icon">
+                        <i class="fa-solid fa-dollar-sign"></i>
+                        <input type="number" formControlName="price" min="0" step="0.01" placeholder="0.00" />
+                      </div>
+                    </div>
 
-                  <label>
-                    Stock
-                    <input type="number" formControlName="stock" min="0" />
-                  </label>
+                    <div class="prod-field">
+                      <label>Stock <span class="req">*</span></label>
+                      <div class="prod-input-icon">
+                        <i class="fa-solid fa-cube"></i>
+                        <input type="number" formControlName="stock" min="0" placeholder="0" />
+                      </div>
+                    </div>
+                  </div>
 
-                  <label>
-                    Available
-                    <select formControlName="available">
-                      <option [ngValue]="true">Yes</option>
-                      <option [ngValue]="false">No</option>
-                    </select>
-                  </label>
+                  <div class="prod-field-row">
+                    <div class="prod-field">
+                      <label>Availability <span class="req">*</span></label>
+                      <div class="prod-input-icon">
+                        <i class="fa-solid fa-circle-check icon-green"></i>
+                        <select formControlName="available">
+                          <option [ngValue]="true">Yes</option>
+                          <option [ngValue]="false">No</option>
+                        </select>
+                      </div>
+                    </div>
 
-                  <label>
-                    Featured
-                    <select formControlName="featured">
-                      <option [ngValue]="false">No</option>
-                      <option [ngValue]="true">Yes</option>
-                    </select>
-                  </label>
+                    <div class="prod-field">
+                      <label>Featured</label>
+                      <div class="prod-input-icon">
+                        <i class="fa-solid fa-star icon-amber"></i>
+                        <select formControlName="featured">
+                          <option [ngValue]="false">No</option>
+                          <option [ngValue]="true">Yes</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
 
-                  <label>
-                    Rating
-                    <input type="number" formControlName="rating" min="0" max="5" step="0.1" />
-                  </label>
+                  <div class="prod-field">
+                    <label>Rating</label>
+                    <div class="prod-input-icon">
+                      <i class="fa-solid fa-star icon-amber"></i>
+                      <input type="number" formControlName="rating" min="0" max="5" step="0.1" />
+                    </div>
+                  </div>
 
-                  <label>
-                    Image URL
-                    <input formControlName="imageUrl" placeholder="https://..." />
-                  </label>
+                  <div class="prod-field">
+                    <label>Image Upload</label>
+                    <div class="prod-upload-zone" (click)="productImgInput.click()" role="button" tabindex="0">
+                      <i class="fa-regular fa-image"></i>
+                      <strong>Drag &amp; drop image here or click to browse</strong>
+                      <span>PNG, JPG, WebP (Max 5 MB)</span>
+                      <input #productImgInput type="file" accept="image/*" hidden (change)="uploadProductImage($event)" />
+                    </div>
+                    @if (productUploadStatus()) {
+                      <small class="prod-upload-status">{{ productUploadStatus() }}</small>
+                    }
+                  </div>
 
-                  <label>
-                    Description
-                    <textarea formControlName="description" rows="4"
-                      placeholder="Describe the product or service"></textarea>
-                  </label>
+                  <div class="prod-field">
+                    <label>Image URL</label>
+                    <div class="prod-input-icon">
+                      <i class="fa-solid fa-link"></i>
+                      <input formControlName="imageUrl" placeholder="https://..." />
+                    </div>
+                  </div>
 
-                  <label>
-                    Tags
-                    <input formControlName="tags" placeholder="comma separated tags" />
-                  </label>
+                  <div class="prod-field">
+                    <label>Description <span class="req">*</span></label>
+                    <textarea formControlName="description" rows="3" placeholder="Describe the product or service"></textarea>
+                  </div>
 
-                  <div class="form-actions">
-                    <button class="btn btn--primary" type="submit" [disabled]="productForm.invalid">
-                      {{ editing() ? 'Update Product' : 'Add Product' }}
+                  <div class="prod-field">
+                    <label>Tags</label>
+                    <div class="prod-input-icon">
+                      <i class="fa-solid fa-tags"></i>
+                      <input formControlName="tags" placeholder="comma separated tags" />
+                    </div>
+                  </div>
+
+                  <div class="prod-form-actions">
+                    <button class="prod-btn prod-btn--clear" type="button" (click)="createProduct()">
+                      <i class="fa-solid fa-rotate-right"></i>
+                      <span>Clear</span>
                     </button>
-                    <button class="btn btn--ghost" type="button" (click)="createProduct()">Reset Form</button>
+                    <button class="prod-btn prod-btn--submit" type="submit" [disabled]="productForm.invalid">
+                      <i class="fa-solid" [class.fa-plus]="!editing()" [class.fa-check]="editing()"></i>
+                      <span>{{ editing() ? 'Update Product' : 'Add Product' }}</span>
+                    </button>
                   </div>
                 </form>
               </section>
 
-              <section class="product-list-panel">
-                <div class="panel-head">
-                  <h2>Products / Services</h2>
-                  <p>Realtime Firestore catalog data with CRUD actions.</p>
-                </div>
+              <!-- Right Column: Catalog Panel -->
+              <section class="prod-catalog-card">
+                <!-- Header + 4 Stat Chips -->
+                <div class="prod-catalog-header">
+                  <div class="prod-catalog-title">
+                    <span class="prod-title-badge"><i class="fa-solid fa-cube"></i></span>
+                    <div>
+                      <h2>Products / Services</h2>
+                      <p>Realtime Firestore catalog with CRUD actions.</p>
+                    </div>
+                  </div>
 
-                <div class="view-toggle">
-                  <span>Display</span>
-                  <button class="toggle-btn" type="button" [class.active]="viewMode() === 'grid'"
-                    (click)="setViewMode('grid')">
-                    Grid
-                  </button>
-                  <button class="toggle-btn" type="button" [class.active]="viewMode() === 'list'"
-                    (click)="setViewMode('list')">
-                    List
-                  </button>
-                </div>
-
-                <div class="layout-control" *ngIf="viewMode() === 'grid'">
-                  <span>Items per row</span>
-                  <button class="layout-btn" *ngFor="let cols of [2, 3, 4, 5, 6]" type="button"
-                    [class.active]="itemsPerRow() === cols" (click)="setItemsPerRow(cols)">
-                    {{ cols }}
-                  </button>
-                </div>
-
-                <div class="product-list" [class.list-view]="viewMode() === 'list'" [style.--grid-cols]="itemsPerRow()">
-                  <article class="product-card" *ngFor="let product of products()">
-                    <img
-                      [src]="product.imageUrl || 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=80'"
-                      [alt]="product.name" />
-                    <div class="product-card-body">
-                      <div class="card-meta">
-                        <strong>{{ product.name }}</strong>
-                        <small>{{ product.category }}</small>
+                  <div class="prod-stat-chips">
+                    <div class="prod-stat-chip">
+                      <span class="chip-icon chip-icon--purple"><i class="fa-solid fa-cube"></i></span>
+                      <div>
+                        <strong>{{ productStatus().total }}</strong>
+                        <span>Total Products</span>
                       </div>
-                      <p>{{ product.description }}</p>
                     </div>
-                    <div class="product-card-footer">
-                      <span class="product-price">${{ product.price.toFixed(2) }}</span>
-                      <span class="stock-badge" [class.active]="product.available">
-                        {{ product.available ? 'Available' : 'Unavailable' }}
-                      </span>
+                    <div class="prod-stat-chip">
+                      <span class="chip-icon chip-icon--green"><i class="fa-regular fa-circle-check"></i></span>
+                      <div>
+                        <strong>{{ productStatus().inStock }}</strong>
+                        <span>In Stock</span>
+                      </div>
                     </div>
-                    <div class="card-actions">
-                      <button class="btn btn--ghost" type="button" (click)="editProduct(product)">Edit</button>
-                      <button class="btn btn--primary" type="button" (click)="removeProduct(product)">Delete</button>
+                    <div class="prod-stat-chip">
+                      <span class="chip-icon chip-icon--red"><i class="fa-solid fa-xmark"></i></span>
+                      <div>
+                        <strong>{{ productStatus().outOfStock }}</strong>
+                        <span>Out of Stock</span>
+                      </div>
                     </div>
-                  </article>
+                    <div class="prod-stat-chip">
+                      <span class="chip-icon chip-icon--amber"><i class="fa-solid fa-star"></i></span>
+                      <div>
+                        <strong>{{ averageProductRating() }}</strong>
+                        <span>Avg Rating</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Toolbar: Grid/List + Items per page + Search + Category + Refresh -->
+                <div class="prod-toolbar">
+                  <div class="prod-toolbar-left">
+                    <div class="prod-view-switch">
+                      <button type="button" [class.active]="viewMode() === 'grid'" (click)="setViewMode('grid')">
+                        <i class="fa-solid fa-table-cells-large"></i> Grid
+                      </button>
+                      <button type="button" [class.active]="viewMode() === 'list'" (click)="setViewMode('list')">
+                        <i class="fa-solid fa-list"></i> List
+                      </button>
+                    </div>
+
+                    <div class="prod-per-page">
+                      <span>Items per page:</span>
+                      <select [ngModel]="productsPerPage()" (ngModelChange)="updateProductsPerPage($event)">
+                        <option [ngValue]="4">4</option>
+                        <option [ngValue]="8">8</option>
+                        <option [ngValue]="12">12</option>
+                        <option [ngValue]="16">16</option>
+                      </select>
+                    </div>
+
+                    @if (viewMode() === 'grid') {
+                      <div class="prod-cols-picker">
+                        <span>Cols:</span>
+                        @for (cols of [2, 3, 4]; track cols) {
+                          <button type="button" [class.active]="itemsPerRow() === cols" (click)="setItemsPerRow(cols)">{{ cols }}</button>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <div class="prod-toolbar-right">
+                    <div class="prod-search-input">
+                      <i class="fa-solid fa-magnifying-glass"></i>
+                      <input
+                        type="search"
+                        placeholder="Search products..."
+                        [ngModel]="productSearchQuery()"
+                        (ngModelChange)="updateProductSearch($event)"
+                      />
+                    </div>
+
+                    <div class="prod-cat-select">
+                      <i class="fa-solid fa-filter"></i>
+                      <select [ngModel]="selectedProductCategory()" (ngModelChange)="updateProductCategory($event)">
+                        @for (cat of productCategories(); track cat) {
+                          <option [value]="cat">{{ cat === 'All' ? 'All Categories' : cat }}</option>
+                        }
+                      </select>
+                    </div>
+
+                    <button type="button" class="prod-refresh-btn" title="Reset filters" (click)="resetProductFilters()">
+                      <i class="fa-solid fa-arrows-rotate"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Product Cards Grid / List -->
+                <div
+                  class="prod-grid"
+                  [class.prod-grid--list]="viewMode() === 'list'"
+                  [style.--prod-cols]="itemsPerRow()"
+                >
+                  @for (product of paginatedProducts(); track product.id || $index; let idx = $index) {
+                    <article class="prod-card">
+                      <div class="prod-card-media">
+                        <img
+                          [src]="product.imageUrl || 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=80'"
+                          [alt]="product.name"
+                        />
+                        <span class="prod-code-badge">{{ formatProductCode(idx) }}</span>
+                        <span class="prod-avail-badge" [class.is-out]="!product.available">
+                          {{ product.available ? 'In Stock' : 'Out of Stock' }}
+                        </span>
+                        <span class="prod-fav-badge" [class.is-featured]="product.featured" title="Featured">
+                          <i [class]="product.featured ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
+                        </span>
+                      </div>
+
+                      <div class="prod-card-content">
+                        <div class="prod-card-head">
+                          <h3>{{ product.name }}</h3>
+                          <span class="prod-cat-tag">
+                            <i class="fa-regular fa-folder"></i> {{ product.category || 'General' }}
+                          </span>
+                        </div>
+
+                        <p class="prod-desc">{{ product.description }}</p>
+
+                        <div class="prod-rating-row">
+                          <i class="fa-solid fa-star"></i>
+                          <strong>{{ (product.rating ?? 4.5).toFixed(1) }}</strong>
+                          <span>({{ product.stock + 4 }} reviews)</span>
+                        </div>
+
+                        <div class="prod-price-row">
+                          <span class="prod-price">${{ product.price.toFixed(2) }}</span>
+                          <span class="prod-stock-pill" [class.is-low]="product.stock < 10">
+                            <i class="fa-solid fa-cube"></i> Stock: {{ product.stock }}
+                          </span>
+                        </div>
+
+                        <div class="prod-card-actions">
+                          <button class="prod-action-btn prod-action-btn--edit" type="button" (click)="editProduct(product)">
+                            <i class="fa-solid fa-pen"></i> Edit
+                          </button>
+                          <button class="prod-action-btn prod-action-btn--delete" type="button" (click)="removeProduct(product)">
+                            <i class="fa-regular fa-trash-can"></i> Delete
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  } @empty {
+                    <div class="prod-empty-state">
+                      <i class="fa-solid fa-box-open"></i>
+                      <p>No products match your current filter.</p>
+                    </div>
+                  }
+                </div>
+
+                <!-- Pagination Footer -->
+                <div class="prod-pagination-bar">
+                  <span class="prod-showing-text">
+                    Showing {{ productPageStart() }} – {{ productPageEnd() }} of {{ filteredProducts().length }} products
+                  </span>
+
+                  <div class="prod-page-controls">
+                    <button type="button" [disabled]="currentProductPage() <= 1" (click)="setProductPage(1)" aria-label="First page">
+                      <i class="fa-solid fa-angles-left"></i>
+                    </button>
+                    <button type="button" [disabled]="currentProductPage() <= 1" (click)="setProductPage(currentProductPage() - 1)" aria-label="Previous page">
+                      <i class="fa-solid fa-angle-left"></i>
+                    </button>
+
+                    @for (pageNum of productPageNumbers(); track pageNum) {
+                      <button
+                        type="button"
+                        [class.active]="currentProductPage() === pageNum"
+                        (click)="setProductPage(pageNum)"
+                      >
+                        {{ pageNum }}
+                      </button>
+                    }
+
+                    <button type="button" [disabled]="currentProductPage() >= totalProductPages()" (click)="setProductPage(currentProductPage() + 1)" aria-label="Next page">
+                      <i class="fa-solid fa-angle-right"></i>
+                    </button>
+                    <button type="button" [disabled]="currentProductPage() >= totalProductPages()" (click)="setProductPage(totalProductPages())" aria-label="Last page">
+                      <i class="fa-solid fa-angles-right"></i>
+                    </button>
+                  </div>
                 </div>
               </section>
             </div>
           </div>
 
-          <div *ngIf="activeTab === 'dashboard' && permissions()['dashboard']">
-            <section class="dashboard-header">
-              <div>
-                <p class="dashboard-section-label">Admin Analytics</p>
-                <h1>Commerce Dashboard</h1>
-                <p class="dashboard-description">Realtime business insights, sales performance and product health powered by
-                  Firestore data.</p>
+          <div *ngIf="activeTab === 'dashboard' && permissions()['dashboard']" class="saas-dashboard">
+            <!-- Greeting & Action Header -->
+            <section class="dash-hero">
+              <div class="dash-hero-copy">
+                <h1>{{ getGreeting() }}, {{ getFirstName(user) }}! <span class="wave-emoji" aria-hidden="true">👋</span></h1>
+                <p>Here's what's happening with your store today.</p>
               </div>
 
-              <div class="dashboard-actions">
-                <button class="btn btn--ghost" type="button" (click)="setPeriod('Daily')"
-                  [class.active]="selectedPeriod() === 'Daily'">Daily</button>
-                <button class="btn btn--ghost" type="button" (click)="setPeriod('Weekly')"
-                  [class.active]="selectedPeriod() === 'Weekly'">Weekly</button>
-                <button class="btn btn--ghost" type="button" (click)="setPeriod('Monthly')"
-                  [class.active]="selectedPeriod() === 'Monthly'">Monthly</button>
+              <div class="dash-hero-actions">
+                <div class="dash-search-box">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input
+                    type="search"
+                    placeholder="Search orders, products, customers..."
+                    [ngModel]="searchQuery()"
+                    (ngModelChange)="updateSearchQuery($event)"
+                  />
+                </div>
+
+                <div class="dash-period-pills" role="group" aria-label="Time period">
+                  <button type="button" [class.active]="selectedPeriod() === 'Daily'" (click)="setPeriod('Daily')">Daily</button>
+                  <button type="button" [class.active]="selectedPeriod() === 'Weekly'" (click)="setPeriod('Weekly')">Weekly</button>
+                  <button type="button" [class.active]="selectedPeriod() === 'Monthly'" (click)="setPeriod('Monthly')">Monthly</button>
+                </div>
+
+                <button type="button" class="dash-btn dash-btn--primary" (click)="openAddProduct()">
+                  <i class="fa-solid fa-plus"></i>
+                  <span>Add Product</span>
+                </button>
+                <button type="button" class="dash-btn dash-btn--outline" (click)="exportDashboardReport()">
+                  <i class="fa-solid fa-download"></i>
+                  <span>Export Report</span>
+                </button>
               </div>
             </section>
 
-            <section class="dashboard-grid">
-              <article class="metric-card">
-                <span class="metric-title">Total Revenue</span>
-                <h2>${{ totalSales().toFixed(0) }}</h2>
-                <small>Revenue generated from recent orders</small>
-                <div class="metric-pill positive">+12.3% this week</div>
-              </article>
-
-              <article class="metric-card">
-                <span class="metric-title">Orders Processed</span>
-                <h2>{{ totalOrders() }}</h2>
-                <small>Confirmed orders in the current period</small>
-                <div class="metric-pill neutral">{{ orderStatuses().pending }} pending</div>
-              </article>
-
-              <article class="metric-card">
-                <span class="metric-title">Products Sold</span>
-                <h2>{{ productsSold() }}</h2>
-                <small>Total items sold across orders</small>
-                <div class="metric-pill positive">{{ totalCustomers() }} customers</div>
-              </article>
-
-              <article class="metric-card">
-                <span class="metric-title">Inventory Status</span>
-                <h2>{{ productStatus().total }} items</h2>
-                <small>{{ productStatus().lowStock }} products low on stock</small>
-                <div class="metric-pill warning">{{ productStatus().outOfStock }} out of stock</div>
-              </article>
-
-              <article class="chart-card span-8">
-                <div class="chart-card-header">
-                  <div>
-                    <span>Revenue Analytics</span>
-                    <h3>Sales trend</h3>
-                  </div>
-                  <span class="badge badge-info">{{ selectedPeriod() }} view</span>
-                </div>
-                <div class="line-chart">
-                  <div class="line-chart-grid"></div>
-                  <div class="line-chart-path"></div>
-                </div>
-              </article>
-
-              <article class="chart-card span-4">
-                <div class="chart-card-header">
-                  <div>
-                    <span>Payment Status</span>
-                    <h3>Checkout performance</h3>
+            <!-- Row 1: 5 KPI Sparkline Cards -->
+            <section class="dash-kpi-grid">
+              <!-- Total Revenue -->
+              <article class="kpi-card kpi-card--purple">
+                <div class="kpi-top">
+                  <span class="kpi-icon"><i class="fa-solid fa-coins"></i></span>
+                  <div class="kpi-info">
+                    <span class="kpi-label">Total Revenue</span>
+                    <strong class="kpi-value">${{ totalSales().toFixed(0) }}</strong>
+                    <span class="kpi-trend kpi-trend--up">
+                      <i class="fa-solid fa-arrow-up"></i> +12.3% <small>vs last week</small>
+                    </span>
                   </div>
                 </div>
-                <div class="status-widget">
-                  <div class="status-row"><span>Success</span><strong>{{ paymentSuccess() }}%</strong></div>
-                  <div class="progress-bar">
-                    <div class="progress-fill" [style.width.%]="paymentSuccess()"></div>
-                  </div>
-                  <div class="status-row"><span>Checkout conversion</span><strong>{{ checkoutRate() }}%</strong></div>
-                  <div class="progress-bar">
-                    <div class="progress-fill accent" [style.width.%]="checkoutRate()"></div>
-                  </div>
-                  <div class="status-row"><span>Conversion rate</span><strong>{{ conversionRate() }}%</strong></div>
-                  <div class="progress-bar">
-                    <div class="progress-fill neutral" [style.width.%]="conversionRate() * 10"></div>
-                  </div>
-                </div>
+                <svg class="kpi-wave" viewBox="0 0 220 44" preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="wavePurple" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.34" />
+                      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.02" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M0 34 Q35 16 70 28 T145 20 T220 10 L220 44 L0 44 Z" fill="url(#wavePurple)" />
+                  <path d="M0 34 Q35 16 70 28 T145 20 T220 10" fill="none" stroke="#8b5cf6" stroke-width="2.5" stroke-linecap="round" />
+                </svg>
               </article>
 
-              <article class="chart-card span-5">
-                <div class="chart-card-header">
-                  <div>
-                    <span>Orders Summary</span>
-                    <h3>Performance by status</h3>
+              <!-- Orders Processed -->
+              <article class="kpi-card kpi-card--blue">
+                <div class="kpi-top">
+                  <span class="kpi-icon"><i class="fa-solid fa-cart-shopping"></i></span>
+                  <div class="kpi-info">
+                    <span class="kpi-label">Orders Processed</span>
+                    <strong class="kpi-value">{{ totalOrders() }}</strong>
+                    <span class="kpi-trend kpi-trend--up">
+                      <i class="fa-solid fa-arrow-up"></i> {{ orderStatuses().pending }} pending <small>current</small>
+                    </span>
                   </div>
                 </div>
-                <div class="bar-chart">
-                  <div class="bar-item"><strong>{{ orderStatuses().completed }}</strong><span>Completed</span>
-                    <div class="bar-track">
-                      <div class="bar-fill" style="width: 80%"></div>
+                <svg class="kpi-wave" viewBox="0 0 220 44" preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="waveBlue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.32" />
+                      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.02" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M0 32 Q42 14 82 26 T160 18 T220 12 L220 44 L0 44 Z" fill="url(#waveBlue)" />
+                  <path d="M0 32 Q42 14 82 26 T160 18 T220 12" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" />
+                </svg>
+              </article>
+
+              <!-- Products Sold -->
+              <article class="kpi-card kpi-card--amber">
+                <div class="kpi-top">
+                  <span class="kpi-icon"><i class="fa-solid fa-box-open"></i></span>
+                  <div class="kpi-info">
+                    <span class="kpi-label">Products Sold</span>
+                    <strong class="kpi-value">{{ productsSold() }}</strong>
+                    <span class="kpi-trend kpi-trend--up">
+                      <i class="fa-solid fa-arrow-up"></i> +15.2% <small>vs last week</small>
+                    </span>
+                  </div>
+                </div>
+                <svg class="kpi-wave" viewBox="0 0 220 44" preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="waveAmber" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.32" />
+                      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.02" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M0 34 Q48 20 92 28 T165 16 T220 10 L220 44 L0 44 Z" fill="url(#waveAmber)" />
+                  <path d="M0 34 Q48 20 92 28 T165 16 T220 10" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" />
+                </svg>
+              </article>
+
+              <!-- Inventory Items -->
+              <article class="kpi-card kpi-card--pink">
+                <div class="kpi-top">
+                  <span class="kpi-icon"><i class="fa-solid fa-layer-group"></i></span>
+                  <div class="kpi-info">
+                    <span class="kpi-label">Inventory Items</span>
+                    <strong class="kpi-value">{{ productStatus().total }}</strong>
+                    <span class="kpi-trend" [class.kpi-trend--down]="productStatus().lowStock > 0" [class.kpi-trend--up]="productStatus().lowStock === 0">
+                      <i class="fa-solid" [class.fa-arrow-down]="productStatus().lowStock > 0" [class.fa-check]="productStatus().lowStock === 0"></i>
+                      {{ productStatus().lowStock }} low stock <small>· {{ productStatus().outOfStock }} out</small>
+                    </span>
+                  </div>
+                </div>
+                <svg class="kpi-wave" viewBox="0 0 220 44" preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="wavePink" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#ec4899" stop-opacity="0.32" />
+                      <stop offset="100%" stop-color="#ec4899" stop-opacity="0.02" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M0 30 Q40 24 85 16 T165 24 T220 14 L220 44 L0 44 Z" fill="url(#wavePink)" />
+                  <path d="M0 30 Q40 24 85 16 T165 24 T220 14" fill="none" stroke="#ec4899" stroke-width="2.5" stroke-linecap="round" />
+                </svg>
+              </article>
+
+              <!-- Customers -->
+              <article class="kpi-card kpi-card--green">
+                <div class="kpi-top">
+                  <span class="kpi-icon"><i class="fa-solid fa-users"></i></span>
+                  <div class="kpi-info">
+                    <span class="kpi-label">Customers</span>
+                    <strong class="kpi-value">{{ totalCustomers() }}</strong>
+                    <span class="kpi-trend kpi-trend--up">
+                      <i class="fa-solid fa-arrow-up"></i> +6.8% <small>vs last week</small>
+                    </span>
+                  </div>
+                </div>
+                <svg class="kpi-wave" viewBox="0 0 220 44" preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="waveGreen" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#10b981" stop-opacity="0.32" />
+                      <stop offset="100%" stop-color="#10b981" stop-opacity="0.02" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M0 34 Q42 18 88 26 T168 18 T220 10 L220 44 L0 44 Z" fill="url(#waveGreen)" />
+                  <path d="M0 34 Q42 18 88 26 T168 18 T220 10" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" />
+                </svg>
+              </article>
+            </section>
+
+            <!-- Row 2: Revenue Analytics + Sales Trend + Top Selling Products -->
+            <section class="dash-row-analytics">
+              <!-- Revenue Analytics Card -->
+              <article class="dash-card">
+                <div class="dash-card-head">
+                  <div class="dash-card-title">
+                    <span class="dash-title-icon"><i class="fa-solid fa-chart-column"></i></span>
+                    <h3>Revenue Analytics</h3>
+                  </div>
+                  <div class="segmented-tabs">
+                    <button type="button" [class.active]="revenueMetric() === 'Revenue'" (click)="setRevenueMetric('Revenue')">Revenue</button>
+                    <button type="button" [class.active]="revenueMetric() === 'Orders'" (click)="setRevenueMetric('Orders')">Orders</button>
+                    <button type="button" [class.active]="revenueMetric() === 'Profit'" (click)="setRevenueMetric('Profit')">Profit</button>
+                  </div>
+                </div>
+
+                <div class="chart-legend">
+                  <span><i class="dot dot--purple"></i> {{ revenueMetric() }}</span>
+                  <span><i class="dot dot--blue"></i> Orders</span>
+                  <span class="legend-period">{{ selectedPeriod() }} view</span>
+                </div>
+
+                <div class="combo-chart">
+                  @if (revenueChartPoints()[activeChartIndex()]; as activePt) {
+                    <div class="chart-floating-tooltip">
+                      <strong>{{ activePt.label }} ({{ selectedPeriod() }})</strong>
+                      <span><i class="dot dot--purple"></i> {{ revenueMetric() }}: {{ revenueMetric() === 'Orders' ? activePt.value : ('$' + activePt.value) }}</span>
+                      <span><i class="dot dot--blue"></i> Orders: {{ activePt.orderCount }}</span>
+                    </div>
+                  }
+
+                  <div class="combo-chart-plot">
+                    <div class="combo-gridlines">
+                      <span></span><span></span><span></span><span></span>
+                    </div>
+
+                    <svg class="combo-line-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                      <polyline
+                        [attr.points]="revenueLinePolyline()"
+                        fill="none"
+                        stroke="#2563eb"
+                        stroke-width="1.35"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+
+                    <div class="combo-bars">
+                      @for (pt of revenueChartPoints(); track pt.label; let idx = $index) {
+                        <div
+                          class="combo-bar-col"
+                          [class.is-active]="activeChartIndex() === idx"
+                          (mouseenter)="activeChartIndex.set(idx)"
+                          (click)="activeChartIndex.set(idx)"
+                        >
+                          <div class="combo-bar-track">
+                            <span class="combo-line-dot" [style.bottom.%]="pt.lineBottomPct"></span>
+                            <div class="combo-bar-fill" [style.height.%]="pt.heightPct"></div>
+                          </div>
+                          <span class="combo-bar-label">{{ pt.label }}</span>
+                        </div>
+                      }
                     </div>
                   </div>
-                  <div class="bar-item"><strong>{{ orderStatuses().pending }}</strong><span>Pending</span>
-                    <div class="bar-track">
-                      <div class="bar-fill accent" style="width: 45%"></div>
-                    </div>
+                </div>
+              </article>
+
+              <!-- Sales Trend Card -->
+              <article class="dash-card sales-trend-card">
+                <div class="dash-card-head">
+                  <div class="dash-card-title">
+                    <span class="dash-title-icon"><i class="fa-solid fa-arrow-trend-up"></i></span>
+                    <h3>Sales Trend</h3>
                   </div>
-                  <div class="bar-item"><strong>{{ orderStatuses().refunded }}</strong><span>Refunded</span>
-                    <div class="bar-track">
-                      <div class="bar-fill warning" style="width: 24%"></div>
+                </div>
+
+                <div class="sales-trend-stat">
+                  <div>
+                    <strong class="trend-big">+12.3%</strong>
+                    <span class="trend-sub">vs last {{ selectedPeriod().toLowerCase() }}</span>
+                  </div>
+                  <span class="trend-circle-badge">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                  </span>
+                </div>
+
+                <div class="sales-trend-chart">
+                  <svg viewBox="0 0 260 110" preserveAspectRatio="none" aria-hidden="true">
+                    <defs>
+                      <linearGradient id="salesTrendGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#10b981" stop-opacity="0.34" />
+                        <stop offset="100%" stop-color="#10b981" stop-opacity="0.02" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M0 86 Q26 70 52 78 T104 62 T156 54 T208 42 T260 22 L260 110 L0 110 Z" fill="url(#salesTrendGrad)" />
+                    <path d="M0 86 Q26 70 52 78 T104 62 T156 54 T208 42 T260 22" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" />
+                  </svg>
+                </div>
+
+                <div class="sales-trend-foot">
+                  <span>Latest Visitors</span>
+                  <strong>{{ visitorTrend()[visitorTrend().length - 1] }}</strong>
+                </div>
+              </article>
+
+              <!-- Top Selling Products Card -->
+              <article class="dash-card">
+                <div class="dash-card-head">
+                  <div class="dash-card-title">
+                    <span class="dash-title-icon"><i class="fa-solid fa-trophy"></i></span>
+                    <h3>Top Selling Products</h3>
+                  </div>
+                  <button type="button" class="link-pill-btn" (click)="selectTab('products')">View All</button>
+                </div>
+
+                <div class="top-selling-list">
+                  @for (product of topProducts().slice(0, 4); track product.product; let idx = $index) {
+                    <div class="top-selling-item">
+                      <div class="top-selling-thumb">
+                        @if (getProductImage(product.product)) {
+                          <img [src]="getProductImage(product.product)" [alt]="product.product" />
+                        } @else {
+                          <i class="fa-solid fa-cube"></i>
+                        }
+                      </div>
+                      <div class="top-selling-meta">
+                        <strong>{{ product.product }}</strong>
+                        <span>{{ product.sold }} sold · ${{ product.revenue.toFixed(0) }}</span>
+                      </div>
+                      <span class="rank-badge" [class.rank-1]="idx === 0" [class.rank-2]="idx === 1" [class.rank-3]="idx === 2">
+                        #{{ idx + 1 }}
+                      </span>
                     </div>
+                  } @empty {
+                    <p class="empty-hint">No product sales recorded yet.</p>
+                  }
+                </div>
+
+                <div class="category-mini-strip">
+                  @for (category of categoriesPerformance().slice(0, 3); track category.category) {
+                    <div class="cat-mini-chip">
+                      <span>{{ category.category }}</span>
+                      <strong>{{ category.sold }}</strong>
+                    </div>
+                  }
+                </div>
+              </article>
+            </section>
+
+            <!-- Row 3: Checkout Performance + Orders Summary + Traffic Source -->
+            <section class="dash-row-metrics">
+              <!-- Checkout Performance (3 Circular Rings) -->
+              <article class="dash-card">
+                <div class="dash-card-head">
+                  <div class="dash-card-title">
+                    <span class="dash-title-icon"><i class="fa-solid fa-cart-arrow-down"></i></span>
+                    <h3>Checkout Performance</h3>
+                  </div>
+                </div>
+
+                <div class="radial-gauges-grid">
+                  <div class="radial-gauge-item">
+                    <div
+                      class="radial-ring"
+                      [style.background]="'conic-gradient(#8b5cf6 ' + paymentSuccess() + '%, var(--dm-lavender-bg) 0)'"
+                    >
+                      <span>{{ paymentSuccess() }}%</span>
+                    </div>
+                    <small>Success</small>
+                  </div>
+
+                  <div class="radial-gauge-item">
+                    <div
+                      class="radial-ring"
+                      [style.background]="'conic-gradient(#3b82f6 ' + checkoutRate() + '%, var(--dm-lavender-bg) 0)'"
+                    >
+                      <span>{{ checkoutRate() }}%</span>
+                    </div>
+                    <small>Checkout Conversion</small>
+                  </div>
+
+                  <div class="radial-gauge-item">
+                    <div
+                      class="radial-ring"
+                      [style.background]="'conic-gradient(#6366f1 ' + (conversionRate() * 8) + '%, var(--dm-lavender-bg) 0)'"
+                    >
+                      <span>{{ conversionRate() }}%</span>
+                    </div>
+                    <small>Conversion Rate</small>
                   </div>
                 </div>
               </article>
 
-              <article class="chart-card span-3">
-                <div class="chart-card-header">
-                  <div>
-                    <span>Traffic Source</span>
-                    <h3>Top sources</h3>
+              <!-- Orders Summary -->
+              <article class="dash-card">
+                <div class="dash-card-head">
+                  <div class="dash-card-title">
+                    <span class="dash-title-icon"><i class="fa-solid fa-box"></i></span>
+                    <h3>Orders Summary</h3>
                   </div>
+                  <button type="button" class="link-text-btn" (click)="exportDashboardReport()">
+                    View Report <i class="fa-solid fa-chevron-right"></i>
+                  </button>
                 </div>
-                <div class="donut-chart"></div>
-                <div class="traffic-list">
-                  <div class="traffic-item" *ngFor="let source of trafficSources()">
-                    <span>{{ source.source }}</span>
-                    <strong>{{ source.percent }}%</strong>
+
+                <div class="orders-summary-rows">
+                  <div class="summary-status-row">
+                    <span class="status-icon status-icon--green"><i class="fa-solid fa-check"></i></span>
+                    <span class="summary-label">Completed</span>
+                    <strong class="summary-count">{{ orderStatuses().completed }}</strong>
+                    <div class="summary-bar">
+                      <div class="summary-bar-fill summary-bar-fill--green" [style.width.%]="orderStatusPercents().completed"></div>
+                    </div>
+                    <span class="summary-pct">{{ orderStatusPercents().completed }}%</span>
+                  </div>
+
+                  <div class="summary-status-row">
+                    <span class="status-icon status-icon--blue"><i class="fa-regular fa-clock"></i></span>
+                    <span class="summary-label">Pending</span>
+                    <strong class="summary-count">{{ orderStatuses().pending }}</strong>
+                    <div class="summary-bar">
+                      <div class="summary-bar-fill summary-bar-fill--blue" [style.width.%]="orderStatusPercents().pending"></div>
+                    </div>
+                    <span class="summary-pct">{{ orderStatusPercents().pending }}%</span>
+                  </div>
+
+                  <div class="summary-status-row">
+                    <span class="status-icon status-icon--red"><i class="fa-solid fa-xmark"></i></span>
+                    <span class="summary-label">Refunded</span>
+                    <strong class="summary-count">{{ orderStatuses().refunded }}</strong>
+                    <div class="summary-bar">
+                      <div class="summary-bar-fill summary-bar-fill--red" [style.width.%]="orderStatusPercents().refunded"></div>
+                    </div>
+                    <span class="summary-pct">{{ orderStatusPercents().refunded }}%</span>
                   </div>
                 </div>
               </article>
 
-              <article class="table-card span-7">
-                <div class="table-card-header">
-                  <div>
-                    <span>Recent Orders</span>
-                    <h3>Live order activity</h3>
+              <!-- Traffic Source -->
+              <article class="dash-card">
+                <div class="dash-card-head">
+                  <div class="dash-card-title">
+                    <span class="dash-title-icon"><i class="fa-solid fa-link"></i></span>
+                    <h3>Traffic Source</h3>
                   </div>
-                  <div class="table-filters">
-                    <input type="search" placeholder="Search orders..." [ngModel]="searchQuery()"
-                      (ngModelChange)="updateSearchQuery($event)" />
-                    <select [ngModel]="selectedStatus()" (ngModelChange)="updateStatus($event)">
+                  <button type="button" class="link-text-btn" (click)="selectTab('analytics')">View Details</button>
+                </div>
+
+                <div class="traffic-layout">
+                  <div class="traffic-donut">
+                    <div class="traffic-donut-hole">
+                      <strong>{{ totalVisits() | number }}</strong>
+                      <span>Total Visits</span>
+                    </div>
+                  </div>
+
+                  <div class="traffic-legend">
+                    @for (source of trafficSources(); track source.source; let idx = $index) {
+                      <div class="traffic-legend-row">
+                        <span class="legend-name">
+                          <i class="dot" [class.dot--purple]="idx === 0" [class.dot--amber]="idx === 1" [class.dot--blue]="idx === 2" [class.dot--green]="idx === 3" [class.dot--pink]="idx === 4"></i>
+                          {{ source.source }}
+                        </span>
+                        <strong>{{ source.percent }}%</strong>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </article>
+            </section>
+
+            <!-- Row 4: Recent Orders + AI Insights -->
+            <section class="dash-row-bottom">
+              <!-- Recent Orders Table Card -->
+              <article class="dash-card">
+                <div class="dash-card-head">
+                  <div class="dash-card-title">
+                    <span class="dash-title-icon"><i class="fa-solid fa-receipt"></i></span>
+                    <h3>Recent Orders</h3>
+                  </div>
+                  <div class="orders-table-controls">
+                    <select class="dash-select" [ngModel]="selectedStatus()" (ngModelChange)="updateStatus($event)">
                       <option value="All">All Status</option>
                       <option value="Completed">Completed</option>
                       <option value="Pending">Pending</option>
@@ -382,84 +885,110 @@
                     </select>
                   </div>
                 </div>
-                <div class="table-wrap">
-                  <table>
+
+                <div class="dash-table-wrap">
+                  <table class="dash-table">
                     <thead>
                       <tr>
-                        <th>Order</th>
+                        <th>Order ID</th>
                         <th>Customer</th>
-                        <th>Product</th>
+                        <th>Items</th>
+                        <th>Amount</th>
                         <th>Status</th>
-                        <th>Total</th>
                         <th>Date</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr *ngFor="let order of filteredOrders()">
-                        <td>{{ order.id }}</td>
-                        <td>{{ order.customer }}</td>
-                        <td>{{ order.product }}</td>
-                        <td><span class="status-chip" [class.completed]="order.status === 'Completed'"
-                            [class.pending]="order.status === 'Pending'" [class.refunded]="order.status === 'Refunded'">{{
-                            order.status }}</span></td>
-                        <td>${{ order.total.toFixed(2) }}</td>
-                        <td>{{ order.date }}</td>
-                      </tr>
+                      @for (order of filteredOrders(); track order.id) {
+                        <tr>
+                          <td class="order-id-cell">{{ order.id }}</td>
+                          <td>
+                            <div class="customer-cell">
+                              <span class="customer-avatar">{{ getCustomerInitial(order.customer) }}</span>
+                              <span>{{ order.customer }}</span>
+                            </div>
+                          </td>
+                          <td>{{ order.items }}</td>
+                          <td class="amount-cell">${{ order.total.toFixed(2) }}</td>
+                          <td>
+                            <span
+                              class="status-pill-tag"
+                              [class.status-pill-tag--completed]="order.status === 'Completed'"
+                              [class.status-pill-tag--pending]="order.status === 'Pending'"
+                              [class.status-pill-tag--refunded]="order.status === 'Refunded'"
+                            >
+                              {{ order.status }}
+                            </span>
+                          </td>
+                          <td class="date-cell">{{ order.date }}</td>
+                        </tr>
+                      } @empty {
+                        <tr>
+                          <td colspan="6" class="empty-table-cell">No matching orders found.</td>
+                        </tr>
+                      }
                     </tbody>
                   </table>
                 </div>
               </article>
 
-              <article class="table-card span-5">
-                <div class="table-card-header">
-                  <div>
-                    <span>Top Selling Products</span>
-                    <h3>Best sellers</h3>
+              <!-- AI Insights Card -->
+              <article class="dash-card ai-insights-card">
+                <div class="dash-card-head">
+                  <div class="dash-card-title">
+                    <span class="dash-title-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                    <h3>AI Insights</h3>
                   </div>
+                  <span class="ai-badge">Powered by AI</span>
                 </div>
-                <div class="top-products">
-                  <div class="top-product" *ngFor="let product of topProducts()">
-                    <div>
-                      <strong>{{ product.product }}</strong>
-                      <span>{{ product.sold }} sold</span>
-                    </div>
-                    <strong>${{ product.revenue.toFixed(0) }}</strong>
-                  </div>
-                </div>
-                <div class="category-summary">
-                  <h4>Category performance</h4>
-                  <ul>
-                    <li *ngFor="let category of categoriesPerformance()">
-                      <span>{{ category.category }}</span>
-                      <strong>{{ category.sold }} sold</strong>
-                    </li>
-                  </ul>
-                </div>
-              </article>
 
-              <article class="chart-card span-12">
-                <div class="chart-card-header">
-                  <div>
-                    <span>Visitors & Engagement</span>
-                    <h3>Website traffic overview</h3>
+                <div class="ai-insights-body">
+                  <div class="ai-insights-list">
+                    <div class="ai-insight-item">
+                      <span class="ai-item-icon ai-item-icon--green"><i class="fa-solid fa-arrow-trend-up"></i></span>
+                      <span>Revenue is at <strong>${{ totalSales().toFixed(0) }}</strong> ({{ selectedPeriod() }} view) with {{ paymentSuccess() }}% payment success.</span>
+                    </div>
+                    <div class="ai-insight-item">
+                      <span class="ai-item-icon ai-item-icon--purple"><i class="fa-solid fa-bag-shopping"></i></span>
+                      <span>
+                        @if (topProducts().length) {
+                          <strong>{{ topProducts()[0].product }}</strong> is your top-selling product ({{ topProducts()[0].sold }} sold).
+                        } @else {
+                          Add products and orders to unlock top-seller recommendations.
+                        }
+                      </span>
+                    </div>
+                    <div class="ai-insight-item">
+                      <span class="ai-item-icon ai-item-icon--amber"><i class="fa-solid fa-lightbulb"></i></span>
+                      <span>Restock <strong>{{ productStatus().lowStock }}</strong> product(s) soon ({{ productStatus().outOfStock }} currently out of stock).</span>
+                    </div>
                   </div>
-                </div>
-                <div class="area-chart">
-                  <div class="area-chart-grid"></div>
-                  <div class="area-chart-fill"></div>
-                </div>
-                <div class="visitor-summary">
-                  <div>
-                    <strong>{{ visitorTrend()[visitorTrend().length - 1] }}</strong>
-                    <span>Visitors this week</span>
-                  </div>
-                  <div>
-                    <strong>{{ trafficSources()[0]?.percent }}%</strong>
-                    <span>Organic traffic share</span>
-                  </div>
-                  <div>
-                    <strong>{{ productStatus().lowStock }}</strong>
-                    <span>Low stock alerts</span>
+
+                  <div class="ai-bot-art" aria-hidden="true">
+                    <svg viewBox="0 0 110 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <linearGradient id="botBody" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stop-color="#f5f3ff" />
+                          <stop offset="100%" stop-color="#ddd6fe" />
+                        </linearGradient>
+                        <linearGradient id="botScreen" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stop-color="#1e1b4b" />
+                          <stop offset="100%" stop-color="#4c1d95" />
+                        </linearGradient>
+                      </defs>
+                      <line x1="55" y1="10" x2="55" y2="24" stroke="#8b5cf6" stroke-width="3" stroke-linecap="round" />
+                      <circle cx="55" cy="8" r="5" fill="#a855f7" />
+                      <rect x="22" y="22" width="66" height="44" rx="18" fill="url(#botBody)" stroke="#c4b5fd" stroke-width="2" />
+                      <rect x="30" y="30" width="50" height="28" rx="11" fill="url(#botScreen)" />
+                      <circle cx="44" cy="43" r="4.5" fill="#38bdf8" />
+                      <circle cx="66" cy="43" r="4.5" fill="#38bdf8" />
+                      <path d="M48 51 Q55 56 62 51" stroke="#c4b5fd" stroke-width="2.2" stroke-linecap="round" fill="none" />
+                      <rect x="28" y="70" width="54" height="40" rx="16" fill="url(#botBody)" stroke="#c4b5fd" stroke-width="2" />
+                      <rect x="38" y="80" width="34" height="20" rx="6" fill="#6d28d9" />
+                      <rect x="43" y="90" width="5" height="6" rx="1.5" fill="#a78bfa" />
+                      <rect x="52" y="86" width="5" height="10" rx="1.5" fill="#38bdf8" />
+                      <rect x="61" y="83" width="5" height="13" rx="1.5" fill="#34d399" />
+                    </svg>
                   </div>
                 </div>
               </article>

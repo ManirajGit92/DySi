@@ -52,7 +52,9 @@ export class BookingsAdminComponent {
   readonly rows = signal(10);
 
   readonly bookingStatuses: BookingStatus[] = ['Pending', 'Confirmed', 'Cancelled', 'Completed'];
+  readonly statusFilterOptions: Array<'All' | BookingStatus> = ['All', 'Pending', 'Confirmed', 'Cancelled', 'Completed'];
   readonly busTypes: BusType[] = ['Mini Bus', 'AC Bus', 'Luxury Coach', 'Sleeper Bus'];
+  readonly busTypeFilterOptions: Array<'All' | BusType> = ['All', 'Mini Bus', 'AC Bus', 'Luxury Coach', 'Sleeper Bus'];
   selectedStatus: any;
   readonly packageOptions = computed(() => [
     'All',

@@ -1,31 +1,52 @@
 <div class="booking-settings-container">
   <p-toast></p-toast>
 
+  <!-- Header -->
   <header class="settings-header">
-    <div>
-      <span class="eyebrow">Booking Administration</span>
-      <h1>Booking Page Configuration</h1>
-      <p>Configure the customer-facing booking form, dropdown variables, bus seat grids, and driver cabin layouts. Data is saved in Firestore.</p>
+    <div class="header-title-wrap">
+      <span class="header-icon-badge">
+        <i class="fa-regular fa-calendar-check"></i>
+      </span>
+      <div>
+        <h1>Booking Page Configuration</h1>
+        <p>Configure the customer-facing booking form, dropdown variables, bus seat grids, and driver cabin layouts.</p>
+      </div>
     </div>
-    <button class="btn btn--primary save-btn" (click)="saveSettings()">
-      <i class="pi pi-save mr-2"></i> Save Configurations
-    </button>
+
+    <div class="header-actions">
+      <label class="preview-toggle-pill">
+        <span>Live Preview</span>
+        <input type="checkbox" [ngModel]="showLivePreview()" (ngModelChange)="showLivePreview.set($event)" />
+        <span class="toggle-track"></span>
+      </label>
+
+      <button type="button" class="bs-btn bs-btn--primary" (click)="saveSettings()">
+        <i class="fa-regular fa-floppy-disk"></i>
+        <span>Save Configurations</span>
+      </button>
+    </div>
   </header>
 
-  <div class="settings-grid">
-    <!-- Config Accordion Panel -->
+  <div class="settings-grid" [class.settings-grid--single]="!showLivePreview()">
+    <!-- Left Column: Accordion Configuration Panel -->
     <div class="accordion-panel">
       <div class="accordion">
-        
+
         <!-- SECTION 1: Booking Page Fields Management -->
         <div class="accordion-item" [class.active]="openSection() === 'fields'">
-          <button class="accordion-header" (click)="toggleSection('fields')">
-            <span class="header-text"><i class="pi pi-list icon-prefix"></i> Booking Page Fields Management</span>
-            <i class="pi accordion-chevron" [class.pi-chevron-down]="openSection() !== 'fields'" [class.pi-chevron-up]="openSection() === 'fields'"></i>
+          <button type="button" class="accordion-header" (click)="toggleSection('fields')">
+            <div class="accordion-header-left">
+              <span class="acc-icon"><i class="fa-solid fa-list-check"></i></span>
+              <div class="acc-title-block">
+                <strong>Booking Page Fields Management</strong>
+                <span>Add, edit, reorder, and manage form fields (name, phone, travel date, etc.).</span>
+              </div>
+            </div>
+            <i class="fa-solid accordion-chevron" [class.fa-chevron-down]="openSection() !== 'fields'" [class.fa-chevron-up]="openSection() === 'fields'"></i>
           </button>
-          
+
           <div class="accordion-content">
-            <!-- Add new custom field section -->
+            <!-- Add new custom field -->
             <div class="sub-card">
               <h4>Add New Custom Field</h4>
               <form [formGroup]="customFieldForm" (ngSubmit)="addField()" class="custom-field-form">
@@ -46,43 +67,42 @@
                       <option *ngFor="let opt of fieldTypes" [value]="opt.value">{{ opt.label }}</option>
                     </select>
                   </label>
-                  <div class="form-col flex-center mt-4">
+                  <div class="form-col flex-center">
                     <label class="flex-row">
                       <input type="checkbox" formControlName="required" />
                       <span>Required field?</span>
                     </label>
                   </div>
                 </div>
-                
-                <!-- If type is dropdown or radio, allow comma-separated options -->
+
                 <div class="form-row" *ngIf="customFieldForm.value.type === 'dropdown' || customFieldForm.value.type === 'radio'">
                   <label class="form-col span-12">
                     <span>Options List (comma separated)</span>
                     <input pInputText formControlName="options" placeholder="e.g. Option A, Option B, Option C" />
                   </label>
                 </div>
-                
-                <button type="submit" class="btn btn--primary mt-2" [disabled]="customFieldForm.invalid">
-                  <i class="pi pi-plus mr-1"></i> Add Custom Field
+
+                <button type="submit" class="bs-btn bs-btn--primary bs-btn--sm" [disabled]="customFieldForm.invalid">
+                  <i class="fa-solid fa-plus"></i> Add Custom Field
                 </button>
               </form>
             </div>
 
             <!-- List of existing fields -->
-            <div class="sub-card mt-4">
+            <div class="sub-card">
               <h4>Field Configurations List</h4>
               <p class="description">Drag and drop fields to reorder them or toggle their status. Core fields cannot be deleted.</p>
-              
-              <!-- Edit Field Modal (Inline) -->
+
+              <!-- Inline Edit Modal -->
               <div *ngIf="editingField" class="edit-field-overlay">
                 <div class="edit-field-modal">
                   <h3>Edit Field: {{ editingField.key }}</h3>
                   <form [formGroup]="editFieldForm" (ngSubmit)="saveFieldEdit()">
-                    <label>
+                    <label class="form-col">
                       <span>Label</span>
                       <input pInputText formControlName="label" />
                     </label>
-                    <label class="mt-2">
+                    <label class="form-col mt-2">
                       <span>Placeholder</span>
                       <input pInputText formControlName="placeholder" />
                     </label>
@@ -91,79 +111,87 @@
                       <span>Required field?</span>
                     </label>
                     <div class="form-actions mt-3">
-                      <button type="submit" class="btn btn--primary" [disabled]="editFieldForm.invalid">Save Changes</button>
-                      <button type="button" class="btn btn--ghost" (click)="cancelEditField()">Cancel</button>
+                      <button type="submit" class="bs-btn bs-btn--primary bs-btn--sm" [disabled]="editFieldForm.invalid">Save Changes</button>
+                      <button type="button" class="bs-btn bs-btn--outline bs-btn--sm" (click)="cancelEditField()">Cancel</button>
                     </div>
                   </form>
                 </div>
               </div>
 
               <div class="fields-list">
-                <div 
-                  *ngFor="let field of fieldsList(); let i = index" 
+                <div
+                  *ngFor="let field of fieldsList(); let i = index"
                   class="field-item-row"
                   [class.dragging]="draggedIndex === i"
                   draggable="true"
                   (dragstart)="onDragStart(i)"
                   (dragover)="onDragOver($event, i)"
                   (drop)="onDrop($event, i)">
-                  
+
                   <div class="drag-handle" title="Drag to reorder">
-                    <i class="pi pi-align-justify"></i>
+                    <i class="fa-solid fa-grip-vertical"></i>
                   </div>
-                  
+
                   <div class="field-meta">
                     <strong class="field-label">{{ field.label }}</strong>
-                    <span class="field-key">{{ field.key }} <span class="badge" [class.badge-core]="isCoreField(field.key)">{{ isCoreField(field.key) ? 'Core' : 'Custom' }}</span></span>
+                    <span class="field-key">
+                      {{ field.key }}
+                      <span class="badge" [class.badge-core]="isCoreField(field.key)">
+                        {{ isCoreField(field.key) ? 'Core' : 'Custom' }}
+                      </span>
+                    </span>
                   </div>
 
-                  <div class="field-type-badge">
-                    {{ field.type | titlecase }}
-                  </div>
+                  <div class="field-type-badge">{{ field.type | titlecase }}</div>
 
                   <div class="field-toggles">
-                    <label class="switch-container" title="Visible?">
+                    <label class="switch-container">
                       <input type="checkbox" [checked]="field.visible" (change)="toggleFieldVisibility(field)" />
                       <span class="switch-label">Visible</span>
                     </label>
-                    <label class="switch-container" title="Required?">
+                    <label class="switch-container">
                       <input type="checkbox" [checked]="field.required" (change)="toggleFieldRequired(field)" />
                       <span class="switch-label">Required</span>
                     </label>
                   </div>
 
                   <div class="field-actions">
-                    <button class="action-icon-btn text-info" (click)="startEditField(field)" title="Edit Label/Placeholder">
-                      <i class="pi pi-pencil"></i>
+                    <button type="button" class="action-icon-btn text-info" (click)="startEditField(field)" title="Edit">
+                      <i class="fa-solid fa-pen"></i>
                     </button>
-                    <button 
-                      class="action-icon-btn text-danger" 
-                      [disabled]="isCoreField(field.key)" 
+                    <button
+                      type="button"
+                      class="action-icon-btn text-danger"
+                      [disabled]="isCoreField(field.key)"
                       [class.disabled]="isCoreField(field.key)"
-                      (click)="deleteField(field)" 
+                      (click)="deleteField(field)"
                       title="Delete custom field">
-                      <i class="pi pi-trash"></i>
+                      <i class="fa-regular fa-trash-can"></i>
                     </button>
                     <div class="order-arrows">
-                      <button class="arrow-btn" (click)="moveFieldUp(i)" [disabled]="i === 0" title="Move Up"><i class="pi pi-chevron-up"></i></button>
-                      <button class="arrow-btn" (click)="moveFieldDown(i)" [disabled]="i === fieldsList().length - 1" title="Move Down"><i class="pi pi-chevron-down"></i></button>
+                      <button type="button" class="arrow-btn" (click)="moveFieldUp(i)" [disabled]="i === 0"><i class="fa-solid fa-chevron-up"></i></button>
+                      <button type="button" class="arrow-btn" (click)="moveFieldDown(i)" [disabled]="i === fieldsList().length - 1"><i class="fa-solid fa-chevron-down"></i></button>
                     </div>
                   </div>
-
                 </div>
               </div>
-
             </div>
           </div>
         </div>
 
         <!-- SECTION 2: Dropdown Data Management -->
         <div class="accordion-item" [class.active]="openSection() === 'dropdowns'">
-          <button class="accordion-header" (click)="toggleSection('dropdowns')">
-            <span class="header-text"><i class="pi pi-cog icon-prefix"></i> Dropdown Data Management</span>
-            <i class="pi accordion-chevron" [class.pi-chevron-down]="openSection() !== 'dropdowns'" [class.pi-chevron-up]="openSection() === 'dropdowns'"></i>
+          <button type="button" class="accordion-header" (click)="toggleSection('dropdowns')">
+            <div class="accordion-header-left">
+              <span class="acc-icon"><i class="fa-solid fa-database"></i></span>
+              <div class="acc-title-block">
+                <strong>Dropdown Data Management</strong>
+                <span>Manage dropdown values (City, Pickup, Bus Type, Package, etc.).</span>
+              </div>
+            </div>
+            <i class="fa-solid accordion-chevron" [class.fa-chevron-down]="openSection() !== 'dropdowns'" [class.fa-chevron-up]="openSection() === 'dropdowns'"></i>
           </button>
-          
+
           <div class="accordion-content">
             <div class="sub-card">
               <h4>Select Dropdown/Radio Field</h4>
@@ -176,30 +204,26 @@
                 </label>
               </div>
 
-              <div *ngIf="selectedDropdownField()" class="options-manager mt-4">
-                <div class="options-header-row">
-                  <h5>Options for "{{ selectedDropdownField()?.label }}"</h5>
-                </div>
+              <div *ngIf="selectedDropdownField()" class="options-manager">
+                <h5>Options for "{{ selectedDropdownField()?.label }}"</h5>
 
-                <!-- List of current options -->
-                <div class="options-list mt-2">
+                <div class="options-list">
                   <div *ngFor="let opt of selectedDropdownField()?.options; let idx = index" class="option-item-row">
                     <span class="option-index">{{ idx + 1 }}.</span>
-                    
-                    <!-- Inline editing option -->
+
                     <div *ngIf="editingOptionIndex() === idx; else viewOpt" class="option-edit-wrap">
                       <input pInputText [ngModel]="editingOptionVal()" (ngModelChange)="editingOptionVal.set($event)" />
-                      <button class="btn btn--primary btn--sm" (click)="saveOptionEdit()"><i class="pi pi-check"></i></button>
-                      <button class="btn btn--ghost btn--sm" (click)="cancelEditOption()"><i class="pi pi-times"></i></button>
+                      <button type="button" class="bs-btn bs-btn--primary bs-btn--sm" (click)="saveOptionEdit()"><i class="fa-solid fa-check"></i></button>
+                      <button type="button" class="bs-btn bs-btn--outline bs-btn--sm" (click)="cancelEditOption()"><i class="fa-solid fa-xmark"></i></button>
                     </div>
-                    
+
                     <ng-template #viewOpt>
                       <span class="option-text">{{ opt }}</span>
                       <div class="option-actions">
-                        <button class="action-icon-btn text-info" (click)="startEditOption(idx, opt)"><i class="pi pi-pencil"></i></button>
-                        <button class="action-icon-btn text-danger" (click)="deleteOption(idx)"><i class="pi pi-trash"></i></button>
-                        <button class="arrow-btn" (click)="moveOption(idx, 'up')" [disabled]="idx === 0"><i class="pi pi-chevron-up"></i></button>
-                        <button class="arrow-btn" (click)="moveOption(idx, 'down')" [disabled]="idx === (selectedDropdownField()?.options?.length || 0) - 1"><i class="pi pi-chevron-down"></i></button>
+                        <button type="button" class="action-icon-btn text-info" (click)="startEditOption(idx, opt)"><i class="fa-solid fa-pen"></i></button>
+                        <button type="button" class="action-icon-btn text-danger" (click)="deleteOption(idx)"><i class="fa-regular fa-trash-can"></i></button>
+                        <button type="button" class="arrow-btn" (click)="moveOption(idx, 'up')" [disabled]="idx === 0"><i class="fa-solid fa-chevron-up"></i></button>
+                        <button type="button" class="arrow-btn" (click)="moveOption(idx, 'down')" [disabled]="idx === (selectedDropdownField()?.options?.length || 0) - 1"><i class="fa-solid fa-chevron-down"></i></button>
                       </div>
                     </ng-template>
                   </div>
@@ -208,16 +232,12 @@
                   </div>
                 </div>
 
-                <!-- Add option form -->
-                <div class="add-option-form mt-3">
-                  <label class="flex-grow">
-                    <input pInputText [ngModel]="newOptionVal()" (ngModelChange)="newOptionVal.set($event)" placeholder="Enter new option value" (keyup.enter)="addOption()" />
-                  </label>
-                  <button type="button" class="btn btn--primary" (click)="addOption()">
-                    <i class="pi pi-plus mr-1"></i> Add Option
+                <div class="add-option-form">
+                  <input pInputText [ngModel]="newOptionVal()" (ngModelChange)="newOptionVal.set($event)" placeholder="Enter new option value" (keyup.enter)="addOption()" />
+                  <button type="button" class="bs-btn bs-btn--primary bs-btn--sm" (click)="addOption()">
+                    <i class="fa-solid fa-plus"></i> Add Option
                   </button>
                 </div>
-
               </div>
             </div>
           </div>
@@ -225,31 +245,87 @@
 
         <!-- SECTION 3: Seat Layout Configuration -->
         <div class="accordion-item" [class.active]="openSection() === 'seatLayout'">
-          <button class="accordion-header" (click)="toggleSection('seatLayout')">
-            <span class="header-text"><i class="pi pi-th-large icon-prefix"></i> Seat Layout Configuration</span>
-            <i class="pi accordion-chevron" [class.pi-chevron-down]="openSection() !== 'seatLayout'" [class.pi-chevron-up]="openSection() === 'seatLayout'"></i>
+          <button type="button" class="accordion-header" (click)="toggleSection('seatLayout')">
+            <div class="accordion-header-left">
+              <span class="acc-icon"><i class="fa-solid fa-couch"></i></span>
+              <div class="acc-title-block">
+                <strong>Seat Layout Configuration</strong>
+                <span>Design the seat arrangement and layout for your buses.</span>
+              </div>
+            </div>
+            <i class="fa-solid accordion-chevron" [class.fa-chevron-down]="openSection() !== 'seatLayout'" [class.fa-chevron-up]="openSection() === 'seatLayout'"></i>
           </button>
-          
+
           <div class="accordion-content">
-            <div class="sub-card">
+            <div class="seat-pattern-section">
               <h4>Choose Seating Arrangement Pattern</h4>
-              <p class="description">Select the seat grouping template. 2+2 layout has 4 columns per row, and 3+2 layout has 5 columns per row.</p>
-              
-              <div class="layout-toggle-buttons mt-3">
-                <button 
-                  type="button" 
-                  class="layout-toggle-btn"
+              <p class="description">Select a seat grouping template or configure quick row settings.</p>
+
+              <div class="layout-template-cards">
+                <button
+                  type="button"
+                  class="layout-template-card"
                   [class.active]="settings().seatLayout.layoutType === '2+2'"
                   (click)="changeLayout('2+2')">
-                  <i class="pi pi-table mr-2"></i> 2 + 2 Layout
+                  <span class="template-check" *ngIf="settings().seatLayout.layoutType === '2+2'">
+                    <i class="fa-solid fa-check"></i>
+                  </span>
+                  <div class="template-seat-icons">
+                    <i class="fa-solid fa-chair"></i>
+                    <i class="fa-solid fa-chair"></i>
+                  </div>
+                  <div class="template-info">
+                    <strong>2 + 2 Layout</strong>
+                    <span>4 columns per row</span>
+                    <small>(e.g., A1 A2 | A3 A4)</small>
+                  </div>
                 </button>
-                <button 
-                  type="button" 
-                  class="layout-toggle-btn"
+
+                <button
+                  type="button"
+                  class="layout-template-card"
                   [class.active]="settings().seatLayout.layoutType === '3+2'"
                   (click)="changeLayout('3+2')">
-                  <i class="pi pi-table mr-2"></i> 3 + 2 Layout
+                  <span class="template-check" *ngIf="settings().seatLayout.layoutType === '3+2'">
+                    <i class="fa-solid fa-check"></i>
+                  </span>
+                  <div class="template-seat-icons">
+                    <i class="fa-solid fa-chair"></i>
+                    <i class="fa-solid fa-chair"></i>
+                    <i class="fa-solid fa-chair"></i>
+                  </div>
+                  <div class="template-info">
+                    <strong>3 + 2 Layout</strong>
+                    <span>5 columns per row</span>
+                    <small>(e.g., A1 A2 A3 | A4 A5)</small>
+                  </div>
                 </button>
+              </div>
+
+              <!-- Quick Settings Bar -->
+              <div class="quick-settings-box">
+                <div class="quick-settings-title">
+                  <i class="fa-solid fa-gear"></i>
+                  <span>Quick Settings</span>
+                </div>
+                <div class="quick-settings-row">
+                  <label class="quick-field">
+                    <span>Total Rows</span>
+                    <input type="number" min="1" max="15" [ngModel]="totalRowsCount()" (ngModelChange)="quickRowsInput.set($event)" />
+                  </label>
+                  <label class="quick-field">
+                    <span>Left Side Seats</span>
+                    <input type="number" [value]="leftColCount()" readonly />
+                  </label>
+                  <label class="quick-field">
+                    <span>Right Side Seats</span>
+                    <input type="number" [value]="rightColCount()" readonly />
+                  </label>
+                  <button type="button" class="bs-btn bs-btn--outline quick-apply-btn" (click)="applyQuickLayout(quickRowsInput())">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    <span>Apply Layout</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -257,28 +333,34 @@
 
         <!-- SECTION 4: Seat Count Configuration -->
         <div class="accordion-item" [class.active]="openSection() === 'seatCount'">
-          <button class="accordion-header" (click)="toggleSection('seatCount')">
-            <span class="header-text"><i class="pi pi-slack icon-prefix"></i> Seat Count Configuration</span>
-            <i class="pi accordion-chevron" [class.pi-chevron-down]="openSection() !== 'seatCount'" [class.pi-chevron-up]="openSection() === 'seatCount'"></i>
+          <button type="button" class="accordion-header" (click)="toggleSection('seatCount')">
+            <div class="accordion-header-left">
+              <span class="acc-icon"><i class="fa-solid fa-table-cells-large"></i></span>
+              <div class="acc-title-block">
+                <strong>Seat Count Configuration</strong>
+                <span>Set total seats, seat numbering format, and availability rules.</span>
+              </div>
+            </div>
+            <i class="fa-solid accordion-chevron" [class.fa-chevron-down]="openSection() !== 'seatCount'" [class.fa-chevron-up]="openSection() === 'seatCount'"></i>
           </button>
-          
+
           <div class="accordion-content">
             <div class="sub-card">
               <h4>Configure Total Seats Capacity</h4>
-              <p class="description">Modify the total number of seats in the bus. The row letters and labels will automatically recalculate.</p>
-              
-              <div class="seat-count-control mt-3">
-                <button class="count-btn" (click)="setTotalSeats(settings().seatLayout.totalSeats - 1)" [disabled]="settings().seatLayout.totalSeats <= 4">-</button>
+              <p class="description">Modify the total number of seats in the bus. Row letters and labels automatically recalculate.</p>
+
+              <div class="seat-count-control">
+                <button type="button" class="count-btn" (click)="setTotalSeats(settings().seatLayout.totalSeats - 1)" [disabled]="settings().seatLayout.totalSeats <= 4">-</button>
                 <div class="count-display">
                   <strong>{{ settings().seatLayout.totalSeats }}</strong>
                   <span>Total Seats</span>
                 </div>
-                <button class="count-btn" (click)="setTotalSeats(settings().seatLayout.totalSeats + 1)" [disabled]="settings().seatLayout.totalSeats >= 60">+</button>
+                <button type="button" class="count-btn" (click)="setTotalSeats(settings().seatLayout.totalSeats + 1)" [disabled]="settings().seatLayout.totalSeats >= 60">+</button>
               </div>
-              
-              <div class="mt-3">
+
+              <div class="manual-seat-input">
                 <label>
-                  <span>Manual Input:</span>
+                  <span>Manual Input (4 – 60):</span>
                   <input type="number" class="native-input" [ngModel]="settings().seatLayout.totalSeats" (ngModelChange)="setTotalSeats($event)" min="4" max="60" />
                 </label>
               </div>
@@ -288,30 +370,44 @@
 
         <!-- SECTION 5: Driver & Entrance Position Configuration -->
         <div class="accordion-item" [class.active]="openSection() === 'driverEntrance'">
-          <button class="accordion-header" (click)="toggleSection('driverEntrance')">
-            <span class="header-text"><i class="pi pi-user icon-prefix"></i> Driver & Entrance Position Configuration</span>
-            <i class="pi accordion-chevron" [class.pi-chevron-down]="openSection() !== 'driverEntrance'" [class.pi-chevron-up]="openSection() === 'driverEntrance'"></i>
+          <button type="button" class="accordion-header" (click)="toggleSection('driverEntrance')">
+            <div class="accordion-header-left">
+              <span class="acc-icon"><i class="fa-regular fa-user"></i></span>
+              <div class="acc-title-block">
+                <strong>Driver &amp; Entrance Position Configuration</strong>
+                <span>Set driver cabin position and passenger entrance (Left/Right/Front).</span>
+              </div>
+            </div>
+            <i class="fa-solid accordion-chevron" [class.fa-chevron-down]="openSection() !== 'driverEntrance'" [class.fa-chevron-up]="openSection() === 'driverEntrance'"></i>
           </button>
-          
+
           <div class="accordion-content">
             <div class="sub-card">
               <h4>Position Driver Seat and Door</h4>
               <p class="description">Move the driver steering wheel and cabin left or right, and swap the passenger boarding entrance door position.</p>
-              
-              <div class="control-row mt-3">
+
+              <div class="driver-controls-grid">
                 <div class="control-item">
                   <span>Driver Seat Side</span>
                   <div class="toggle-buttons">
-                    <button class="toggle-side-btn" [class.active]="settings().seatLayout.driverPosition === 'left'" (click)="toggleDriverPosition()"><i class="pi pi-angle-double-left mr-1"></i> Left</button>
-                    <button class="toggle-side-btn" [class.active]="settings().seatLayout.driverPosition === 'right'" (click)="toggleDriverPosition()">Right <i class="pi pi-angle-double-right ml-1"></i></button>
+                    <button type="button" class="toggle-side-btn" [class.active]="settings().seatLayout.driverPosition === 'left'" (click)="toggleDriverPosition()">
+                      <i class="fa-solid fa-angles-left"></i> Left
+                    </button>
+                    <button type="button" class="toggle-side-btn" [class.active]="settings().seatLayout.driverPosition === 'right'" (click)="toggleDriverPosition()">
+                      Right <i class="fa-solid fa-angles-right"></i>
+                    </button>
                   </div>
                 </div>
-                
-                <div class="control-item mt-3">
+
+                <div class="control-item">
                   <span>Entrance Door Side</span>
                   <div class="toggle-buttons">
-                    <button class="toggle-side-btn" [class.active]="settings().seatLayout.entrancePosition === 'left'" (click)="toggleEntrancePosition()"><i class="pi pi-angle-double-left mr-1"></i> Left</button>
-                    <button class="toggle-side-btn" [class.active]="settings().seatLayout.entrancePosition === 'right'" (click)="toggleEntrancePosition()">Right <i class="pi pi-angle-double-right ml-1"></i></button>
+                    <button type="button" class="toggle-side-btn" [class.active]="settings().seatLayout.entrancePosition === 'left'" (click)="toggleEntrancePosition()">
+                      <i class="fa-solid fa-angles-left"></i> Left
+                    </button>
+                    <button type="button" class="toggle-side-btn" [class.active]="settings().seatLayout.entrancePosition === 'right'" (click)="toggleEntrancePosition()">
+                      Right <i class="fa-solid fa-angles-right"></i>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -321,144 +417,232 @@
 
         <!-- SECTION 6: Live Preview Section -->
         <div class="accordion-item" [class.active]="openSection() === 'livePreview'">
-          <button class="accordion-header" (click)="toggleSection('livePreview')">
-            <span class="header-text"><i class="pi pi-desktop icon-prefix"></i> Live Preview Section</span>
-            <i class="pi accordion-chevron" [class.pi-chevron-down]="openSection() !== 'livePreview'" [class.pi-chevron-up]="openSection() === 'livePreview'"></i>
+          <button type="button" class="accordion-header" (click)="toggleSection('livePreview')">
+            <div class="accordion-header-left">
+              <span class="acc-icon"><i class="fa-solid fa-desktop"></i></span>
+              <div class="acc-title-block">
+                <strong>Live Preview Section</strong>
+                <span>View the customer booking page in real time with current settings.</span>
+              </div>
+            </div>
+            <i class="fa-solid accordion-chevron" [class.fa-chevron-down]="openSection() !== 'livePreview'" [class.fa-chevron-up]="openSection() === 'livePreview'"></i>
           </button>
-          
+
           <div class="accordion-content">
-            <p class="description">Use the side-by-side Live Preview on the right (or displayed below on mobile) to view and test all layouts, fields, and options interactively.</p>
+            <div class="sub-card">
+              <p class="description">Toggle the Live Preview switch at the top right or open the live customer booking page in a new tab to test your saved configuration.</p>
+              <button type="button" class="bs-btn bs-btn--outline bs-btn--sm" (click)="openBookingInNewTab()">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Customer Booking Page
+              </button>
+            </div>
           </div>
         </div>
 
       </div>
     </div>
 
-    <!-- Live Preview Sticky Panel -->
-    <div class="preview-panel card">
+    <!-- Right Column: Live Booking Page Preview Card -->
+    <aside class="preview-panel" *ngIf="showLivePreview()">
+      <!-- Purple Gradient Header -->
       <div class="preview-header">
-        <span class="badge badge-info">Realtime Mock</span>
-        <h3>Live Booking Page Preview</h3>
+        <div class="preview-header-title">
+          <i class="fa-regular fa-eye"></i>
+          <h3>Live Booking Page Preview</h3>
+        </div>
+        <span class="realtime-badge">REALTIME MOCK</span>
       </div>
-      
-      <div class="preview-scrollable-content">
-        <!-- Bus Cabin Preview -->
-        <div class="bus-preview-section">
-          <h5>1. Seat Layout Cabin ({{ settings().seatLayout.layoutType }} Layout)</h5>
-          
-          <div class="bus-selection-container">
-            <div class="bus-cabin">
-              <!-- Driver & Entrance Section -->
-              <div class="bus-dashboard">
-                <div class="driver-cabin" [style.order]="settings().seatLayout.driverPosition === 'left' ? 1 : 2">
-                  <span class="steering-wheel">
-                    <i class="pi pi-cog steering-icon"></i>
-                  </span>
-                  <span class="driver-seat-mock">
-                    <span class="seat-headrest"></span>
-                    <span class="seat-cushion">
-                      <span class="driver-icon"><i class="pi pi-user"></i></span>
-                    </span>
-                  </span>
+
+      <!-- Preview Mode Tabs -->
+      <div class="preview-tabs">
+        <button type="button" [class.active]="previewTab() === 'seatLayout'" (click)="previewTab.set('seatLayout')">
+          <i class="fa-solid fa-bus"></i> Seat Layout
+        </button>
+        <button type="button" [class.active]="previewTab() === 'bookingForm'" (click)="previewTab.set('bookingForm')">
+          <i class="fa-regular fa-rectangle-list"></i> Booking Form
+        </button>
+        <button type="button" [class.active]="previewTab() === 'mobileView'" (click)="previewTab.set('mobileView')">
+          <i class="fa-solid fa-mobile-screen"></i> Mobile View
+        </button>
+      </div>
+
+      <div class="preview-body">
+        <!-- TAB 1: SEAT LAYOUT -->
+        <div class="seat-preview-grid" *ngIf="previewTab() === 'seatLayout'">
+          <!-- Layout Details & Legend -->
+          <div class="layout-details-card">
+            <div class="details-head">
+              <i class="fa-solid fa-circle-info"></i>
+              <h4>Layout Details</h4>
+            </div>
+
+            <div class="details-rows">
+              <div class="detail-row">
+                <span><i class="fa-solid fa-bus"></i> Layout Type</span>
+                <span class="layout-pill">{{ settings().seatLayout.layoutType }}</span>
+              </div>
+              <div class="detail-row">
+                <span><i class="fa-solid fa-table-cells-large"></i> Columns per Row</span>
+                <strong>{{ columnsPerRow() }}</strong>
+              </div>
+              <div class="detail-row">
+                <span><i class="fa-solid fa-list-ol"></i> Total Rows</span>
+                <strong>{{ totalRowsCount() }}</strong>
+              </div>
+              <div class="detail-row">
+                <span><i class="fa-solid fa-chair"></i> Total Seats</span>
+                <strong>{{ settings().seatLayout.totalSeats }}</strong>
+              </div>
+            </div>
+
+            <div class="legend-section">
+              <h5>Legend</h5>
+              <div class="legend-item"><span class="swatch swatch--available"></span> Available</div>
+              <div class="legend-item"><span class="swatch swatch--booked"></span> Booked</div>
+              <div class="legend-item"><span class="swatch swatch--selected"></span> Selected</div>
+              <div class="legend-item"><span class="swatch swatch--reserved"></span> Reserved</div>
+            </div>
+          </div>
+
+          <!-- Interactive Dark Bus Cabin Mockup -->
+          <div class="bus-cabin-shell">
+            <div class="bus-cabin-top">
+              <div class="bus-entry-box" [style.order]="settings().seatLayout.entrancePosition === 'left' ? 1 : 2">
+                <span class="entry-pill">ENTRY</span>
+              </div>
+              <div class="bus-driver-box" [style.order]="settings().seatLayout.driverPosition === 'left' ? 1 : 2">
+                <i class="fa-regular fa-life-ring driver-wheel"></i>
+                <span>Driver</span>
+              </div>
+            </div>
+
+            <div class="bus-seats-floor">
+              <div class="bus-seat-row" *ngFor="let row of previewSeats()">
+                <div class="seat-cluster">
+                  <button
+                    *ngFor="let seat of row.leftSeats"
+                    type="button"
+                    class="mock-seat"
+                    [class.mock-seat--booked]="isMockSeatBooked(seat)"
+                    [class.mock-seat--selected]="isMockSeatSelected(seat)"
+                    (click)="toggleMockSeat(seat)">
+                    <span class="seat-check" *ngIf="isMockSeatSelected(seat)"><i class="fa-solid fa-check"></i></span>
+                    {{ seat }}
+                  </button>
+                  <div *ngFor="let spacer of getSpacers(row.leftSeats, leftColCount())" class="mock-seat-spacer"></div>
                 </div>
-                <div class="bus-door" [style.order]="settings().seatLayout.entrancePosition === 'left' ? 1 : 2">
-                  <div class="door-indicator">Entry</div>
-                  <div class="door-steps">
-                    <span></span>
-                    <span></span>
-                  </div>
+
+                <div class="bus-aisle-gap"></div>
+
+                <div class="seat-cluster">
+                  <button
+                    *ngFor="let seat of row.rightSeats"
+                    type="button"
+                    class="mock-seat"
+                    [class.mock-seat--booked]="isMockSeatBooked(seat)"
+                    [class.mock-seat--selected]="isMockSeatSelected(seat)"
+                    (click)="toggleMockSeat(seat)">
+                    <span class="seat-check" *ngIf="isMockSeatSelected(seat)"><i class="fa-solid fa-check"></i></span>
+                    {{ seat }}
+                  </button>
+                  <div *ngFor="let spacer of getSpacers(row.rightSeats, rightColCount())" class="mock-seat-spacer"></div>
                 </div>
               </div>
-
-              <!-- Passenger Seating Floor -->
-              <div class="bus-floor">
-                <div class="bus-row" *ngFor="let row of previewSeats()">
-                  <!-- Left side -->
-                  <div class="seat-group seat-group--left">
-                    <button *ngFor="let seat of row.leftSeats" type="button" class="bus-seat bus-seat--available">
-                      <span class="seat-headrest"></span>
-                      <span class="seat-cushion">
-                        <span class="seat-label">{{ seat }}</span>
-                      </span>
-                    </button>
-                    <!-- Spacer columns if seat is missing in row -->
-                    <div *ngFor="let spacer of getSpacers(row.leftSeats, leftColCount())" class="seat-spacer"></div>
-                  </div>
-
-                  <!-- Aisle -->
-                  <div class="bus-aisle">
-                    <span class="aisle-line"></span>
-                  </div>
-
-                  <!-- Right side -->
-                  <div class="seat-group seat-group--right">
-                    <button *ngFor="let seat of row.rightSeats" type="button" class="bus-seat bus-seat--available">
-                      <span class="seat-headrest"></span>
-                      <span class="seat-cushion">
-                        <span class="seat-label">{{ seat }}</span>
-                      </span>
-                    </button>
-                    <div *ngFor="let spacer of getSpacers(row.rightSeats, rightColCount())" class="seat-spacer"></div>
-                  </div>
-                </div>
-              </div>
-
             </div>
           </div>
         </div>
 
-        <!-- Form fields layout preview -->
-        <div class="form-preview-section mt-4">
-          <h5>2. Booking Form Fields</h5>
-          
+        <!-- TAB 2: BOOKING FORM PREVIEW -->
+        <div class="form-preview-wrap" *ngIf="previewTab() === 'bookingForm'">
           <div class="field-grid">
             <ng-container *ngFor="let field of fieldsList()">
-              <div *ngIf="field.visible" [class]="'col-span-' + (field.colSpan || 3)">
+              <div *ngIf="field.visible" class="preview-field-item" [class.preview-field-wide]="field.type === 'textarea'">
                 <label>
                   <span class="label-text">
                     {{ field.label }}
                     <span class="required" *ngIf="field.required">*</span>
                   </span>
-                  
-                  <!-- textbox -->
+
                   <input *ngIf="field.type === 'textbox'" pInputText [placeholder]="field.placeholder || ''" disabled />
-                  
-                  <!-- number -->
                   <input *ngIf="field.type === 'number'" type="number" pInputText [placeholder]="field.placeholder || ''" disabled />
-                  
-                  <!-- dropdown -->
                   <select *ngIf="field.type === 'dropdown'" class="native-select" disabled>
                     <option>{{ field.placeholder || 'Select option' }}</option>
                     <option *ngFor="let opt of field.options">{{ opt }}</option>
                   </select>
-                  
-                  <!-- checkbox -->
-                  <div *ngIf="field.type === 'checkbox'" class="flex items-center gap-2 mt-2">
+                  <div *ngIf="field.type === 'checkbox'" class="preview-check-row">
                     <input type="checkbox" disabled />
-                    <span class="text-sm">{{ field.placeholder || 'Checkbox Label' }}</span>
+                    <span>{{ field.placeholder || 'Checkbox Label' }}</span>
                   </div>
-                  
-                  <!-- radio -->
-                  <div *ngIf="field.type === 'radio'" class="flex flex-wrap gap-4 mt-2">
-                    <div *ngFor="let opt of field.options" class="flex items-center gap-2">
-                      <input type="radio" disabled />
-                      <span class="text-sm">{{ opt }}</span>
-                    </div>
+                  <div *ngIf="field.type === 'radio'" class="preview-radio-row">
+                    <span *ngFor="let opt of field.options" class="preview-check-row">
+                      <input type="radio" disabled /> {{ opt }}
+                    </span>
                   </div>
-                  
-                  <!-- datepicker -->
                   <input *ngIf="field.type === 'datepicker'" type="date" pInputText disabled />
-                  
-                  <!-- textarea -->
                   <textarea *ngIf="field.type === 'textarea'" pInputTextarea rows="2" [placeholder]="field.placeholder || ''" disabled></textarea>
-
                 </label>
               </div>
             </ng-container>
           </div>
         </div>
 
+        <!-- TAB 3: MOBILE VIEW -->
+        <div class="mobile-preview-frame" *ngIf="previewTab() === 'mobileView'">
+          <div class="mobile-notch"></div>
+          <div class="mobile-screen-scroll">
+            <div class="bus-cabin-shell bus-cabin-shell--compact">
+              <div class="bus-cabin-top">
+                <div class="bus-entry-box" [style.order]="settings().seatLayout.entrancePosition === 'left' ? 1 : 2">
+                  <span class="entry-pill">ENTRY</span>
+                </div>
+                <div class="bus-driver-box" [style.order]="settings().seatLayout.driverPosition === 'left' ? 1 : 2">
+                  <i class="fa-regular fa-life-ring driver-wheel"></i>
+                  <span>Driver</span>
+                </div>
+              </div>
+              <div class="bus-seats-floor">
+                <div class="bus-seat-row" *ngFor="let row of previewSeats()">
+                  <div class="seat-cluster">
+                    <button
+                      *ngFor="let seat of row.leftSeats"
+                      type="button"
+                      class="mock-seat"
+                      [class.mock-seat--booked]="isMockSeatBooked(seat)"
+                      [class.mock-seat--selected]="isMockSeatSelected(seat)"
+                      (click)="toggleMockSeat(seat)">
+                      {{ seat }}
+                    </button>
+                  </div>
+                  <div class="bus-aisle-gap"></div>
+                  <div class="seat-cluster">
+                    <button
+                      *ngFor="let seat of row.rightSeats"
+                      type="button"
+                      class="mock-seat"
+                      [class.mock-seat--booked]="isMockSeatBooked(seat)"
+                      [class.mock-seat--selected]="isMockSeatSelected(seat)"
+                      (click)="toggleMockSeat(seat)">
+                      {{ seat }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <!-- Footer Quick Actions -->
+      <div class="preview-footer">
+        <button type="button" class="bs-btn bs-btn--outline bs-btn--sm" (click)="resetMockPreview()">
+          <i class="fa-solid fa-rotate-right"></i> Reset
+        </button>
+        <button type="button" class="bs-btn bs-btn--outline bs-btn--sm" (click)="previewTab.set(previewTab() === 'seatLayout' ? 'bookingForm' : 'seatLayout')">
+          <i class="fa-regular fa-eye"></i> Full Preview
+        </button>
+        <button type="button" class="bs-btn bs-btn--outline bs-btn--sm" (click)="openBookingInNewTab()">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in New Tab
+        </button>
+      </div>
+    </aside>
   </div>
 </div>

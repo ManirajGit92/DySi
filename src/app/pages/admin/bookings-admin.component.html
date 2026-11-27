@@ -1,40 +1,141 @@
 <section class="bookings-admin">
+  <!-- Header -->
+  <header class="bookings-header">
+    <span class="bookings-header-icon">
+      <i class="fa-solid fa-bus"></i>
+    </span>
+    <div>
+      <h1>Bookings</h1>
+      <p>Manage and track all bus bookings in one place.</p>
+    </div>
+  </header>
+
+  <!-- 5 KPI Summary Cards -->
   <div class="admin-summary">
-    <article class="stat-card">
-      <span>Total Bookings</span>
-      <strong>{{ summary().total }}</strong>
+    <!-- Total Bookings -->
+    <article class="kpi-card kpi-card--purple">
+      <div class="kpi-top">
+        <span class="kpi-icon"><i class="fa-regular fa-calendar-check"></i></span>
+        <div class="kpi-meta">
+          <span class="kpi-label">Total Bookings</span>
+          <strong class="kpi-value">{{ summary().total }}</strong>
+          <span class="kpi-trend kpi-trend--up"><i class="fa-solid fa-arrow-up"></i> Live total</span>
+        </div>
+      </div>
+      <svg class="kpi-wave" viewBox="0 0 220 40" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="bkWavePurple" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.34" />
+            <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.02" />
+          </linearGradient>
+        </defs>
+        <path d="M0 32 Q42 20 84 26 T164 18 T220 8 L220 40 L0 40 Z" fill="url(#bkWavePurple)" />
+        <path d="M0 32 Q42 20 84 26 T164 18 T220 8" fill="none" stroke="#8b5cf6" stroke-width="2.4" stroke-linecap="round" />
+      </svg>
     </article>
-    <article class="stat-card">
-      <span>Pending</span>
-      <strong>{{ summary().pending }}</strong>
+
+    <!-- Pending -->
+    <article class="kpi-card kpi-card--amber">
+      <div class="kpi-top">
+        <span class="kpi-icon"><i class="fa-solid fa-hourglass-half"></i></span>
+        <div class="kpi-meta">
+          <span class="kpi-label">Pending</span>
+          <strong class="kpi-value">{{ summary().pending }}</strong>
+          <span class="kpi-trend kpi-trend--amber"><i class="fa-regular fa-clock"></i> Awaiting review</span>
+        </div>
+      </div>
+      <svg class="kpi-wave" viewBox="0 0 220 40" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="bkWaveAmber" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.34" />
+            <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.02" />
+          </linearGradient>
+        </defs>
+        <path d="M0 34 Q46 22 92 28 T168 18 T220 10 L220 40 L0 40 Z" fill="url(#bkWaveAmber)" />
+        <path d="M0 34 Q46 22 92 28 T168 18 T220 10" fill="none" stroke="#f59e0b" stroke-width="2.4" stroke-linecap="round" />
+      </svg>
     </article>
-    <article class="stat-card">
-      <span>Confirmed</span>
-      <strong>{{ summary().confirmed }}</strong>
+
+    <!-- Confirmed -->
+    <article class="kpi-card kpi-card--green">
+      <div class="kpi-top">
+        <span class="kpi-icon"><i class="fa-solid fa-check"></i></span>
+        <div class="kpi-meta">
+          <span class="kpi-label">Confirmed</span>
+          <strong class="kpi-value">{{ summary().confirmed }}</strong>
+          <span class="kpi-trend kpi-trend--up"><i class="fa-solid fa-arrow-up"></i> Ready for travel</span>
+        </div>
+      </div>
+      <svg class="kpi-wave" viewBox="0 0 220 40" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="bkWaveGreen" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#10b981" stop-opacity="0.34" />
+            <stop offset="100%" stop-color="#10b981" stop-opacity="0.02" />
+          </linearGradient>
+        </defs>
+        <path d="M0 34 Q44 26 88 22 T166 18 T220 8 L220 40 L0 40 Z" fill="url(#bkWaveGreen)" />
+        <path d="M0 34 Q44 26 88 22 T166 18 T220 8" fill="none" stroke="#10b981" stroke-width="2.4" stroke-linecap="round" />
+      </svg>
     </article>
-    <article class="stat-card">
-      <span>Cancelled</span>
-      <strong>{{ summary().cancelled }}</strong>
+
+    <!-- Cancelled -->
+    <article class="kpi-card kpi-card--red">
+      <div class="kpi-top">
+        <span class="kpi-icon"><i class="fa-solid fa-xmark"></i></span>
+        <div class="kpi-meta">
+          <span class="kpi-label">Cancelled</span>
+          <strong class="kpi-value">{{ summary().cancelled }}</strong>
+          <span class="kpi-trend kpi-trend--down"><i class="fa-solid fa-arrow-down"></i> Cancelled trips</span>
+        </div>
+      </div>
+      <svg class="kpi-wave" viewBox="0 0 220 40" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="bkWaveRed" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f43f5e" stop-opacity="0.32" />
+            <stop offset="100%" stop-color="#f43f5e" stop-opacity="0.02" />
+          </linearGradient>
+        </defs>
+        <path d="M0 34 Q48 24 96 22 T170 16 T220 10 L220 40 L0 40 Z" fill="url(#bkWaveRed)" />
+        <path d="M0 34 Q48 24 96 22 T170 16 T220 10" fill="none" stroke="#f43f5e" stroke-width="2.4" stroke-linecap="round" />
+      </svg>
     </article>
-    <article class="stat-card stat-card--revenue">
-      <span>Revenue</span>
-      <strong>₹{{ summary().revenue | number:'1.0-0' }}</strong>
+
+    <!-- Revenue -->
+    <article class="kpi-card kpi-card--revenue">
+      <div class="kpi-top">
+        <span class="kpi-icon"><i class="fa-solid fa-coins"></i></span>
+        <div class="kpi-meta">
+          <span class="kpi-label">Revenue</span>
+          <strong class="kpi-value">₹{{ summary().revenue | number:'1.0-0' }}</strong>
+          <span class="kpi-trend"><i class="fa-solid fa-arrow-up"></i> Total collected</span>
+        </div>
+      </div>
+      <div class="revenue-bars-art" aria-hidden="true">
+        <span style="height: 28%"></span>
+        <span style="height: 46%"></span>
+        <span style="height: 62%"></span>
+        <span style="height: 82%"></span>
+        <span style="height: 100%"></span>
+      </div>
     </article>
   </div>
 
+  <!-- Filter Bar Card -->
   <div class="filter-bar">
-
     <!-- Search -->
-    <div class="filter-group">
-      <label>Search</label>
-      <input pInputText type="text" placeholder="Search bookings" [ngModel]="searchText()"
-        (ngModelChange)="searchText.set($event)" class="w-full" />
+    <div class="filter-group filter-group--search">
+      <label>Search Bookings</label>
+      <div class="search-input-wrap">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input pInputText type="text" placeholder="Search by Booking ID, Customer, Package..." [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event)" class="w-full" />
+      </div>
     </div>
 
     <!-- Status -->
     <div class="filter-group">
       <label>Status</label>
-      <p-select [options]="bookingStatuses" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)"
+      <p-select [options]="statusFilterOptions" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)"
         placeholder="Select Status" class="w-full">
       </p-select>
     </div>
@@ -42,7 +143,7 @@
     <!-- Bus Type -->
     <div class="filter-group">
       <label>Bus Type</label>
-      <p-select [options]="busTypes" [ngModel]="busTypeFilter()" (ngModelChange)="busTypeFilter.set($event)"
+      <p-select [options]="busTypeFilterOptions" [ngModel]="busTypeFilter()" (ngModelChange)="busTypeFilter.set($event)"
         placeholder="Select Bus Type" class="w-full">
       </p-select>
     </div>
@@ -51,7 +152,7 @@
     <div class="filter-group">
       <label>Package</label>
       <p-select [options]="packageOptions()" [ngModel]="packageFilter()" (ngModelChange)="packageFilter.set($event)"
-        placeholder="Select Package" class="w-full">
+        placeholder="All Packages" class="w-full">
       </p-select>
     </div>
 
@@ -59,7 +160,7 @@
     <div class="filter-group">
       <label>Travel Date (Start)</label>
       <p-datepicker [ngModel]="dateFilter()?.[0]" (ngModelChange)="onDateRangeChange($event, 0)" dateFormat="yy-mm-dd"
-        appendTo="body" class="w-full">
+        placeholder="Select start date" appendTo="body" class="w-full">
       </p-datepicker>
     </div>
 
@@ -67,7 +168,7 @@
     <div class="filter-group">
       <label>Travel Date (End)</label>
       <p-datepicker [ngModel]="dateFilter()?.[1]" (ngModelChange)="onDateRangeChange($event, 1)" dateFormat="yy-mm-dd"
-        appendTo="body" class="w-full">
+        placeholder="Select end date" appendTo="body" class="w-full">
       </p-datepicker>
     </div>
 
@@ -90,69 +191,145 @@
 
     <!-- Export Button -->
     <div class="filter-group button-group">
-      <button pButton type="button" label="Export Excel" icon="pi pi-file-excel" class="p-button-success"
-        (click)="exportBookings()">
+      <button type="button" class="btn-export-excel" (click)="exportBookings()">
+        <i class="fa-solid fa-file-excel"></i>
+        <span>Export Excel</span>
       </button>
     </div>
-
   </div>
 
-  <p-table [value]="filteredBookings()" [paginator]="true" [rows]="rows()" dataKey="id" responsiveLayout="scroll">
-    <ng-template pTemplate="header">
-      <tr>
-        <th *ngFor="let col of getVisibleColumns()"
-            [pSortableColumn]="col.sortable ? col.field : undefined">
-          {{ col.header }}
-        </th>
-        <th>Actions</th>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-booking>
-      <tr>
-        <td *ngFor="let col of getVisibleColumns()">
-          <!-- Status badges -->
-          <span *ngIf="col.field === 'bookingStatus'"
-                class="status-chip" [class]="booking.bookingStatus?.toLowerCase()">
-            {{ booking.bookingStatus }}
-          </span>
-          <span *ngIf="col.field === 'paymentStatus'"
-                class="status-chip" [class]="booking.paymentStatus?.toLowerCase()">
-            {{ booking.paymentStatus }}
-          </span>
-          <!-- Generic cell -->
-          <span *ngIf="col.field !== 'bookingStatus' && col.field !== 'paymentStatus'">
-            {{ getCellValue(booking, col.field) }}
-          </span>
-        </td>
-        <td class="actions-cell">
-          <button pButton type="button" label="View" class="p-button-text" (click)="openDetails(booking)"></button>
-          <button pButton type="button" label="Delete" class="p-button-danger p-button-text"
-            (click)="deleteBooking(booking)"></button>
-        </td>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="emptymessage">
-      <tr>
-        <td [attr.colspan]="getVisibleColumns().length + 1" style="text-align:center;padding:2rem;">
-          No bookings found matching the current filters.
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
+  <!-- Bookings Table Card -->
+  <div class="bookings-table-card">
+    <p-table
+      [value]="filteredBookings()"
+      [paginator]="true"
+      [rows]="rows()"
+      [rowsPerPageOptions]="[5, 10, 20, 50]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} – {last} of {totalRecords} bookings"
+      dataKey="id"
+      responsiveLayout="scroll"
+      styleClass="dysi-bookings-table"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th *ngFor="let col of getVisibleColumns()" [pSortableColumn]="col.sortable ? col.field : undefined">
+            <span class="th-inner">
+              {{ col.header }}
+              <p-sortIcon *ngIf="col.sortable" [field]="col.field"></p-sortIcon>
+            </span>
+          </th>
+          <th class="th-actions">Actions</th>
+        </tr>
+      </ng-template>
 
-  <p-dialog header="Booking details" [visible]="showDialog()" (visibleChange)="showDialog.set($event)" [modal]="true"
-    [style]="{ width: '760px' }" [draggable]="false" [resizable]="false">
+      <ng-template pTemplate="body" let-booking>
+        <tr>
+          <td *ngFor="let col of getVisibleColumns()">
+            <!-- Booking ID Pill -->
+            <span *ngIf="col.field === 'bookingId'" class="booking-id-pill">
+              {{ booking.bookingId }}
+            </span>
+
+            <!-- Customer -->
+            <span *ngIf="col.field === 'fullName'" class="cell-with-icon">
+              <i class="fa-regular fa-user"></i>
+              <span>{{ booking.fullName }}</span>
+            </span>
+
+            <!-- Package -->
+            <span *ngIf="col.field === 'packageName'" class="cell-with-icon">
+              <i class="fa-solid fa-location-dot"></i>
+              <span>{{ booking.packageName }}</span>
+            </span>
+
+            <!-- Bus Type -->
+            <span *ngIf="col.field === 'busType'" class="cell-with-icon">
+              <i class="fa-solid fa-bus"></i>
+              <span>{{ booking.busType }}</span>
+            </span>
+
+            <!-- Booking Status Badge -->
+            <span *ngIf="col.field === 'bookingStatus'" class="status-pill" [class]="'status-pill--' + (booking.bookingStatus || '').toLowerCase()">
+              <i
+                class="fa-solid"
+                [class.fa-check]="booking.bookingStatus === 'Confirmed' || booking.bookingStatus === 'Completed'"
+                [class.fa-hourglass-half]="booking.bookingStatus === 'Pending'"
+                [class.fa-xmark]="booking.bookingStatus === 'Cancelled'"
+              ></i>
+              {{ booking.bookingStatus }}
+            </span>
+
+            <!-- Payment Status Badge -->
+            <span *ngIf="col.field === 'paymentStatus'" class="payment-pill" [class]="'payment-pill--' + (booking.paymentStatus || '').toLowerCase()">
+              {{ booking.paymentStatus }}
+            </span>
+
+            <!-- Travel / Return Date -->
+            <span *ngIf="col.field === 'travelDate' || col.field === 'returnDate'" class="cell-with-icon">
+              <i class="fa-regular fa-calendar"></i>
+              <span>{{ getCellValue(booking, col.field) }}</span>
+            </span>
+
+            <!-- Fare -->
+            <strong *ngIf="col.field === 'totalFare'" class="fare-cell">
+              {{ getCellValue(booking, col.field) }}
+            </strong>
+
+            <!-- Generic cell -->
+            <span
+              *ngIf="
+                col.field !== 'bookingId' &&
+                col.field !== 'fullName' &&
+                col.field !== 'packageName' &&
+                col.field !== 'busType' &&
+                col.field !== 'bookingStatus' &&
+                col.field !== 'paymentStatus' &&
+                col.field !== 'travelDate' &&
+                col.field !== 'returnDate' &&
+                col.field !== 'totalFare'
+              "
+            >
+              {{ getCellValue(booking, col.field) }}
+            </span>
+          </td>
+
+          <td class="actions-cell">
+            <button type="button" class="action-pill action-pill--view" (click)="openDetails(booking)">
+              <i class="fa-regular fa-eye"></i> View
+            </button>
+            <button type="button" class="action-pill action-pill--delete" (click)="deleteBooking(booking)">
+              <i class="fa-regular fa-trash-can"></i> Delete
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="getVisibleColumns().length + 1" class="empty-bookings-cell">
+            <i class="fa-solid fa-bus"></i>
+            <p>No bookings found matching the current filters.</p>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- Booking Details Dialog -->
+  <p-dialog header="Booking Details" [visible]="showDialog()" (visibleChange)="showDialog.set($event)" [modal]="true"
+    [style]="{ width: '760px', maxWidth: '94vw' }" [draggable]="false" [resizable]="false" styleClass="dysi-booking-dialog">
     <ng-container *ngIf="selectedBooking()">
       <div class="dialog-grid">
-        <div>
-          <strong>{{ selectedBooking()?.bookingId }}</strong>
-          <p>{{ selectedBooking()?.fullName }}</p>
-          <p>{{ selectedBooking()?.email }}</p>
-          <p>{{ selectedBooking()?.mobileNumber }}</p>
-          <p><strong>Aadhaar Number:</strong> {{ selectedBooking()?.aadhaarNumber }}</p>
+        <div class="dialog-customer-box">
+          <span class="booking-id-pill">{{ selectedBooking()?.bookingId }}</span>
+          <h3>{{ selectedBooking()?.fullName }}</h3>
+          <p><i class="fa-regular fa-envelope"></i> {{ selectedBooking()?.email }}</p>
+          <p><i class="fa-solid fa-phone"></i> {{ selectedBooking()?.mobileNumber }}</p>
+          <p><i class="fa-regular fa-id-card"></i> <strong>Aadhaar:</strong> {{ selectedBooking()?.aadhaarNumber }}</p>
         </div>
         <div class="dialog-status">
-          <span>Status</span>
+          <label>Booking Status</label>
           <select [ngModel]="selectedBooking()?.bookingStatus" (ngModelChange)="updateStatus($event)">
             <option *ngFor="let status of bookingStatuses" [value]="status">{{ status }}</option>
           </select>
@@ -160,17 +337,16 @@
       </div>
 
       <div class="booking-details-grid">
-        <div>
-          <h4>Travel summary</h4>
+        <div class="detail-card">
+          <h4><i class="fa-solid fa-route"></i> Travel Summary</h4>
           <p><strong>Package:</strong> {{ selectedBooking()?.packageName }}</p>
           <p><strong>Bus type:</strong> {{ selectedBooking()?.busType }}</p>
           <p><strong>Travel date:</strong> {{ selectedBooking()?.travelDate | date:'mediumDate' }}</p>
-          <p><strong>Return date:</strong> {{ selectedBooking()?.returnDate ? (selectedBooking()?.returnDate |
-            date:'mediumDate') : 'Not set' }}</p>
+          <p><strong>Return date:</strong> {{ selectedBooking()?.returnDate ? (selectedBooking()?.returnDate | date:'mediumDate') : 'Not set' }}</p>
           <p><strong>Seats:</strong> {{ selectedBooking()?.selectedSeats?.join(', ') || 'None' }}</p>
         </div>
-        <div>
-          <h4>Booking details</h4>
+        <div class="detail-card">
+          <h4><i class="fa-solid fa-ticket"></i> Booking Details</h4>
           <p><strong>Pickup:</strong> {{ selectedBooking()?.pickupLocation }}</p>
           <p><strong>Drop:</strong> {{ selectedBooking()?.dropLocation }}</p>
           <p><strong>Passengers:</strong> {{ selectedBooking()?.passengers }}</p>
@@ -180,10 +356,9 @@
       </div>
 
       <div class="notes-block">
-        <h4>Special requests</h4>
+        <h4><i class="fa-regular fa-comment-dots"></i> Special Requests</h4>
         <p>{{ selectedBooking()?.specialRequests || 'None' }}</p>
       </div>
     </ng-container>
   </p-dialog>
-
 </section>
