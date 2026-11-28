@@ -1,0 +1,746 @@
+<div class="profile-shell">
+  <!-- Deep-Violet Left Sidebar -->
+  <aside class="profile-sidebar">
+    <a class="sb-brand" routerLink="/">
+      <div class="sb-logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="profLogoGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#818cf8" />
+              <stop offset="100%" stop-color="#c084fc" />
+            </linearGradient>
+          </defs>
+          <path d="M6 6H18.5C25.9558 6 31 11.0442 31 18C31 24.9558 25.9558 30 18.5 30H6V22.5H17.5C20.5 22.5 22.8 20.6 22.8 18C22.8 15.4 20.5 13.5 17.5 13.5H6V6Z" fill="url(#profLogoGrad)"/>
+          <rect x="6" y="15.2" width="11" height="5.6" rx="2.8" fill="#ede9fe"/>
+        </svg>
+      </div>
+      <div>
+        <span class="sb-brand-name">Dysi</span>
+        <span class="sb-brand-sub">Website Builder</span>
+      </div>
+    </a>
+
+    <nav class="sb-nav" aria-label="Profile navigation">
+      <a class="sb-nav-item" routerLink="/">
+        <i class="fa-solid fa-house"></i>
+        <span>Home</span>
+      </a>
+      <button type="button" class="sb-nav-item" [class.active]="activeSidebarItem() === 'profile'" (click)="activeSidebarItem.set('profile'); currentStep.set(1)">
+        <i class="fa-regular fa-user"></i>
+        <span>My Profile</span>
+      </button>
+      <button type="button" class="sb-nav-item" [class.active]="activeSidebarItem() === 'requirements'" (click)="activeSidebarItem.set('requirements')">
+        <i class="fa-regular fa-file-lines"></i>
+        <span>My Requirements</span>
+      </button>
+      <button type="button" class="sb-nav-item" [class.active]="activeSidebarItem() === 'projects'" (click)="activeSidebarItem.set('projects'); currentStep.set(3)">
+        <i class="fa-regular fa-folder-open"></i>
+        <span>My Projects</span>
+      </button>
+      <button type="button" class="sb-nav-item" [class.active]="activeSidebarItem() === 'templates'" (click)="activeSidebarItem.set('templates'); currentStep.set(2)">
+        <i class="fa-solid fa-layer-group"></i>
+        <span>Templates</span>
+      </button>
+      <a class="sb-nav-item" routerLink="/" fragment="contact">
+        <i class="fa-solid fa-headset"></i>
+        <span>Support</span>
+      </a>
+    </nav>
+
+    <!-- Decorative Builder Illustration -->
+    <div class="sb-illustration" aria-hidden="true">
+      <svg viewBox="0 0 180 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="28" y="18" width="124" height="74" rx="12" fill="rgba(167, 139, 250, 0.18)" stroke="rgba(196, 181, 253, 0.45)" stroke-width="2" />
+        <rect x="38" y="28" width="104" height="52" rx="6" fill="rgba(76, 29, 149, 0.65)" />
+        <text x="90" y="61" text-anchor="middle" fill="#e9d5ff" font-size="22" font-weight="800" font-family="monospace">&lt;/&gt;</text>
+        <rect x="74" y="92" width="32" height="10" rx="3" fill="rgba(196, 181, 253, 0.35)" />
+        <rect x="56" y="102" width="68" height="6" rx="3" fill="rgba(196, 181, 253, 0.45)" />
+      </svg>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="profile-main">
+    @if (user$ | async; as user) {
+      <!-- Fixed Top Header & Stepper -->
+      <div class="profile-fixed-top">
+        <!-- Top Header -->
+        <header class="profile-topbar">
+          <div class="topbar-title">
+            <span class="topbar-icon"><i class="fa-regular fa-file-lines"></i></span>
+            <div>
+              @if (activeSidebarItem() === 'requirements') {
+                <h1>My Requirements</h1>
+                <p>View, manage and track all your website requirements by submission date.</p>
+              } @else {
+                <h1>My Profile &amp; Project Requirement</h1>
+                <p>Manage your profile and share your website requirement to get a custom solution.</p>
+              }
+            </div>
+          </div>
+
+          <div class="topbar-right">
+            <div class="top-user-wrap" (click)="$event.stopPropagation()">
+              <button type="button" class="top-user-btn" (click)="toggleTopMenu($event)">
+                @if (customPhotoUrl() || user.photoURL) {
+                  <img [src]="customPhotoUrl() || user.photoURL" [alt]="user.displayName || 'User'" class="top-user-avatar" />
+                } @else {
+                  <span class="top-user-initial">{{ getInitial(user.displayName, user.email) }}</span>
+                }
+                <span class="top-user-name">{{ profileForm.controls.fullName.value || user.displayName || 'User' }}</span>
+                <i class="fa-solid fa-chevron-down"></i>
+              </button>
+
+              @if (isTopMenuOpen()) {
+                <div class="top-dropdown">
+                  <a routerLink="/" class="top-dropdown-item" (click)="isTopMenuOpen.set(false)">
+                    <i class="fa-solid fa-globe"></i> Back to Website
+                  </a>
+                  <button type="button" class="top-dropdown-item top-dropdown-item--danger" (click)="signOut()">
+                    <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        </header>
+
+        <!-- 4-Step Progress Stepper (Profile Flow Only) -->
+        @if (activeSidebarItem() !== 'requirements') {
+        <div class="stepper-bar" role="tablist">
+          <button type="button" class="step-pill" [class.active]="currentStep() === 1" [class.done]="currentStep() > 1" (click)="currentStep.set(1)">
+            <span class="step-num"><i class="fa-regular fa-user"></i></span>
+            <span>Profile &amp; Requirement</span>
+          </button>
+          <i class="fa-solid fa-chevron-right step-sep"></i>
+          <button type="button" class="step-pill" [class.active]="currentStep() === 2" [class.done]="currentStep() > 2" (click)="currentStep.set(2)">
+            <span class="step-num">2</span>
+            <span>Select Template</span>
+          </button>
+          <i class="fa-solid fa-chevron-right step-sep"></i>
+          <button type="button" class="step-pill" [class.active]="currentStep() === 3" [class.done]="currentStep() > 3" (click)="currentStep.set(3)">
+            <span class="step-num">3</span>
+            <span>Review &amp; Confirm</span>
+          </button>
+          <i class="fa-solid fa-chevron-right step-sep"></i>
+          <button type="button" class="step-pill" [class.active]="currentStep() === 4" (click)="currentStep.set(4)">
+            <span class="step-num">4</span>
+            <span>Project Submitted</span>
+          </button>
+        </div>
+        }
+
+        @if (statusMessage()) {
+          <div class="profile-status-banner" [class]="'profile-status-banner--' + statusType()">
+            <i class="fa-solid" [class.fa-circle-check]="statusType() === 'success'" [class.fa-triangle-exclamation]="statusType() === 'error'" [class.fa-circle-info]="statusType() === 'info'"></i>
+            <span>{{ statusMessage() }}</span>
+          </div>
+        }
+      </div>
+
+      <!-- Scrollable Inner Content Area -->
+      <div class="profile-scroll-body">
+
+      <!-- ====================================================
+           MY REQUIREMENTS TIMELINE & DETAILS VIEW
+           ==================================================== -->
+      @if (activeSidebarItem() === 'requirements') {
+        <section class="req-split-grid">
+          <!-- Left Column: Requirements Timeline -->
+          <div class="p-card req-timeline-card">
+            <div class="req-tl-header">
+              <div class="req-tl-title">
+                <span class="req-tl-icon"><i class="fa-solid fa-diagram-project"></i></span>
+                <div>
+                  <h2>Requirements Timeline</h2>
+                  <p>Your website requirements in chronological order.</p>
+                </div>
+              </div>
+              <button type="button" class="p-btn p-btn--primary p-btn--sm" (click)="startNewRequirement()">
+                <i class="fa-solid fa-plus"></i> Add New Requirement
+              </button>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="req-filter-bar">
+              <select class="req-filter-select" [ngModel]="reqStatusFilter()" (ngModelChange)="reqStatusFilter.set($event)">
+                <option value="all">All Status</option>
+                <option value="draft">Draft (Saved)</option>
+                <option value="submitted">Submitted</option>
+                <option value="approved">Approved</option>
+              </select>
+
+              <input
+                type="date"
+                class="req-filter-date"
+                [ngModel]="reqDateFilter()"
+                (ngModelChange)="reqDateFilter.set($event)"
+                title="Filter by date"
+              />
+
+              <div class="req-filter-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input
+                  type="search"
+                  placeholder="Search requirement..."
+                  [ngModel]="reqSearchQuery()"
+                  (ngModelChange)="reqSearchQuery.set($event)"
+                />
+              </div>
+            </div>
+
+            <!-- Chronological Timeline -->
+            <div class="req-timeline-list">
+              @for (group of groupedRequirements(); track group.dateLabel) {
+                <div class="tl-date-group">
+                  <div class="tl-date-row">
+                    <span class="tl-node"></span>
+                    <span class="tl-date-pill">
+                      <i class="fa-regular fa-calendar"></i>
+                      {{ group.dateLabel }}
+                    </span>
+                  </div>
+
+                  <div class="tl-items">
+                    @for (item of group.items; track item.id) {
+                      <article
+                        class="tl-item-card"
+                        [class.is-selected]="selectedRequirementId() === item.id"
+                        (click)="selectRequirement(item)"
+                      >
+                        <div class="tl-item-left">
+                          <span class="tl-doc-icon"><i class="fa-regular fa-file-lines"></i></span>
+                          <div class="tl-item-meta">
+                            <strong>{{ item.title }}</strong>
+                            <span><i class="fa-regular fa-clock"></i> {{ formatReqTime(item.updatedAt || item.createdAt) }}</span>
+                          </div>
+                        </div>
+
+                        <div class="tl-item-right">
+                          <span class="req-status-pill" [class]="'req-status-pill--' + item.status">
+                            @if (item.status === 'approved') {
+                              <i class="fa-solid fa-lock"></i>
+                            }
+                            {{ getReqStatusLabel(item.status) }}
+                          </span>
+
+                          <button type="button" class="tl-action-btn" (click)="selectRequirement(item)">
+                            <i class="fa-solid" [class.fa-lock]="item.status === 'approved'" [class.fa-pen]="item.status !== 'approved'"></i>
+                            <span>{{ item.status === 'approved' ? 'View' : 'Edit' }}</span>
+                          </button>
+
+                          @if (item.status === 'draft') {
+                            <button type="button" class="tl-del-btn" title="Delete draft" (click)="deleteRequirement(item, $event)">
+                              <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                          }
+                        </div>
+                      </article>
+                    }
+                  </div>
+                </div>
+              } @empty {
+                <div class="tl-empty">
+                  <i class="fa-regular fa-folder-open"></i>
+                  <p>No website requirements found yet.</p>
+                  <button type="button" class="p-btn p-btn--outline p-btn--sm" (click)="startNewRequirement()">
+                    <i class="fa-solid fa-plus"></i> Create Your First Requirement
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Right Column: Requirement Details -->
+          <div class="req-details-card">
+            <!-- Purple Header Bar -->
+            <div class="req-details-banner">
+              <div class="req-details-banner-title">
+                <i class="fa-regular fa-clipboard"></i>
+                <h2>Requirement Details</h2>
+              </div>
+              <span class="req-banner-pill" [class]="'req-banner-pill--' + (selectedRequirement()?.status || 'draft')">
+                {{ getReqStatusLabel(selectedRequirement()?.status) }}
+              </span>
+            </div>
+
+            <div class="req-details-body">
+              <!-- Title & 3-Step Status Tracker -->
+              <div class="req-details-top">
+                <div class="req-details-title-block">
+                  <span class="req-cart-icon"><i class="fa-solid fa-cart-shopping"></i></span>
+                  <div class="req-title-inputs">
+                    <input
+                      type="text"
+                      class="req-title-input"
+                      [ngModel]="reqEditorTitle()"
+                      (ngModelChange)="reqEditorTitle.set($event)"
+                      [readonly]="selectedRequirement()?.status === 'approved'"
+                      placeholder="Requirement Title (e.g. E-commerce Website)"
+                    />
+                    <span class="req-submitted-meta">
+                      @if (selectedRequirement()) {
+                        Last updated on {{ formatReqFullDate(selectedRequirement()?.updatedAt || selectedRequirement()?.createdAt) }}
+                      } @else {
+                        New Draft Requirement
+                      }
+                    </span>
+                  </div>
+                </div>
+
+                <!-- 3-Stage Status Progress -->
+                <div class="mini-status-stepper">
+                  <div class="mini-step is-done">
+                    <span class="mini-dot"><i class="fa-solid fa-check"></i></span>
+                    <small>Saved</small>
+                  </div>
+                  <div class="mini-line" [class.is-done]="selectedRequirement()?.status === 'submitted' || selectedRequirement()?.status === 'approved'"></div>
+                  <div class="mini-step" [class.is-done]="selectedRequirement()?.status === 'submitted' || selectedRequirement()?.status === 'approved'">
+                    <span class="mini-dot">
+                      @if (selectedRequirement()?.status === 'submitted' || selectedRequirement()?.status === 'approved') {
+                        <i class="fa-solid fa-check"></i>
+                      }
+                    </span>
+                    <small>Submitted</small>
+                  </div>
+                  <div class="mini-line" [class.is-done]="selectedRequirement()?.status === 'approved'"></div>
+                  <div class="mini-step" [class.is-done]="selectedRequirement()?.status === 'approved'">
+                    <span class="mini-dot">
+                      @if (selectedRequirement()?.status === 'approved') {
+                        <i class="fa-solid fa-check"></i>
+                      }
+                    </span>
+                    <small>Approved</small>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Metadata Info Cards -->
+              <div class="req-meta-grid">
+                <div class="req-meta-box">
+                  <span class="meta-icon"><i class="fa-regular fa-user"></i></span>
+                  <div class="meta-field">
+                    <label>Business Type</label>
+                    <select
+                      [ngModel]="reqEditorBusinessType()"
+                      (ngModelChange)="reqEditorBusinessType.set($event)"
+                      [disabled]="selectedRequirement()?.status === 'approved'"
+                    >
+                      @for (bt of businessTypes; track bt) {
+                        <option [value]="bt">{{ bt }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+
+                <div class="req-meta-box">
+                  <span class="meta-icon"><i class="fa-solid fa-globe"></i></span>
+                  <div class="meta-field">
+                    <label>Primary Domain</label>
+                    <input
+                      type="text"
+                      [ngModel]="reqEditorPrimaryDomain()"
+                      (ngModelChange)="reqEditorPrimaryDomain.set($event)"
+                      [readonly]="selectedRequirement()?.status === 'approved'"
+                      placeholder="www.mybusiness.com"
+                    />
+                  </div>
+                </div>
+
+                <div class="req-meta-box req-meta-box--wide">
+                  <span class="meta-icon"><i class="fa-solid fa-link"></i></span>
+                  <div class="meta-field">
+                    <label>Alternative Domains</label>
+                    <input
+                      type="text"
+                      [ngModel]="reqEditorAltDomains()"
+                      (ngModelChange)="reqEditorAltDomains.set($event)"
+                      [readonly]="selectedRequirement()?.status === 'approved'"
+                      placeholder="mybusiness.in, mybrand.com (comma separated)"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Project Requirement / Description Editor -->
+              <div class="req-desc-section">
+                <div class="req-card-head">
+                  <div class="p-card-head">
+                    <i class="fa-regular fa-pen-to-square"></i>
+                    <h3>Project Requirement / Description</h3>
+                  </div>
+
+                  <div class="req-head-actions" *ngIf="selectedRequirement()?.status !== 'approved'">
+                    <button type="button" class="p-btn p-btn--primary p-btn--sm" (click)="generateReqAiDraft()">
+                      <i class="fa-solid fa-wand-magic-sparkles"></i> AI Assistant
+                    </button>
+                    <button type="button" class="p-btn p-btn--outline p-btn--sm" (click)="useStarterTemplate()">
+                      <i class="fa-regular fa-file-code"></i> Use Template
+                    </button>
+                  </div>
+                </div>
+
+                <div class="rich-editor-frame">
+                  <div class="rich-toolbar" *ngIf="selectedRequirement()?.status !== 'approved'">
+                    <span class="tb-chip">Paragraph</span>
+                    <div class="tb-sep"></div>
+                    <button type="button" class="tb-btn" title="Bold" (click)="applyReqFormat('bold')"><strong>B</strong></button>
+                    <button type="button" class="tb-btn" title="Italic" (click)="applyReqFormat('italic')"><em>I</em></button>
+                    <button type="button" class="tb-btn" title="Underline" (click)="applyReqFormat('underline')"><u>U</u></button>
+                    <button type="button" class="tb-btn" title="Bullet List" (click)="applyReqFormat('bullet')"><i class="fa-solid fa-list-ul"></i></button>
+                    <button type="button" class="tb-btn" title="Clear" (click)="applyReqFormat('clear')"><i class="fa-solid fa-eraser"></i></button>
+                  </div>
+                  <textarea
+                    rows="9"
+                    [ngModel]="reqEditorDescription()"
+                    (ngModelChange)="reqEditorDescription.set($event)"
+                    [readonly]="selectedRequirement()?.status === 'approved'"
+                    placeholder="Describe your website goals, key features, and preferences..."
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Details Card Footer -->
+            <div class="req-details-footer" *ngIf="selectedRequirement()?.status !== 'approved'">
+              <button type="button" class="p-btn p-btn--outline" [disabled]="isSaving()" (click)="saveSelectedRequirement('draft')">
+                <i class="fa-regular fa-floppy-disk"></i> Save as Draft
+              </button>
+              <button type="button" class="p-btn p-btn--primary" [disabled]="isSaving()" (click)="saveSelectedRequirement('submitted')">
+                <i class="fa-regular fa-paper-plane"></i>
+                <span>{{ isSaving() ? 'Submitting...' : 'Submit Requirement' }}</span>
+              </button>
+            </div>
+          </div>
+        </section>
+      } @else {
+
+      <!-- STEP 1: PROFILE & REQUIREMENT -->
+      @if (currentStep() === 1) {
+        <form [formGroup]="profileForm" class="profile-workspace">
+          <!-- Left Column -->
+          <div class="left-col">
+            <!-- User Identity Card -->
+            <section class="p-card identity-card">
+              <div class="identity-avatar-wrap">
+                @if (customPhotoUrl() || user.photoURL) {
+                  <img [src]="customPhotoUrl() || user.photoURL" [alt]="user.displayName || 'Profile photo'" class="identity-avatar" />
+                } @else {
+                  <div class="identity-avatar-fallback">{{ getInitial(user.displayName, user.email) }}</div>
+                }
+                <button type="button" class="avatar-camera-btn" title="Upload photo" (click)="avatarInput.click()">
+                  <i class="fa-solid fa-camera"></i>
+                </button>
+                <input #avatarInput type="file" accept="image/*" hidden (change)="uploadAvatar($event)" />
+              </div>
+
+              <div class="identity-info">
+                <span class="provider-chip">
+                  @if (signInProvider() === 'google') {
+                    <i class="fa-brands fa-google"></i> Signed in with Google
+                  } @else {
+                    <i class="fa-regular fa-envelope"></i> Signed in with Email
+                  }
+                </span>
+                <h2>{{ profileForm.controls.fullName.value || user.displayName || 'User' }}</h2>
+                <p>{{ user.email }}</p>
+              </div>
+            </section>
+
+            <!-- Personal Information Card -->
+            <section class="p-card">
+              <div class="p-card-head">
+                <i class="fa-regular fa-user"></i>
+                <h3>Personal Information</h3>
+              </div>
+
+              <div class="p-fields-stack">
+                <div class="p-field">
+                  <label>Full Name <span class="req">*</span></label>
+                  <div class="p-input-wrap">
+                    <i class="fa-regular fa-user"></i>
+                    <input formControlName="fullName" placeholder="Enter your full name" />
+                  </div>
+                </div>
+
+                <div class="p-field">
+                  <label>Email Address <span class="req">*</span></label>
+                  <div class="p-input-wrap p-input-wrap--readonly">
+                    <i class="fa-regular fa-envelope"></i>
+                    <input formControlName="email" readonly />
+                  </div>
+                </div>
+
+                <div class="p-field">
+                  <label>Phone Number <span class="req">*</span></label>
+                  <div class="p-input-wrap">
+                    <i class="fa-solid fa-phone"></i>
+                    <input formControlName="phoneNumber" placeholder="+91 98765 43210" />
+                  </div>
+                </div>
+
+                <div class="p-field">
+                  <label>Contact Address</label>
+                  <div class="p-textarea-wrap">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <textarea rows="3" formControlName="contactAddress" placeholder="Street, City, State, Postal Code"></textarea>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Project Planning Card -->
+            <section class="p-card">
+              <div class="p-card-head">
+                <i class="fa-regular fa-calendar"></i>
+                <h3>Project Planning</h3>
+              </div>
+
+              <div class="p-fields-stack">
+                <div class="p-field">
+                  <label>Expected Completion Date</label>
+                  <div class="p-input-wrap">
+                    <i class="fa-regular fa-calendar"></i>
+                    <input type="date" formControlName="expectedCompletionDate" />
+                  </div>
+                </div>
+
+                <div class="p-field">
+                  <label>Project Budget (in ₹)</label>
+                  <div class="p-input-wrap">
+                    <i class="fa-solid fa-indian-rupee-sign"></i>
+                    <input formControlName="projectBudget" placeholder="e.g. 75,000" />
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Right Column -->
+          <div class="right-col">
+            <!-- Business & Project Details Card -->
+            <section class="p-card">
+              <div class="p-card-head">
+                <i class="fa-solid fa-briefcase"></i>
+                <h3>Business &amp; Project Details</h3>
+              </div>
+
+              <div class="p-grid-2">
+                <div class="p-field">
+                  <label>Business Type <span class="req">*</span></label>
+                  <div class="p-input-wrap">
+                    <i class="fa-solid fa-store"></i>
+                    <select formControlName="businessType">
+                      @for (bt of businessTypes; track bt) {
+                        <option [value]="bt">{{ bt }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+
+                <div class="p-field">
+                  <label>Primary Domain</label>
+                  <div class="p-input-wrap">
+                    <i class="fa-solid fa-globe"></i>
+                    <input formControlName="primaryDomain" placeholder="www.mybusiness.com" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="alt-domains-section">
+                <label class="alt-label">Alternative Domains <span>(Optional)</span></label>
+                <div class="alt-domains-layout">
+                  <div class="alt-domains-list" formArrayName="alternativeDomains">
+                    @for (ctrl of alternativeDomains.controls; track $index; let i = $index) {
+                      <div class="alt-domain-row">
+                        <div class="p-input-wrap">
+                          <i class="fa-solid fa-globe"></i>
+                          <input [formControlName]="i" placeholder="mybusiness.in" />
+                        </div>
+                        <button type="button" class="alt-del-btn" title="Remove domain" (click)="removeAlternativeDomain(i)">
+                          <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                  <button type="button" class="p-btn p-btn--outline add-domain-btn" (click)="addAlternativeDomain()">
+                    <i class="fa-solid fa-plus"></i> Add Field
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <!-- Project Requirement / Description Card -->
+            <section class="p-card requirement-card">
+              <div class="req-card-head">
+                <div class="p-card-head">
+                  <i class="fa-regular fa-pen-to-square"></i>
+                  <h3>Project Requirement / Description <span class="req">*</span></h3>
+                </div>
+
+                <div class="req-head-actions">
+                  <button type="button" class="p-btn p-btn--primary p-btn--sm" (click)="generateAiDraft()">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> AI Assistant
+                  </button>
+                  <button type="button" class="p-btn p-btn--outline p-btn--sm" (click)="useStarterTemplate()">
+                    <i class="fa-regular fa-file-code"></i> Use Template
+                  </button>
+                  <button type="button" class="p-btn p-btn--outline p-btn--sm" [class.is-active]="isPreviewMode()" (click)="isPreviewMode.set(!isPreviewMode())">
+                    <i class="fa-regular fa-eye"></i> {{ isPreviewMode() ? 'Edit' : 'Preview' }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="rich-editor-frame">
+                <div class="rich-toolbar">
+                  <span class="tb-chip">Paragraph</span>
+                  <div class="tb-sep"></div>
+                  <button type="button" class="tb-btn" title="Bold" (click)="applyDescriptionFormat('bold')"><strong>B</strong></button>
+                  <button type="button" class="tb-btn" title="Italic" (click)="applyDescriptionFormat('italic')"><em>I</em></button>
+                  <button type="button" class="tb-btn" title="Underline" (click)="applyDescriptionFormat('underline')"><u>U</u></button>
+                  <button type="button" class="tb-btn" title="Bullet List" (click)="applyDescriptionFormat('bullet')"><i class="fa-solid fa-list-ul"></i></button>
+                  <button type="button" class="tb-btn" title="Quote" (click)="applyDescriptionFormat('quote')"><i class="fa-solid fa-quote-left"></i></button>
+                  <button type="button" class="tb-btn" title="Clear" (click)="applyDescriptionFormat('clear')"><i class="fa-solid fa-eraser"></i></button>
+                </div>
+
+                @if (!isPreviewMode()) {
+                  <textarea
+                    rows="11"
+                    formControlName="projectDescription"
+                    placeholder="Describe your website goals, key pages, features, and design preferences..."
+                  ></textarea>
+                } @else {
+                  <div class="rich-preview-box">
+                    @if (profileForm.controls.projectDescription.value) {
+                      <pre>{{ profileForm.controls.projectDescription.value }}</pre>
+                    } @else {
+                      <p class="empty-preview">No requirement description entered yet. Click "AI Assistant" for a quick draft.</p>
+                    }
+                  </div>
+                }
+              </div>
+            </section>
+          </div>
+        </form>
+      }
+
+      <!-- STEP 2: SELECT TEMPLATE -->
+      @if (currentStep() === 2) {
+        <section class="p-card">
+          <div class="p-card-head">
+            <i class="fa-solid fa-layer-group"></i>
+            <h3>Select a Starter Template</h3>
+          </div>
+          <div class="templates-grid">
+            @for (tpl of templates; track tpl.id) {
+              <button
+                type="button"
+                class="template-card"
+                [class.selected]="profileForm.controls.selectedTemplate.value === tpl.id"
+                (click)="selectTemplate(tpl.id)"
+              >
+                <div class="template-banner" [style.background]="tpl.accent">
+                  <i class="fa-solid" [class]="tpl.icon"></i>
+                  @if (profileForm.controls.selectedTemplate.value === tpl.id) {
+                    <span class="tpl-selected-pill"><i class="fa-solid fa-check"></i> Selected</span>
+                  }
+                </div>
+                <div class="template-body">
+                  <strong>{{ tpl.name }}</strong>
+                  <span class="tpl-cat">{{ tpl.category }}</span>
+                  <p>{{ tpl.description }}</p>
+                </div>
+              </button>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- STEP 3: REVIEW & CONFIRM -->
+      @if (currentStep() === 3) {
+        <section class="p-card review-card">
+          <div class="p-card-head">
+            <i class="fa-solid fa-clipboard-check"></i>
+            <h3>Review &amp; Confirm Your Details</h3>
+          </div>
+          <div class="review-grid">
+            <div class="review-block">
+              <h4>Personal Details</h4>
+              <p><strong>Full Name:</strong> {{ profileForm.controls.fullName.value || '—' }}</p>
+              <p><strong>Email:</strong> {{ profileForm.controls.email.value || '—' }}</p>
+              <p><strong>Phone:</strong> {{ profileForm.controls.phoneNumber.value || '—' }}</p>
+              <p><strong>Address:</strong> {{ profileForm.controls.contactAddress.value || '—' }}</p>
+            </div>
+            <div class="review-block">
+              <h4>Project &amp; Domain</h4>
+              <p><strong>Business Type:</strong> {{ profileForm.controls.businessType.value }}</p>
+              <p><strong>Primary Domain:</strong> {{ profileForm.controls.primaryDomain.value || '—' }}</p>
+              <p><strong>Selected Template:</strong> {{ getSelectedTemplateName() }}</p>
+              <p><strong>Target Date:</strong> {{ profileForm.controls.expectedCompletionDate.value || '—' }}</p>
+              <p><strong>Budget:</strong> ₹{{ profileForm.controls.projectBudget.value || '—' }}</p>
+            </div>
+            <div class="review-block review-block--wide">
+              <h4>Project Requirement</h4>
+              <pre>{{ profileForm.controls.projectDescription.value || 'No description provided yet.' }}</pre>
+            </div>
+          </div>
+        </section>
+      }
+
+      <!-- STEP 4: SUBMITTED -->
+      @if (currentStep() === 4) {
+        <section class="p-card submitted-card">
+          <div class="submitted-icon"><i class="fa-solid fa-circle-check"></i></div>
+          <h2>Project Requirement {{ submissionStatus() === 'submitted' ? 'Submitted!' : 'Saved' }}</h2>
+          <p>Thank you, <strong>{{ profileForm.controls.fullName.value || user.displayName }}</strong>. Your profile and website requirement have been saved to your account.</p>
+          <div class="submitted-actions">
+            <button type="button" class="p-btn p-btn--outline" (click)="currentStep.set(1)">Edit Profile &amp; Requirement</button>
+            <a routerLink="/" class="p-btn p-btn--primary">Back to Website</a>
+          </div>
+        </section>
+      }
+
+      }
+      </div>
+
+      <!-- Bottom Action Footer (Profile Flow Only) -->
+      @if (activeSidebarItem() !== 'requirements') {
+      <footer class="profile-footer-bar">
+        <button type="button" class="p-btn p-btn--outline" (click)="resetForm()">
+          <i class="fa-solid fa-rotate-right"></i> Reset
+        </button>
+
+        <div class="footer-right-actions">
+          @if (currentStep() < 3) {
+            <button type="button" class="p-btn p-btn--outline p-btn--next" (click)="goToNextStep()">
+              <span>Next Step</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          }
+          <button type="button" class="p-btn p-btn--outline" [disabled]="isSaving()" (click)="saveProfile('draft')">
+            <i class="fa-regular fa-floppy-disk"></i> Save as Draft
+          </button>
+          <button type="button" class="p-btn p-btn--primary" [disabled]="isSaving()" (click)="saveProfile('submitted')">
+            <i class="fa-regular fa-paper-plane"></i>
+            <span>{{ isSaving() ? 'Submitting...' : 'Submit Requirement' }}</span>
+          </button>
+        </div>
+      </footer>
+      }
+    } @else {
+      <!-- Signed Out Fallback -->
+      <section class="p-card auth-gate-card">
+        <div class="auth-gate-icon"><i class="fa-solid fa-user-lock"></i></div>
+        <h2>Sign in to View Your Profile</h2>
+        <p>Please sign in to access your profile details and submit website project requirements.</p>
+        <div class="auth-gate-actions">
+          <button type="button" class="p-btn p-btn--primary" (click)="signInWithGoogle()">
+            <i class="fa-brands fa-google"></i> Sign in with Google
+          </button>
+          <a routerLink="/admin" class="p-btn p-btn--outline">Email Sign In</a>
+          <a routerLink="/" class="p-btn p-btn--outline">Back to Home</a>
+        </div>
+      </section>
+    }
+  </div>
+</div>

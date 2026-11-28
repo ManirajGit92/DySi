@@ -28,19 +28,49 @@
     @if (isSuperAdmin) {
     <a routerLink="/super-admin" class="super-admin-link" (click)="isMenuOpen.set(false)">Super Admin</a>
     }
-    
-    @if (user$ | async; as user) {
-      <div class="user-profile-nav">
-        <img [src]="user.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'" class="user-avatar-nav" alt="Avatar" />
-        <span class="user-name-nav">{{ user.displayName || user.email }}</span>
-        <button class="btn-auth-logout-nav" (click)="websiteData.signOut(); isMenuOpen.set(false)">Sign Out</button>
-      </div>
-    } @else {
+    @if (!(user$ | async)) {
       <a routerLink="/admin" class="admin-link auth-login-link" (click)="isMenuOpen.set(false)">Sign In</a>
     }
   </nav>
 
   <div class="header-actions">
+    @if (user$ | async; as user) {
+      <div class="user-dropdown-wrap" (click)="$event.stopPropagation()">
+        <button
+          type="button"
+          class="user-avatar-trigger"
+          [attr.aria-expanded]="isProfileMenuOpen()"
+          aria-label="User menu"
+          (click)="toggleProfileMenu($event)"
+        >
+          @if (user.photoURL) {
+            <img [src]="user.photoURL" class="user-avatar-nav" [alt]="user.displayName || 'User'" />
+          } @else {
+            <span class="user-avatar-initial">{{ getUserInitial(user) }}</span>
+          }
+          <i class="fa-solid fa-chevron-down avatar-caret" [class.is-open]="isProfileMenuOpen()"></i>
+        </button>
+
+        @if (isProfileMenuOpen()) {
+          <div class="user-dropdown-menu" role="menu">
+            <div class="dropdown-user-summary">
+              <strong>{{ user.displayName || 'User' }}</strong>
+              <span>{{ user.email }}</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <a routerLink="/profile" class="dropdown-item" role="menuitem" (click)="closeProfileMenu(); isMenuOpen.set(false)">
+              <i class="fa-regular fa-user"></i>
+              <span>View Profile</span>
+            </a>
+            <button type="button" class="dropdown-item dropdown-item--danger" role="menuitem" (click)="handleSignOut()">
+              <i class="fa-solid fa-right-from-bracket"></i>
+              <span>Sign Out</span>
+            </button>
+          </div>
+        }
+      </div>
+    }
+
     <div class="search" [class.search--open]="isSearchOpen()">
       @if (isSearchOpen()) {
       <input type="search" placeholder="Search menu" [value]="searchTerm()"

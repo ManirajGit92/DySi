@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { HeaderMenuOption, HeaderSettings, MenuItem } from '../../core/models/website.models';
@@ -28,7 +28,33 @@ export class HeaderComponent {
 
   readonly isMenuOpen = signal(false);
   readonly isSearchOpen = signal(false);
+  readonly isProfileMenuOpen = signal(false);
   readonly searchTerm = signal('');
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.isProfileMenuOpen.set(false);
+  }
+
+  toggleProfileMenu(event: Event): void {
+    event.stopPropagation();
+    this.isProfileMenuOpen.update((open) => !open);
+    this.isSearchOpen.set(false);
+  }
+
+  closeProfileMenu(): void {
+    this.isProfileMenuOpen.set(false);
+  }
+
+  async handleSignOut(): Promise<void> {
+    this.isProfileMenuOpen.set(false);
+    this.isMenuOpen.set(false);
+    await this.websiteData.signOut();
+  }
+
+  getUserInitial(user: { displayName?: string | null; email?: string | null }): string {
+    return (user.displayName || user.email || 'U').trim().charAt(0).toUpperCase();
+  }
 
   get resolvedHeaderMode(): HeaderMenuOption {
     const option = this.headerSettings?.headerMenuOption;

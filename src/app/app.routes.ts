@@ -29,4 +29,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/feedback-submission/feedback-submission').then((m) => m.FeedbackSubmissionComponent),
   },
+  {
+    path: 'profile',
+    loadComponent: () =>
+      import('./pages/profile/my-profile').then((m) => m.MyProfileComponent),
+  },
 ];
