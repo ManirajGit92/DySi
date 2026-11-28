@@ -33,18 +33,18 @@
         <i class="fa-regular fa-file-lines"></i>
         <span>My Requirements</span>
       </button>
-      <button type="button" class="sb-nav-item" [class.active]="activeSidebarItem() === 'projects'" (click)="activeSidebarItem.set('projects'); currentStep.set(3)">
+      <button type="button" class="sb-nav-item" [class.active]="activeSidebarItem() === 'projects'" (click)="activeSidebarItem.set('projects')">
         <i class="fa-regular fa-folder-open"></i>
         <span>My Projects</span>
       </button>
-      <button type="button" class="sb-nav-item" [class.active]="activeSidebarItem() === 'templates'" (click)="activeSidebarItem.set('templates'); currentStep.set(2)">
+      <button type="button" class="sb-nav-item" [class.active]="activeSidebarItem() === 'templates'" (click)="activeSidebarItem.set('templates')">
         <i class="fa-solid fa-layer-group"></i>
         <span>Templates</span>
       </button>
-      <a class="sb-nav-item" routerLink="/" fragment="contact">
+      <button type="button" class="sb-nav-item" [class.active]="activeSidebarItem() === 'support'" (click)="activeSidebarItem.set('support')">
         <i class="fa-solid fa-headset"></i>
         <span>Support</span>
-      </a>
+      </button>
     </nav>
 
     <!-- Decorative Builder Illustration -->
@@ -67,11 +67,28 @@
         <!-- Top Header -->
         <header class="profile-topbar">
           <div class="topbar-title">
-            <span class="topbar-icon"><i class="fa-regular fa-file-lines"></i></span>
+            <span class="topbar-icon">
+              <i
+                class="fa-solid"
+                [class.fa-folder-open]="activeSidebarItem() === 'projects'"
+                [class.fa-layer-group]="activeSidebarItem() === 'templates'"
+                [class.fa-headset]="activeSidebarItem() === 'support'"
+                [class.fa-file-lines]="activeSidebarItem() !== 'projects' && activeSidebarItem() !== 'templates' && activeSidebarItem() !== 'support'"
+              ></i>
+            </span>
             <div>
               @if (activeSidebarItem() === 'requirements') {
                 <h1>My Requirements</h1>
                 <p>View, manage and track all your website requirements by submission date.</p>
+              } @else if (activeSidebarItem() === 'projects') {
+                <h1>My Projects</h1>
+                <p>View and manage all your website projects, releases and feature updates.</p>
+              } @else if (activeSidebarItem() === 'templates') {
+                <h1>Templates</h1>
+                <p>Choose a business theme and select a ready-made template for your website.</p>
+              } @else if (activeSidebarItem() === 'support') {
+                <h1>Support Center</h1>
+                <p>Get help, ask questions, or connect with our support team. You can chat with our AI assistant or a support specialist.</p>
               } @else {
                 <h1>My Profile &amp; Project Requirement</h1>
                 <p>Manage your profile and share your website requirement to get a custom solution.</p>
@@ -106,7 +123,7 @@
         </header>
 
         <!-- 4-Step Progress Stepper (Profile Flow Only) -->
-        @if (activeSidebarItem() !== 'requirements') {
+        @if (activeSidebarItem() !== 'requirements' && activeSidebarItem() !== 'projects' && activeSidebarItem() !== 'templates' && activeSidebarItem() !== 'support') {
         <div class="stepper-bar" role="tablist">
           <button type="button" class="step-pill" [class.active]="currentStep() === 1" [class.done]="currentStep() > 1" (click)="currentStep.set(1)">
             <span class="step-num"><i class="fa-regular fa-user"></i></span>
@@ -413,6 +430,815 @@
             </div>
           </div>
         </section>
+      } @else if (activeSidebarItem() === 'projects') {
+
+      <!-- ====================================================
+           MY PROJECTS CATALOG & RELEASE HISTORY VIEW
+           ==================================================== -->
+        <section class="proj-split-grid">
+          <!-- Left Column: Projects List / Grid -->
+          <div class="proj-catalog-panel">
+            <!-- Status Filter Pills -->
+            <div class="proj-status-pills">
+              <button type="button" [class.active]="projectStatusFilter() === 'All'" (click)="projectStatusFilter.set('All')">
+                All Projects ({{ projectCounts().all }})
+              </button>
+              <button type="button" [class.active]="projectStatusFilter() === 'Not Started'" (click)="projectStatusFilter.set('Not Started')">
+                Not Started ({{ projectCounts().notStarted }})
+              </button>
+              <button type="button" [class.active]="projectStatusFilter() === 'In Progress'" (click)="projectStatusFilter.set('In Progress')">
+                In Progress ({{ projectCounts().inProgress }})
+              </button>
+              <button type="button" [class.active]="projectStatusFilter() === 'Completed'" (click)="projectStatusFilter.set('Completed')">
+                Completed ({{ projectCounts().completed }})
+              </button>
+              <button type="button" [class.active]="projectStatusFilter() === 'Upgrading'" (click)="projectStatusFilter.set('Upgrading')">
+                Upgrading ({{ projectCounts().upgrading }})
+              </button>
+            </div>
+
+            <!-- Search + Grid/List + New Project Toolbar -->
+            <div class="proj-toolbar">
+              <div class="proj-search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input
+                  type="search"
+                  placeholder="Search projects..."
+                  [ngModel]="projectSearchQuery()"
+                  (ngModelChange)="projectSearchQuery.set($event)"
+                />
+              </div>
+
+              <div class="proj-view-switch">
+                <button type="button" [class.active]="projectViewMode() === 'grid'" (click)="projectViewMode.set('grid')">
+                  <i class="fa-solid fa-table-cells-large"></i> Grid View
+                </button>
+                <button type="button" [class.active]="projectViewMode() === 'list'" (click)="projectViewMode.set('list')">
+                  <i class="fa-solid fa-list"></i> List View
+                </button>
+              </div>
+
+              <button type="button" class="p-btn p-btn--primary p-btn--sm" (click)="showNewProjectForm.set(!showNewProjectForm())">
+                <i class="fa-solid fa-plus"></i> New Project
+              </button>
+            </div>
+
+            <!-- Inline New Project Creator -->
+            @if (showNewProjectForm()) {
+              <form class="p-card new-proj-form" [formGroup]="newProjectForm" (ngSubmit)="createProject()">
+                <div class="p-card-head">
+                  <i class="fa-solid fa-folder-plus"></i>
+                  <h3>Create New Project</h3>
+                </div>
+                <div class="p-grid-2">
+                  <div class="p-field">
+                    <label>Project Name <span class="req">*</span></label>
+                    <input formControlName="name" placeholder="e.g. Electronics Store" class="plain-input" />
+                  </div>
+                  <div class="p-field">
+                    <label>Domain</label>
+                    <input formControlName="domain" placeholder="www.myelectronics.com" class="plain-input" />
+                  </div>
+                  <div class="p-field">
+                    <label>Status</label>
+                    <select formControlName="status" class="plain-input">
+                      <option value="Not Started">Not Started</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Upgrading">Upgrading</option>
+                    </select>
+                  </div>
+                  <div class="p-field">
+                    <label>Expected Completion</label>
+                    <input formControlName="expectedCompletion" placeholder="e.g. Dec 30, 2026" class="plain-input" />
+                  </div>
+                  <div class="p-field field-span-2">
+                    <label>Thumbnail URL (Optional)</label>
+                    <input formControlName="thumbnailUrl" placeholder="https://..." class="plain-input" />
+                  </div>
+                  <div class="p-field field-span-2">
+                    <label>Description</label>
+                    <textarea rows="2" formControlName="description" placeholder="Short summary of the website project" class="plain-input"></textarea>
+                  </div>
+                </div>
+                <div class="new-proj-actions">
+                  <button type="button" class="p-btn p-btn--outline p-btn--sm" (click)="showNewProjectForm.set(false)">Cancel</button>
+                  <button type="submit" class="p-btn p-btn--primary p-btn--sm" [disabled]="newProjectForm.invalid">Create Project</button>
+                </div>
+              </form>
+            }
+
+            <!-- Project Cards Grid / List -->
+            <div class="proj-cards-grid" [class.proj-cards-grid--list]="projectViewMode() === 'list'">
+              @for (proj of filteredProjects(); track proj.id) {
+                <article
+                  class="proj-card"
+                  [class.is-selected]="selectedProject()?.id === proj.id"
+                  (click)="selectProject(proj)"
+                >
+                  <div class="proj-card-top">
+                    <div class="proj-thumb">
+                      @if (proj.thumbnailUrl) {
+                        <img [src]="proj.thumbnailUrl" [alt]="proj.name" />
+                      } @else {
+                        <i class="fa-solid fa-globe"></i>
+                      }
+                    </div>
+                    <span class="proj-status-pill" [class]="getProjectStatusClass(proj.status)">
+                      <i
+                        class="fa-solid"
+                        [class.fa-spinner]="proj.status === 'In Progress'"
+                        [class.fa-circle-check]="proj.status === 'Completed'"
+                        [class.fa-angles-up]="proj.status === 'Upgrading'"
+                        [class.fa-play]="proj.status === 'Not Started'"
+                      ></i>
+                      {{ proj.status }}
+                    </span>
+                  </div>
+
+                  <div class="proj-card-mid">
+                    <h3>{{ proj.name }}</h3>
+                    <span class="proj-domain"><i class="fa-solid fa-globe"></i> {{ proj.domain }}</span>
+                    <p>{{ proj.description }}</p>
+                  </div>
+
+                  <div class="proj-card-foot">
+                    <div class="proj-foot-col">
+                      <span class="foot-label"><i class="fa-regular fa-calendar"></i> Last Release</span>
+                      <strong>{{ proj.lastReleaseDate || '—' }}</strong>
+                    </div>
+                    <div class="proj-foot-col">
+                      <span class="foot-label"><i class="fa-regular fa-star"></i> Latest Feature</span>
+                      <strong>{{ proj.latestFeature || '—' }}</strong>
+                    </div>
+                  </div>
+                </article>
+              } @empty {
+                <div class="p-card proj-empty-card">
+                  <i class="fa-regular fa-folder-open"></i>
+                  <p>No projects found yet. Click <strong>+ New Project</strong> to add your first website project.</p>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Right Column: Selected Project Details & Release History -->
+          <div class="proj-detail-card">
+            @if (selectedProject(); as proj) {
+              <!-- Purple Banner -->
+              <div class="proj-detail-banner">
+                <div class="proj-detail-banner-left">
+                  <div class="proj-banner-thumb">
+                    @if (proj.thumbnailUrl) {
+                      <img [src]="proj.thumbnailUrl" [alt]="proj.name" />
+                    } @else {
+                      <i class="fa-solid fa-globe"></i>
+                    }
+                  </div>
+                  <div>
+                    <h2>{{ proj.name }}</h2>
+                    <a class="proj-banner-domain" [href]="'https://' + proj.domain.replace('https://', '').replace('http://', '')" target="_blank" rel="noopener">
+                      {{ proj.domain }} <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+                  </div>
+                </div>
+                <span class="proj-status-pill" [class]="getProjectStatusClass(proj.status)">
+                  {{ proj.status }}
+                </span>
+              </div>
+
+              <!-- 4-Col Meta Summary Strip -->
+              <div class="proj-meta-strip">
+                <div class="proj-meta-item">
+                  <i class="fa-regular fa-calendar"></i>
+                  <div>
+                    <span>Project Started</span>
+                    <strong>{{ proj.startedDate || '—' }}</strong>
+                  </div>
+                </div>
+                <div class="proj-meta-item">
+                  <i class="fa-solid fa-code"></i>
+                  <div>
+                    <span>Last Release</span>
+                    <strong>{{ proj.lastReleaseDate || '—' }}</strong>
+                  </div>
+                </div>
+                <div class="proj-meta-item">
+                  <i class="fa-solid fa-rocket"></i>
+                  <div>
+                    <span>Latest Feature</span>
+                    <strong>{{ proj.latestFeature || '—' }}</strong>
+                  </div>
+                </div>
+                <div class="proj-meta-item">
+                  <i class="fa-regular fa-calendar-check"></i>
+                  <div>
+                    <span>Expected Completion</span>
+                    <strong>{{ proj.expectedCompletion || '—' }}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 4 Inner Detail Tabs -->
+              <div class="proj-inner-tabs">
+                <button type="button" [class.active]="projectDetailTab() === 'releases'" (click)="projectDetailTab.set('releases')">
+                  <i class="fa-solid fa-layer-group"></i> Release History ({{ proj.releases.length || 0 }})
+                </button>
+                <button type="button" [class.active]="projectDetailTab() === 'details'" (click)="projectDetailTab.set('details')">
+                  <i class="fa-solid fa-circle-info"></i> Project Details
+                </button>
+                <button type="button" [class.active]="projectDetailTab() === 'features'" (click)="projectDetailTab.set('features')">
+                  <i class="fa-solid fa-list-check"></i> Features
+                </button>
+                <button type="button" [class.active]="projectDetailTab() === 'notes'" (click)="projectDetailTab.set('notes')">
+                  <i class="fa-regular fa-note-sticky"></i> Notes
+                </button>
+              </div>
+
+              <div class="proj-detail-body">
+                <!-- TAB 1: RELEASE HISTORY -->
+                @if (projectDetailTab() === 'releases') {
+                  <div class="release-head-row">
+                    <span class="release-sub">Chronological version releases &amp; changelog</span>
+                    <button type="button" class="p-btn p-btn--outline p-btn--sm" (click)="showAddReleaseForm.set(!showAddReleaseForm())">
+                      <i class="fa-solid fa-plus"></i> Add Release
+                    </button>
+                  </div>
+
+                  @if (showAddReleaseForm()) {
+                    <form class="add-release-box" [formGroup]="newReleaseForm" (ngSubmit)="addProjectRelease()">
+                      <div class="p-grid-2">
+                        <div class="p-field">
+                          <label>Version *</label>
+                          <input formControlName="version" placeholder="e.g. v1.4.0" class="plain-input" />
+                        </div>
+                        <div class="p-field">
+                          <label>Release Title *</label>
+                          <input formControlName="title" placeholder="e.g. Payment Gateway Integration" class="plain-input" />
+                        </div>
+                        <div class="p-field field-span-2">
+                          <label>Changes (one per line)</label>
+                          <textarea rows="3" formControlName="changesText" placeholder="Integrated Razorpay/UPI&#10;Added order confirmation emails" class="plain-input"></textarea>
+                        </div>
+                      </div>
+                      <div class="new-proj-actions">
+                        <button type="button" class="p-btn p-btn--outline p-btn--sm" (click)="showAddReleaseForm.set(false)">Cancel</button>
+                        <button type="submit" class="p-btn p-btn--primary p-btn--sm" [disabled]="newReleaseForm.invalid">Save Release</button>
+                      </div>
+                    </form>
+                  }
+
+                  <div class="release-timeline">
+                    @for (rel of proj.releases; track rel.version + $index; let idx = $index) {
+                      <div class="release-row" [class.is-current]="rel.isCurrent || idx === 0">
+                        <span class="rel-node"></span>
+                        <div class="rel-version-col">
+                          <span class="rel-version-badge" [class.is-current]="rel.isCurrent || idx === 0">{{ rel.version }}</span>
+                          <span class="rel-date">{{ rel.date }}</span>
+                        </div>
+                        <div class="rel-content-col">
+                          <div class="rel-title-line">
+                            <strong>{{ rel.title }}</strong>
+                            @if (rel.isCurrent || idx === 0) {
+                              <span class="current-release-pill"><i class="fa-regular fa-star"></i> Current Release</span>
+                            }
+                          </div>
+                          <ul class="rel-changes-list">
+                            @for (chg of rel.changes; track $index) {
+                              <li><i class="fa-solid fa-circle-check"></i> {{ chg }}</li>
+                            }
+                          </ul>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- TAB 2: PROJECT DETAILS -->
+                @if (projectDetailTab() === 'details') {
+                  <div class="proj-edit-form">
+                    <div class="p-grid-2">
+                      <div class="p-field">
+                        <label>Status</label>
+                        <select class="plain-input" [ngModel]="editProjStatus()" (ngModelChange)="editProjStatus.set($event)">
+                          <option value="Not Started">Not Started</option>
+                          <option value="In Progress">In Progress</option>
+                          <option value="Completed">Completed</option>
+                          <option value="Upgrading">Upgrading</option>
+                        </select>
+                      </div>
+                      <div class="p-field">
+                        <label>Domain</label>
+                        <input class="plain-input" [ngModel]="editProjDomain()" (ngModelChange)="editProjDomain.set($event)" />
+                      </div>
+                      <div class="p-field field-span-2">
+                        <label>Expected Completion</label>
+                        <input class="plain-input" [ngModel]="editProjExpectedDate()" (ngModelChange)="editProjExpectedDate.set($event)" />
+                      </div>
+                      <div class="p-field field-span-2">
+                        <label>Description</label>
+                        <textarea rows="4" class="plain-input" [ngModel]="editProjDescription()" (ngModelChange)="editProjDescription.set($event)"></textarea>
+                      </div>
+                    </div>
+                    <div class="new-proj-actions">
+                      <button type="button" class="p-btn p-btn--primary p-btn--sm" (click)="saveProjectDetails()">
+                        <i class="fa-regular fa-floppy-disk"></i> Save Project Details
+                      </button>
+                    </div>
+                  </div>
+                }
+
+                <!-- TAB 3: FEATURES -->
+                @if (projectDetailTab() === 'features') {
+                  <div class="proj-features-wrap">
+                    <div class="feature-add-row">
+                      <input
+                        class="plain-input"
+                        placeholder="Add a feature milestone..."
+                        [ngModel]="newFeatureText()"
+                        (ngModelChange)="newFeatureText.set($event)"
+                        (keyup.enter)="addProjectFeature()"
+                      />
+                      <button type="button" class="p-btn p-btn--primary p-btn--sm" (click)="addProjectFeature()">
+                        <i class="fa-solid fa-plus"></i> Add
+                      </button>
+                    </div>
+                    <div class="features-checklist">
+                      @for (feat of proj.features; track $index; let fIdx = $index) {
+                        <label class="feature-check-item" [class.is-done]="feat.done">
+                          <input type="checkbox" [checked]="feat.done" (change)="toggleProjectFeature(fIdx)" />
+                          <span>{{ feat.label }}</span>
+                        </label>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- TAB 4: NOTES -->
+                @if (projectDetailTab() === 'notes') {
+                  <div class="proj-notes-wrap">
+                    <textarea
+                      rows="8"
+                      class="plain-input"
+                      [ngModel]="projectNotesDraft()"
+                      (ngModelChange)="projectNotesDraft.set($event)"
+                      placeholder="Keep private notes, credentials reminders, or release checklists..."
+                    ></textarea>
+                    <div class="new-proj-actions">
+                      <button type="button" class="p-btn p-btn--primary p-btn--sm" (click)="saveProjectNotes()">
+                        <i class="fa-regular fa-floppy-disk"></i> Save Notes
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="proj-empty-detail">
+                <i class="fa-solid fa-layer-group"></i>
+                <h3>Select a Project</h3>
+                <p>Choose a project from the left or create a new project to view its release history and details.</p>
+              </div>
+            }
+          </div>
+        </section>
+      } @else if (activeSidebarItem() === 'templates') {
+
+      <!-- ====================================================
+           TEMPLATES MARKETPLACE VIEW
+           ==================================================== -->
+        <section class="tpl-marketplace-grid">
+          <!-- Left Column: Business Themes Sidebar Card -->
+          <aside class="p-card tpl-themes-card">
+            <div class="tpl-themes-head">
+              <div class="tpl-themes-title">
+                <i class="fa-solid fa-table-cells-large"></i>
+                <h2>Business Themes</h2>
+              </div>
+              <p>Select a business category to explore templates.</p>
+            </div>
+
+            <div class="tpl-themes-list">
+              @for (cat of businessThemeCategories; track cat.id) {
+                <button
+                  type="button"
+                  class="tpl-theme-btn"
+                  [class.active]="activeThemeCategory() === cat.id"
+                  (click)="activeThemeCategory.set(cat.id)"
+                >
+                  <span class="tpl-theme-left">
+                    <i class="fa-solid" [class]="cat.icon"></i>
+                    <span>{{ cat.label }}</span>
+                  </span>
+                  <span class="tpl-theme-right">
+                    <span class="tpl-count-pill">{{ getThemeCount(cat.id) }}</span>
+                    @if (activeThemeCategory() === cat.id) {
+                      <i class="fa-solid fa-chevron-right tpl-arrow"></i>
+                    }
+                  </span>
+                </button>
+              }
+            </div>
+          </aside>
+
+          <!-- Right Column: Banner + Filter Bar + 3-Col Grid -->
+          <div class="tpl-gallery-main">
+            <!-- Category Hero Banner -->
+            <div class="tpl-hero-banner">
+              <div class="tpl-hero-bg" [style.backgroundImage]="'url(' + activeThemeMeta().bannerImg + ')'"></div>
+              <div class="tpl-hero-overlay"></div>
+              <div class="tpl-hero-content">
+                <span class="tpl-hero-icon"><i class="fa-solid" [class]="activeThemeMeta().icon"></i></span>
+                <div>
+                  <h2>{{ activeThemeMeta().id === 'all' ? 'All Website Templates' : (activeThemeMeta().label + ' Templates') }}</h2>
+                  <p>{{ activeThemeMeta().subtitle }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="tpl-filter-bar">
+              <div class="tpl-search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input
+                  type="search"
+                  [placeholder]="'Search ' + activeThemeMeta().label.toLowerCase() + ' templates...'"
+                  [ngModel]="tplSearchQuery()"
+                  (ngModelChange)="tplSearchQuery.set($event)"
+                />
+              </div>
+
+              <div class="tpl-select-wrap">
+                <i class="fa-solid fa-layer-group"></i>
+                <select [ngModel]="tplStyleFilter()" (ngModelChange)="tplStyleFilter.set($event)">
+                  <option value="All">Style: All</option>
+                  <option value="Modern">Style: Modern</option>
+                  <option value="Minimal">Style: Minimal</option>
+                  <option value="Bold">Style: Bold</option>
+                  <option value="Professional">Style: Professional</option>
+                  <option value="Creative">Style: Creative</option>
+                </select>
+              </div>
+
+              <div class="tpl-select-wrap">
+                <i class="fa-solid fa-table-cells-large"></i>
+                <select [ngModel]="tplLayoutFilter()" (ngModelChange)="tplLayoutFilter.set($event)">
+                  <option value="All">Layout: All</option>
+                  <option value="Landing Page">Layout: Landing Page</option>
+                  <option value="Multi-Page">Layout: Multi-Page</option>
+                  <option value="Storefront">Layout: Storefront</option>
+                  <option value="Booking">Layout: Booking</option>
+                </select>
+              </div>
+
+              <div class="tpl-select-wrap">
+                <i class="fa-solid fa-arrow-up-wide-short"></i>
+                <select [ngModel]="tplSortBy()" (ngModelChange)="tplSortBy.set($event)">
+                  <option value="popular">Sort By: Popular</option>
+                  <option value="newest">Sort By: Newest</option>
+                  <option value="name">Sort By: Name (A-Z)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 3-Column Templates Grid -->
+            <div class="tpl-cards-grid">
+              @for (tpl of filteredTemplates(); track tpl.id) {
+                <article
+                  class="tpl-market-card"
+                  [class.is-chosen]="profileForm.controls.selectedTemplate.value === tpl.id"
+                >
+                  <!-- Mini Website Hero Mockup -->
+                  <div class="tpl-preview-frame" [style.backgroundImage]="'url(' + tpl.imageUrl + ')'">
+                    <div class="tpl-preview-scrim"></div>
+                    <div class="tpl-mini-nav">
+                      <span class="mini-brand">{{ tpl.name }}</span>
+                      @if (tpl.popular) {
+                        <span class="popular-badge"><i class="fa-solid fa-star"></i> Popular</span>
+                      }
+                    </div>
+                    <div class="tpl-mini-hero">
+                      <h4>{{ tpl.headline }}</h4>
+                      <p>{{ tpl.subline }}</p>
+                      <span class="mini-cta" [style.background]="tpl.ctaColor">{{ tpl.ctaLabel }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Card Footer -->
+                  <div class="tpl-card-info">
+                    <div class="tpl-card-name-row">
+                      <h3>{{ tpl.name }}</h3>
+                      <button
+                        type="button"
+                        class="tpl-heart-btn"
+                        [class.is-fav]="isFavoriteTemplate(tpl.id)"
+                        (click)="toggleFavoriteTemplate(tpl.id, $event)"
+                        aria-label="Favorite template"
+                      >
+                        <i [class]="isFavoriteTemplate(tpl.id) ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
+                      </button>
+                    </div>
+
+                    <div class="tpl-card-bottom">
+                      <div class="tpl-tags">
+                        @for (tag of tpl.tags; track tag) {
+                          <span class="tpl-tag">{{ tag }}</span>
+                        }
+                      </div>
+
+                      <div class="tpl-card-btns">
+                        <button type="button" class="tpl-preview-btn" (click)="previewingTemplate.set(tpl)">
+                          <i class="fa-regular fa-eye"></i> Preview
+                        </button>
+                        <button type="button" class="tpl-use-btn" (click)="useTemplateFromGallery(tpl)">
+                          <i class="fa-solid" [class.fa-check]="profileForm.controls.selectedTemplate.value === tpl.id" [class.fa-wand-magic-sparkles]="profileForm.controls.selectedTemplate.value !== tpl.id"></i>
+                          <span>{{ profileForm.controls.selectedTemplate.value === tpl.id ? 'Selected' : 'Use Template' }}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              } @empty {
+                <div class="p-card tpl-empty-state">
+                  <i class="fa-solid fa-layer-group"></i>
+                  <p>No templates match your current filter. Try switching to <strong>All Templates</strong>.</p>
+                </div>
+              }
+            </div>
+          </div>
+        </section>
+
+        <!-- Template Preview Modal -->
+        @if (previewingTemplate(); as ptpl) {
+          <div class="tpl-modal-backdrop" (click)="previewingTemplate.set(null)">
+            <div class="tpl-modal-card" (click)="$event.stopPropagation()">
+              <div class="tpl-modal-hero" [style.backgroundImage]="'url(' + ptpl.imageUrl + ')'">
+                <div class="tpl-preview-scrim"></div>
+                <button type="button" class="tpl-modal-close" (click)="previewingTemplate.set(null)">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="tpl-modal-hero-copy">
+                  <span class="tpl-modal-cat">{{ ptpl.category }} · {{ ptpl.style }} · {{ ptpl.layout }}</span>
+                  <h2>{{ ptpl.headline }}</h2>
+                  <p>{{ ptpl.subline }}</p>
+                </div>
+              </div>
+              <div class="tpl-modal-body">
+                <h3>{{ ptpl.name }}</h3>
+                <p>{{ ptpl.description }}</p>
+                <div class="tpl-tags">
+                  @for (tag of ptpl.tags; track tag) {
+                    <span class="tpl-tag">{{ tag }}</span>
+                  }
+                </div>
+                <div class="tpl-modal-actions">
+                  <button type="button" class="p-btn p-btn--outline p-btn--sm" (click)="previewingTemplate.set(null)">Close</button>
+                  <button type="button" class="p-btn p-btn--primary p-btn--sm" (click)="useTemplateFromGallery(ptpl)">
+                    <i class="fa-solid fa-check"></i> Use This Template
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      } @else if (activeSidebarItem() === 'support') {
+
+      <!-- ====================================================
+           SUPPORT CENTER VIEW
+           ==================================================== -->
+        <section class="sup-center">
+          <!-- Sub-nav Pills + Status Badges -->
+          <div class="sup-subnav-bar">
+            <div class="sup-tabs">
+              <button type="button" [class.active]="supportTab() === 'chat'" (click)="supportTab.set('chat')">
+                <i class="fa-regular fa-comment-dots"></i> Chat with Support
+              </button>
+              <button type="button" [class.active]="supportTab() === 'tickets'" (click)="supportTab.set('tickets')">
+                <i class="fa-solid fa-ticket"></i> My Tickets
+              </button>
+              <button type="button" [class.active]="supportTab() === 'articles'" (click)="supportTab.set('articles')">
+                <i class="fa-regular fa-newspaper"></i> Help Articles
+              </button>
+              <button type="button" [class.active]="supportTab() === 'contact'" (click)="supportTab.set('contact')">
+                <i class="fa-solid fa-phone"></i> Contact Support
+              </button>
+            </div>
+
+            <div class="sup-badges">
+              <span class="sup-ai-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> AI + Human Support</span>
+              <span class="sup-online-badge"><span class="online-dot"></span> Online</span>
+            </div>
+          </div>
+
+          <!-- TAB 1: CHAT WITH SUPPORT -->
+          @if (supportTab() === 'chat') {
+            <div class="sup-chat-split">
+              <!-- Left Conversations List -->
+              <aside class="p-card sup-conv-sidebar">
+                <button type="button" class="p-btn p-btn--primary sup-new-chat-btn" (click)="startNewSupportChat()">
+                  <i class="fa-solid fa-plus"></i> New Chat
+                </button>
+
+                <div class="sup-search-box">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input
+                    type="search"
+                    placeholder="Search conversations..."
+                    [ngModel]="supportSearchQuery()"
+                    (ngModelChange)="supportSearchQuery.set($event)"
+                  />
+                </div>
+
+                <span class="sup-section-label">CONVERSATIONS</span>
+
+                <div class="sup-conv-list">
+                  @for (conv of filteredConversations(); track conv.id) {
+                    <button
+                      type="button"
+                      class="sup-conv-item"
+                      [class.active]="selectedConversation()?.id === conv.id"
+                      (click)="selectedConversationId.set(conv.id)"
+                    >
+                      <span class="conv-icon"><i class="fa-solid" [class]="conv.icon || 'fa-headset'"></i></span>
+                      <div class="conv-meta">
+                        <div class="conv-top-line">
+                          <strong>{{ conv.title }}</strong>
+                          <small>{{ formatReqTime(conv.updatedAt) }}</small>
+                        </div>
+                        <span class="conv-preview">{{ getLastMessagePreview(conv) }}</span>
+                      </div>
+                    </button>
+                  } @empty {
+                    <div class="sup-conv-empty">
+                      <p>No conversations yet. Click <strong>+ New Chat</strong> to begin.</p>
+                    </div>
+                  }
+                </div>
+
+                <button type="button" class="sup-clear-btn" (click)="clearAllSupportHistory()">
+                  <i class="fa-regular fa-trash-can"></i> Clear All History
+                </button>
+              </aside>
+
+              <!-- Right Chat Thread -->
+              <div class="p-card sup-chat-main">
+                <!-- Chat Header -->
+                <div class="sup-chat-head">
+                  <div class="sup-chat-head-left">
+                    <span class="sup-headset-circle"><i class="fa-solid fa-headset"></i></span>
+                    <div>
+                      <h3>{{ selectedConversation()?.title || 'Dysi Support Chat' }}</h3>
+                      <span class="sup-active-sub">Active now · AI Assistant &amp; Support Team</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="p-btn p-btn--outline p-btn--sm"
+                    [disabled]="!selectedConversation()"
+                    (click)="escalateToTeam()"
+                  >
+                    <i class="fa-solid fa-users"></i> Escalate to Team
+                  </button>
+                </div>
+
+                <!-- Messages Feed -->
+                <div class="sup-messages-feed">
+                  <div class="sup-date-divider"><span>Today</span></div>
+
+                  @if (selectedConversation(); as activeConv) {
+                    @for (msg of activeConv.messages; track msg.id) {
+                      @if (msg.sender === 'user') {
+                        <div class="msg-row msg-row--user">
+                          <div class="msg-bubble msg-bubble--user">
+                            <p>{{ msg.text }}</p>
+                            <span class="msg-time">{{ msg.time }} <i class="fa-solid fa-check-double"></i></span>
+                          </div>
+                          @if (customPhotoUrl() || user.photoURL) {
+                            <img [src]="customPhotoUrl() || user.photoURL" class="msg-avatar" alt="You" />
+                          } @else {
+                            <span class="msg-avatar msg-avatar--initial">{{ getInitial(user.displayName, user.email) }}</span>
+                          }
+                        </div>
+                      } @else if (msg.sender === 'ai') {
+                        <div class="msg-row msg-row--incoming">
+                          <span class="msg-avatar msg-avatar--ai"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                          <div class="msg-bubble msg-bubble--incoming">
+                            <div class="msg-sender-line">
+                              <strong>{{ msg.senderName }}</strong>
+                              <span class="sender-tag sender-tag--ai">AI</span>
+                            </div>
+                            <p>{{ msg.text }}</p>
+                            <span class="msg-time">{{ msg.time }}</span>
+                          </div>
+                        </div>
+                      } @else {
+                        <div class="msg-row msg-row--incoming">
+                          <span class="msg-avatar msg-avatar--team"><i class="fa-solid fa-headset"></i></span>
+                          <div class="msg-bubble msg-bubble--incoming">
+                            <div class="msg-sender-line">
+                              <strong>{{ msg.senderName }}</strong>
+                              <span class="sender-tag sender-tag--team">Team</span>
+                            </div>
+                            <p>{{ msg.text }}</p>
+                            <span class="msg-time">{{ msg.time }}</span>
+                          </div>
+                        </div>
+                      }
+                    }
+                  } @else {
+                    <div class="sup-welcome-empty">
+                      <span class="msg-avatar msg-avatar--ai"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                      <h4>Welcome to Dysi Support!</h4>
+                      <p>Type a message below to chat with our AI Assistant or connect with a Support Specialist.</p>
+                    </div>
+                  }
+                </div>
+
+                <!-- Message Composer -->
+                <div class="sup-composer">
+                  <button type="button" class="composer-icon-btn" title="Attach file" (click)="startNewSupportChat()">
+                    <i class="fa-solid fa-paperclip"></i>
+                  </button>
+                  <input
+                    type="text"
+                    class="composer-input"
+                    placeholder="Type your message here..."
+                    [ngModel]="supportMessageInput()"
+                    (ngModelChange)="supportMessageInput.set($event)"
+                    (keyup.enter)="sendSupportMessage()"
+                  />
+                  <button type="button" class="composer-send-btn" (click)="sendSupportMessage()" aria-label="Send message">
+                    <i class="fa-regular fa-paper-plane"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- TAB 2: MY TICKETS -->
+          @if (supportTab() === 'tickets') {
+            <div class="p-card sup-tickets-card">
+              <div class="req-tl-header">
+                <div>
+                  <h3>My Support Tickets</h3>
+                  <p class="sup-muted-sub">Track escalated issues and active conversations with our team.</p>
+                </div>
+                <button type="button" class="p-btn p-btn--primary p-btn--sm" (click)="supportTab.set('contact')">
+                  <i class="fa-solid fa-plus"></i> New Ticket
+                </button>
+              </div>
+              <div class="sup-tickets-list">
+                @for (t of filteredConversations(); track t.id) {
+                  <div class="sup-ticket-row" (click)="selectedConversationId.set(t.id); supportTab.set('chat')">
+                    <div>
+                      <strong>{{ t.title }}</strong>
+                      <span>{{ getLastMessagePreview(t) }}</span>
+                    </div>
+                    <span class="ticket-pill" [class]="'ticket-pill--' + t.status">{{ t.status | titlecase }}</span>
+                  </div>
+                } @empty {
+                  <p class="sup-muted-sub">No support tickets found.</p>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- TAB 3: HELP ARTICLES -->
+          @if (supportTab() === 'articles') {
+            <div class="sup-articles-grid">
+              @for (art of helpArticles; track art.title) {
+                <article class="p-card sup-article-card">
+                  <span class="art-icon"><i class="fa-solid" [class]="art.icon"></i></span>
+                  <span class="art-cat">{{ art.category }}</span>
+                  <h3>{{ art.title }}</h3>
+                  <p>{{ art.summary }}</p>
+                </article>
+              }
+            </div>
+          }
+
+          <!-- TAB 4: CONTACT SUPPORT -->
+          @if (supportTab() === 'contact') {
+            <div class="p-card sup-contact-card">
+              <h3>Contact Support Specialist</h3>
+              <p class="sup-muted-sub">Send a direct message to our engineering and onboarding team.</p>
+              <div class="p-fields-stack">
+                <div class="p-field">
+                  <label>Subject *</label>
+                  <input class="plain-input" [ngModel]="contactSubject()" (ngModelChange)="contactSubject.set($event)" placeholder="e.g. Help with custom domain setup" />
+                </div>
+                <div class="p-field">
+                  <label>Message *</label>
+                  <textarea rows="5" class="plain-input" [ngModel]="contactMessage()" (ngModelChange)="contactMessage.set($event)" placeholder="Describe your question or issue..."></textarea>
+                </div>
+                <div class="new-proj-actions">
+                  <button type="button" class="p-btn p-btn--primary p-btn--sm" (click)="submitContactSupport()">
+                    <i class="fa-regular fa-paper-plane"></i> Send to Support Team
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </section>
       } @else {
 
       <!-- STEP 1: PROFILE & REQUIREMENT -->
@@ -704,7 +1530,7 @@
       </div>
 
       <!-- Bottom Action Footer (Profile Flow Only) -->
-      @if (activeSidebarItem() !== 'requirements') {
+      @if (activeSidebarItem() !== 'requirements' && activeSidebarItem() !== 'projects' && activeSidebarItem() !== 'templates' && activeSidebarItem() !== 'support') {
       <footer class="profile-footer-bar">
         <button type="button" class="p-btn p-btn--outline" (click)="resetForm()">
           <i class="fa-solid fa-rotate-right"></i> Reset
